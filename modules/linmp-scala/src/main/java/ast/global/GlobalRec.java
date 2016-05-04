@@ -18,4 +18,9 @@ public class GlobalRec implements GlobalType
 	{
 		return "mu " + this.recvar + "." + this.body;
 	}
+	
+	@Override
+	public void accept(ast.global.GlobalTypeVisitor v) {
+		v.visit(this);
+	}
 }

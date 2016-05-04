@@ -28,4 +28,9 @@ public class GlobalSend implements GlobalType
 					.map((e) -> e.getKey().toString() + e.getValue().toString())
 					.collect(Collectors.joining(", ")) + "}";
 	}
+	
+	@Override
+	public void accept(ast.global.GlobalTypeVisitor v) {
+		v.visit(this);
+	}
 }

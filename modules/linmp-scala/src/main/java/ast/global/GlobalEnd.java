@@ -13,4 +13,9 @@ public class GlobalEnd implements GlobalType
 	{
 		return "end";
 	}
+	
+	@Override
+	public void accept(ast.global.GlobalTypeVisitor v) {
+		v.visit(this);
+	}
 }
