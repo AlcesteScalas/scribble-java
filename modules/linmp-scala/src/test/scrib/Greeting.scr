@@ -1,0 +1,17 @@
+module Greeting;
+
+type <java> "java.lang.String" from "rt.jar" as String;
+
+global protocol Proto(role C, role S) {
+    choice at C {
+        Greet(String) from C to S;
+        choice at S {
+            Hello(String) from S to C;
+            do Proto(C, S)
+        } or {
+            Bye(String) from S to C;
+        }
+    } or {
+        Quit() from C to S;
+    }    
+}
