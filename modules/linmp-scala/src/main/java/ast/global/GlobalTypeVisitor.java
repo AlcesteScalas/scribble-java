@@ -1,32 +1,60 @@
 package ast.global;
 
+import ast.name.RecVar;
+import org.scribble.main.ScribbleException;
+
 /** Visitor pattern for global type ASTs. 
  *  
  *  @author Alceste Scalas <alceste.scalas@imperial.ac.uk>
  */
-public interface GlobalTypeVisitor {
+public abstract class GlobalTypeVisitor<A> {
 	/**
-	 * @param node Node being visited
+	 * @param gtype Global type to process
 	 */
-	void visit(GlobalEnd node);
+	protected abstract A process() throws ScribbleException;
 	
 	/**
 	 * @param node Node being visited
 	 */
-	void visit(GlobalSend node);
+	protected abstract A visit(GlobalEnd node);
 	
 	/**
 	 * @param node Node being visited
 	 */
-	void visit(GlobalSendCase node);
+	protected abstract A visit(GlobalSend node);
+		
+	/**
+	 * @param node Node being visited
+	 */
+	protected abstract A visit(GlobalRec node);
 	
 	/**
 	 * @param node Node being visited
 	 */
-	void visit(GlobalRec node);
+	protected abstract A visit(RecVar node);
 	
-	/**
+	/** Default catch-all method with dynamic dispatching.
+	 * 
 	 * @param node Node being visited
 	 */
-	void visit(ast.name.RecVar node);
+	protected final A visit(GlobalType node)
+	{
+		if (node instanceof GlobalEnd)
+		{
+			return visit((GlobalEnd)node);
+		}
+		if (node instanceof GlobalSend)
+		{
+			return visit((GlobalSend)node);
+		}
+		if (node instanceof GlobalRec)
+		{
+			return visit((GlobalRec)node);
+		}
+		if (node instanceof RecVar) 
+		{
+			return visit((RecVar)node);
+		}
+		throw new RuntimeException("Unsupported node type: " + node);
+	}
 }

@@ -15,7 +15,18 @@ public class GlobalEnd implements GlobalType
 	}
 	
 	@Override
-	public void accept(ast.global.GlobalTypeVisitor v) {
-		v.visit(this);
+	public int hashCode()
+	{
+		return 997;
+	}
+	
+	@Override
+	public boolean equals(Object obj)
+	{
+		if (obj instanceof GlobalEnd)
+		{
+			return true;
+		}
+		return false;
 	}
 }
