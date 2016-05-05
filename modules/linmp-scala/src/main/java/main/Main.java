@@ -6,6 +6,7 @@ import java.nio.file.Paths;
 import org.scribble.main.ScribbleException;
 
 import ast.ScribProtocolTranslator;
+import ast.global.GlobalType;
 
 public class Main
 {
@@ -16,7 +17,10 @@ public class Main
 		
 		ScribProtocolTranslator sbp = new ScribProtocolTranslator();
 		
-		//System.out.println("Scribble:\n" + inlined + "\n");
-		System.out.println("Translated:\n" + sbp.parse(mainmod, proto));
+		GlobalType g = sbp.parse(mainmod, proto);
+		System.out.println("Translated:\n" + g);
+		
+		GlobalType gs = ast.global.GlobalTypeSanitizer.apply(g);
+		System.out.println("Sanitized:\n" + gs);
 	}
 }
