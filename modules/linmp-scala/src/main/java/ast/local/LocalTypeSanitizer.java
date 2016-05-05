@@ -1,6 +1,3 @@
-/**
- * 
- */
 package ast.local;
 
 import ast.name.MessageLab;
@@ -11,9 +8,9 @@ import java.util.Map;
 
 import org.scribble.main.ScribbleException;
 
-/** Perform sanity checks on a global type AST
- * @author ascalas
- *
+/** Perform sanity checks on a global type AST.
+ * 
+ *  @author Alceste Scalas <alceste.scalas@imperial.ac.uk>
  */
 public class LocalTypeSanitizer extends LocalTypeVisitor<LocalType>
 {
@@ -99,13 +96,29 @@ public class LocalTypeSanitizer extends LocalTypeVisitor<LocalType>
 	}
 
 	@Override
-	protected LocalRec visit(LocalRec node)
+	protected LocalType visit(LocalRec node)
 	{
-		// FIXME: here we are assuming that all recursion vars are distinct
-		this.bound.add(node.recvar);
-		LocalRec r = new LocalRec(node.recvar, visit(node.body));
-		this.bound.remove(node.recvar);
-		return r;
+		RecVar var = node.recvar;
+		
+		if (this.bound.contains(var))
+		{
+			// The recursion re-binds a variable, let's alpha-convert
+			try
+			{
+				return visit(LocalTypeAlphaConverter.apply(node, var,
+														   new RecVar(var.name+"'")));
+			}
+			catch (ScribbleException e)
+			{
+				errors.add(e.toString());
+			}
+			return node;
+		}
+		
+		this.bound.add(var);
+		LocalRec res = new LocalRec(var, visit(node.body));
+		this.bound.remove(var);
+		return res;
 	}
 
 	@Override

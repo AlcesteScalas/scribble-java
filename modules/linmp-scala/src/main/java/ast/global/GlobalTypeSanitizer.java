@@ -1,6 +1,3 @@
-/**
- * 
- */
 package ast.global;
 
 import ast.local.LocalType;
@@ -15,8 +12,8 @@ import java.util.Map;
 import org.scribble.main.ScribbleException;
 
 /** Perform sanity checks on a global type AST
- * @author ascalas
- *
+ * 
+ *  @author Alceste Scalas <alceste.scalas@imperial.ac.uk>
  */
 public class GlobalTypeSanitizer extends GlobalTypeVisitor<GlobalType>
 {
@@ -87,13 +84,29 @@ public class GlobalTypeSanitizer extends GlobalTypeVisitor<GlobalType>
 	}
 
 	@Override
-	protected GlobalRec visit(GlobalRec node)
+	protected GlobalType visit(GlobalRec node)
 	{
-		// FIXME: here we are assuming that all recursion vars are distinct
-		this.bound.add(node.recvar);
-		GlobalRec r = new GlobalRec(node.recvar, visit(node.body));
-		this.bound.remove(node.recvar);
-		return r;
+		RecVar var = node.recvar;
+		
+		if (this.bound.contains(var))
+		{
+			// The recursion re-binds a variable, let's alpha-convert
+			try
+			{
+				return visit(GlobalTypeAlphaConverter.apply(node, var,
+															new RecVar(var.name+"'")));
+			}
+			catch (ScribbleException e)
+			{
+				errors.add(e.toString());
+			}
+			return node;
+		}
+		
+		this.bound.add(var);
+		GlobalRec res = new GlobalRec(var, visit(node.body));
+		this.bound.remove(var);
+		return res;
 	}
 
 	@Override
