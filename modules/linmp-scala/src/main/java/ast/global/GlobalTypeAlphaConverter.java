@@ -66,7 +66,7 @@ public class GlobalTypeAlphaConverter extends GlobalTypeVisitor<GlobalType>
 	@Override
 	protected GlobalRec visit(GlobalRec node)
 	{
-		if (node.recvar == old)
+		if (node.recvar.equals(old))
 		{
 			if (open)
 			{
@@ -84,7 +84,7 @@ public class GlobalTypeAlphaConverter extends GlobalTypeVisitor<GlobalType>
 
 	@Override
 	protected RecVar visit(RecVar node) {
-		if ((node == old) && open) {
+		if ((node.equals(old)) && open) {
 			return conv;
 		}
 		// Here we might also spot unbound occurrences of "old",

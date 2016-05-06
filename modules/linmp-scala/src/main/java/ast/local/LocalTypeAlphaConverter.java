@@ -79,7 +79,7 @@ public class LocalTypeAlphaConverter extends LocalTypeVisitor<LocalType>
 	@Override
 	protected LocalRec visit(LocalRec node)
 	{
-		if (node.recvar == old)
+		if (node.recvar.equals(old))
 		{
 			if (open)
 			{
@@ -97,13 +97,11 @@ public class LocalTypeAlphaConverter extends LocalTypeVisitor<LocalType>
 
 	@Override
 	protected RecVar visit(RecVar node) {
-		if ((node == old) && open) {
+		if ((node.equals(old)) && open) {
 			return conv;
 		}
 		// Here we might also spot unbound occurrences of "old",
 		// but we take care of them in other processing steps
-		System.out.println(node + " not equal " + old + "open: " + open);
-		
 		return node;
 	}
 }
