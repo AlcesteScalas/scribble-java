@@ -20,6 +20,9 @@ public class LocalTypeSanitizer extends LocalTypeVisitor<LocalType>
 	
 	/** Sanitize the given global type
 	 * 
+	 * A sanitized type all "vacuous" recursions removed, and all recursion
+	 * variables pairwise distinct (a form of Ottmann/Barendregt convention).
+	 * 
 	 * @param lt Local type to be sanitized
 	 * @return A sanitized version of the given local type
 	 * @throws ScribbleException
@@ -99,6 +102,12 @@ public class LocalTypeSanitizer extends LocalTypeVisitor<LocalType>
 	protected LocalType visit(LocalRec node)
 	{
 		RecVar var = node.recvar;
+		
+		if (!node.body.freeVariables().contains(var))
+		{
+			// The recursion is vacuous: let's skip it
+			return visit(node.body);
+		}
 		
 		if (this.bound.contains(var))
 		{

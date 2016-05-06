@@ -21,7 +21,10 @@ public class GlobalTypeSanitizer extends GlobalTypeVisitor<GlobalType>
 	private Collection<String> errors = new java.util.LinkedList<String>();
 	static private GlobalType gtype;
 	
-	/** Sanitize the given global type
+	/** Sanitize the given global type.
+	 * 
+	 * A sanitized type all "vacuous" recursions removed, and all recursion
+	 * variables pairwise distinct (a form of Ottmann/Barendregt convention).
 	 * 
 	 * @param g Global type to be sanitized
 	 * @return A sanitized version of the given global type
@@ -87,6 +90,12 @@ public class GlobalTypeSanitizer extends GlobalTypeVisitor<GlobalType>
 	protected GlobalType visit(GlobalRec node)
 	{
 		RecVar var = node.recvar;
+		
+		if (!node.body.freeVariables().contains(var))
+		{
+			// The recursion is vacuous: let's skip it
+			return visit(node.body);
+		}
 		
 		if (this.bound.contains(var))
 		{
