@@ -1,6 +1,9 @@
 package ast.global;
 
+import java.util.Set;
+
 import ast.name.RecVar;
+import ast.name.Role;
 
 public class GlobalRec implements GlobalType
 {
@@ -11,6 +14,20 @@ public class GlobalRec implements GlobalType
 	{
 		this.recvar = recvar;
 		this.body = body;
+	}
+	
+	@Override
+	public Set<RecVar> freeVariables()
+	{
+		Set<RecVar> res = body.freeVariables();
+		res.remove(recvar);
+		return res;
+	}
+	
+	@Override
+	public Set<Role> roles()
+	{
+		return body.roles();
 	}
 	
 	@Override

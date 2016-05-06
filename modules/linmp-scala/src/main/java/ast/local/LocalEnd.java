@@ -1,5 +1,10 @@
 package ast.local;
 
+import java.util.Set;
+
+import ast.name.RecVar;
+import ast.name.Role;
+
 public class LocalEnd implements LocalType
 {
 	//public final Role self;
@@ -8,6 +13,18 @@ public class LocalEnd implements LocalType
 	public LocalEnd()
 	{
 		//this.self = self;
+	}
+	
+	@Override
+	public Set<RecVar> freeVariables()
+	{
+		return new java.util.HashSet<RecVar>();
+	}
+	
+	@Override
+	public Set<Role> roles()
+	{
+		return new java.util.HashSet<Role>();
 	}
 	
 	@Override 

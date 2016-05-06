@@ -1,6 +1,9 @@
 package ast.local;
 
+import java.util.Set;
+
 import ast.name.RecVar;
+import ast.name.Role;
 
 public class LocalRec implements LocalType
 {
@@ -15,6 +18,20 @@ public class LocalRec implements LocalType
 		//this.self = self;
 		this.recvar = recvar;
 		this.body = body;
+	}
+	
+	@Override
+	public Set<RecVar> freeVariables()
+	{
+		Set<RecVar> res = body.freeVariables();
+		res.remove(recvar);
+		return res;
+	}
+	
+	@Override
+	public Set<Role> roles()
+	{
+		return body.roles();
 	}
 	
 	@Override
