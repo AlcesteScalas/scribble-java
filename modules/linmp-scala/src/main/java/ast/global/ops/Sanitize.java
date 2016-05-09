@@ -1,8 +1,12 @@
-package ast.global;
+package ast.global.ops;
 
+import ast.global.GlobalEnd;
+import ast.global.GlobalRec;
+import ast.global.GlobalSend;
+import ast.global.GlobalSendCase;
+import ast.global.GlobalType;
+import ast.global.GlobalTypeVisitor;
 import ast.local.LocalType;
-import ast.local.LocalTypeSanitizer;
-
 import ast.name.MessageLab;
 import ast.name.RecVar;
 
@@ -15,7 +19,7 @@ import org.scribble.main.ScribbleException;
  * 
  *  @author Alceste Scalas <alceste.scalas@imperial.ac.uk>
  */
-public class GlobalTypeSanitizer extends GlobalTypeVisitor<GlobalType>
+public class Sanitize extends GlobalTypeVisitor<GlobalType>
 {
 	private Collection<RecVar> bound = new java.util.HashSet<RecVar>();
 	private Collection<String> errors = new java.util.LinkedList<String>();
@@ -32,11 +36,11 @@ public class GlobalTypeSanitizer extends GlobalTypeVisitor<GlobalType>
 	 */
 	public static GlobalType apply(GlobalType g) throws ScribbleException
 	{
-		GlobalTypeSanitizer s = new GlobalTypeSanitizer(g);
+		Sanitize s = new Sanitize(g);
 		return s.process();
 	}
 	
-	private GlobalTypeSanitizer(GlobalType g)
+	private Sanitize(GlobalType g)
 	{
 		gtype = g;
 	}
@@ -72,7 +76,7 @@ public class GlobalTypeSanitizer extends GlobalTypeVisitor<GlobalType>
 			{
 				try
 				{
-					pay = LocalTypeSanitizer.apply((LocalType)c.pay);
+					pay = ast.local.ops.Sanitize.apply((LocalType)c.pay);
 				}
 				catch (ScribbleException e)
 				{
@@ -102,7 +106,7 @@ public class GlobalTypeSanitizer extends GlobalTypeVisitor<GlobalType>
 			// The recursion re-binds a variable, let's alpha-convert
 			try
 			{
-				return visit(GlobalTypeAlphaConverter.apply(node, var,
+				return visit(AlphaConvert.apply(node, var,
 															new RecVar(var.name+"'")));
 			}
 			catch (ScribbleException e)

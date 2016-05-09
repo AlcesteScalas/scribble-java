@@ -20,7 +20,7 @@ public class Main
 		GlobalType g = sbp.parse(mainmod, proto);
 		System.out.println("Translated:\n" + g);
 		
-		GlobalType gs = ast.global.GlobalTypeSanitizer.apply(g);
+		GlobalType gs = ast.global.ops.Sanitize.apply(g);
 		System.out.println("Sanitized:\n" + gs);
 	}
 }

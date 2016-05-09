@@ -1,5 +1,12 @@
-package ast.local;
+package ast.local.ops;
 
+import ast.local.LocalBranch;
+import ast.local.LocalCase;
+import ast.local.LocalEnd;
+import ast.local.LocalRec;
+import ast.local.LocalSelect;
+import ast.local.LocalType;
+import ast.local.LocalTypeVisitor;
 import ast.name.MessageLab;
 import ast.name.RecVar;
 
@@ -11,7 +18,7 @@ import org.scribble.main.ScribbleException;
  *
  *  @author Alceste Scalas <alceste.scalas@imperial.ac.uk>
  */
-public class LocalTypeAlphaConverter extends LocalTypeVisitor<LocalType>
+public class AlphaConvert extends LocalTypeVisitor<LocalType>
 {
 	private RecVar old; // Original variable
 	private RecVar conv; // Alpha-converted variable
@@ -27,11 +34,11 @@ public class LocalTypeAlphaConverter extends LocalTypeVisitor<LocalType>
 	 */
 	public static LocalType apply(LocalType g, RecVar old, RecVar conv) throws ScribbleException
 	{
-		LocalTypeAlphaConverter s = new LocalTypeAlphaConverter(g, old, conv);
+		AlphaConvert s = new AlphaConvert(g, old, conv);
 		return s.process();
 	}
 	
-	private LocalTypeAlphaConverter(LocalType g, RecVar old, RecVar conv)
+	private AlphaConvert(LocalType g, RecVar old, RecVar conv)
 	{
 		ltype = g;
 		this.old = old;

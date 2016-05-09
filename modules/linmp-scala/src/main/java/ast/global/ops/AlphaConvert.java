@@ -1,5 +1,11 @@
-package ast.global;
+package ast.global.ops;
 
+import ast.global.GlobalEnd;
+import ast.global.GlobalRec;
+import ast.global.GlobalSend;
+import ast.global.GlobalSendCase;
+import ast.global.GlobalType;
+import ast.global.GlobalTypeVisitor;
 import ast.name.MessageLab;
 import ast.name.RecVar;
 
@@ -11,7 +17,7 @@ import org.scribble.main.ScribbleException;
  *
  *  @author Alceste Scalas <alceste.scalas@imperial.ac.uk>
  */
-public class GlobalTypeAlphaConverter extends GlobalTypeVisitor<GlobalType>
+public class AlphaConvert extends GlobalTypeVisitor<GlobalType>
 {
 	private RecVar old; // Original variable
 	private RecVar conv; // Alpha-converted variable
@@ -27,11 +33,11 @@ public class GlobalTypeAlphaConverter extends GlobalTypeVisitor<GlobalType>
 	 */
 	public static GlobalType apply(GlobalType g, RecVar old, RecVar conv) throws ScribbleException
 	{
-		GlobalTypeAlphaConverter s = new GlobalTypeAlphaConverter(g, old, conv);
+		AlphaConvert s = new AlphaConvert(g, old, conv);
 		return s.process();
 	}
 	
-	private GlobalTypeAlphaConverter(GlobalType g, RecVar old, RecVar conv)
+	private AlphaConvert(GlobalType g, RecVar old, RecVar conv)
 	{
 		gtype = g;
 		this.old = old;

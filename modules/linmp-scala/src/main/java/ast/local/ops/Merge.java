@@ -1,17 +1,17 @@
 /**
  * 
  */
-package ast.local.merger;
+package ast.local.ops;
 
 import ast.local.LocalType;
 
 /** Merge two local types iff they are equal.
+ * 
  * @author Alceste Scalas <alceste.scalas@imperial.ac.uk>
  */
-public class LocalTypesIDMerger extends LocalTypesMerger
+public class Merge
 {
-	@Override
-	public LocalType apply(LocalType t, LocalType u)
+	public static LocalType id(LocalType t, LocalType u)
 	{
 		if (t.equals(u)) {
 			return t;

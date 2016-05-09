@@ -1,5 +1,12 @@
-package ast.local;
+package ast.local.ops;
 
+import ast.local.LocalBranch;
+import ast.local.LocalCase;
+import ast.local.LocalEnd;
+import ast.local.LocalRec;
+import ast.local.LocalSelect;
+import ast.local.LocalType;
+import ast.local.LocalTypeVisitor;
 import ast.name.MessageLab;
 import ast.name.RecVar;
 
@@ -12,7 +19,7 @@ import org.scribble.main.ScribbleException;
  * 
  *  @author Alceste Scalas <alceste.scalas@imperial.ac.uk>
  */
-public class LocalTypeSanitizer extends LocalTypeVisitor<LocalType>
+public class Sanitize extends LocalTypeVisitor<LocalType>
 {
 	private Collection<RecVar> bound = new java.util.HashSet<RecVar>();
 	private Collection<String> errors = new java.util.LinkedList<String>();
@@ -29,11 +36,11 @@ public class LocalTypeSanitizer extends LocalTypeVisitor<LocalType>
 	 */
 	public static LocalType apply(LocalType lt) throws ScribbleException
 	{
-		LocalTypeSanitizer s = new LocalTypeSanitizer(lt);
+		Sanitize s = new Sanitize(lt);
 		return s.process();
 	}
 	
-	private LocalTypeSanitizer(LocalType lt)
+	private Sanitize(LocalType lt)
 	{
 		ltype = lt;
 	}
@@ -75,7 +82,7 @@ public class LocalTypeSanitizer extends LocalTypeVisitor<LocalType>
 		{
 			try
 			{
-				pay = LocalTypeSanitizer.apply((LocalType)c.pay);
+				pay = Sanitize.apply((LocalType)c.pay);
 			}
 			catch (ScribbleException e)
 			{
@@ -114,7 +121,7 @@ public class LocalTypeSanitizer extends LocalTypeVisitor<LocalType>
 			// The recursion re-binds a variable, let's alpha-convert
 			try
 			{
-				return visit(LocalTypeAlphaConverter.apply(node, var,
+				return visit(AlphaConvert.apply(node, var,
 														   new RecVar(var.name+"'")));
 			}
 			catch (ScribbleException e)
