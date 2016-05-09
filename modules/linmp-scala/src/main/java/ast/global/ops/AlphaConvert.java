@@ -59,7 +59,7 @@ public class AlphaConvert extends GlobalTypeVisitor<GlobalType>
 	@Override
 	protected GlobalSend visit(GlobalSend node)
 	{
-		Map<MessageLab, GlobalSendCase> cases2 = new java.util.HashMap<MessageLab, GlobalSendCase>();
+		Map<MessageLab, GlobalSendCase> cases2 = new java.util.HashMap<>();
 		for (Map.Entry<MessageLab, GlobalSendCase> x: node.cases.entrySet())
 		{
 			GlobalSendCase c = x.getValue();

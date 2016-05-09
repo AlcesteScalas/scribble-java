@@ -21,9 +21,9 @@ import org.scribble.main.ScribbleException;
  */
 public class Sanitize extends GlobalTypeVisitor<GlobalType>
 {
-	private Collection<RecVar> bound = new java.util.HashSet<RecVar>();
-	private Collection<String> errors = new java.util.LinkedList<String>();
-	static private GlobalType gtype;
+	private Collection<RecVar> bound = new java.util.HashSet<>();
+	private Collection<String> errors = new java.util.LinkedList<>();
+	private static GlobalType gtype;
 	
 	/** Sanitize the given global type.
 	 * 

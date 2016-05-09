@@ -60,7 +60,7 @@ public class AlphaConvert extends LocalTypeVisitor<LocalType>
 	@Override
 	protected LocalBranch visit(LocalBranch node)
 	{
-		Map<MessageLab, LocalCase> cases2 = new java.util.HashMap<MessageLab, LocalCase>();
+		Map<MessageLab, LocalCase> cases2 = new java.util.HashMap<>();
 		for (Map.Entry<MessageLab, LocalCase> x: node.cases.entrySet())
 		{
 			LocalCase c = x.getValue();
@@ -73,7 +73,7 @@ public class AlphaConvert extends LocalTypeVisitor<LocalType>
 	@Override
 	protected LocalSelect visit(LocalSelect node)
 	{
-		Map<MessageLab, LocalCase> cases2 = new java.util.HashMap<MessageLab, LocalCase>();
+		Map<MessageLab, LocalCase> cases2 = new java.util.HashMap<>();
 		for (Map.Entry<MessageLab, LocalCase> x: node.cases.entrySet())
 		{
 			LocalCase c = x.getValue();
