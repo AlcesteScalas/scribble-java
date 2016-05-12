@@ -99,16 +99,16 @@ public class GChoiceDel extends ChoiceDel implements GCompoundInteractionNodeDel
 								}
 							});
 				
-					// Distinct enabling messages
-					Set<MessageId<?>> mids = benv0.getEnabled().getMessages(dest);
-					benvs.stream().map((e) -> e.getEnabled().getMessages(dest)).forEach((ms) ->
-							{
-								if (!Collections.disjoint(mids, ms))
-								{
-									throw new RuntimeScribbleException("Non disjoint enabling messages for " + dest + ": " + mids + ", " + ms);
-								}
-								mids.addAll(ms);
-							});
+//					// Distinct enabling messages
+//					Set<MessageId<?>> mids = benv0.getEnabled().getMessages(dest);
+//					benvs.stream().map((e) -> e.getEnabled().getMessages(dest)).forEach((ms) ->
+//							{
+//								if (!Collections.disjoint(mids, ms))
+//								{
+//									throw new RuntimeScribbleException("Non disjoint enabling messages for " + dest + ": " + mids + ", " + ms);
+//								}
+//								mids.addAll(ms);
+//							});
 				}
 			}
 			catch (RuntimeScribbleException rse)  // Lambda hack
