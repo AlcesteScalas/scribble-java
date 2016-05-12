@@ -4,8 +4,9 @@ import java.util.Set;
 
 import ast.global.GlobalType;
 import ast.local.LocalType;
+import ast.binary.Type;
 
-public class RecVar extends NameNode implements GlobalType, LocalType
+public class RecVar extends NameNode implements GlobalType, LocalType, Type
 {
 	public RecVar(String name)
 	{

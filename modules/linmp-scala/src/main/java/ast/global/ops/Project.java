@@ -31,7 +31,7 @@ public class Project extends GlobalTypeVisitor<LocalType>
 	/** Perform all projections of the given global type.
 	 * 
 	 * @param g Global type to project
-	 * @param merge 
+	 * @param merge Merge operator to use
 	 * @return A mapping from each role to its projected local type
 	 * @throws ScribbleException
 	 */
@@ -63,6 +63,14 @@ public class Project extends GlobalTypeVisitor<LocalType>
 		return res;
 	}
 	
+	/**
+	 * 
+	 * @param g Global type to project
+	 * @param r Role to project
+	 * @param merge Merge operator to use
+	 * @return The projected local type
+	 * @throws ScribbleException
+	 */
 	public static LocalType apply(GlobalType g, Role r, Merge.Operator merge) throws ScribbleException
 	{
 		Project p = new Project(g, r, merge);

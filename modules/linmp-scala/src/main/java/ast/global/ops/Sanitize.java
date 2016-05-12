@@ -70,7 +70,7 @@ public class Sanitize extends GlobalTypeVisitor<GlobalType>
 		for (Map.Entry<MessageLab, GlobalSendCase> x: node.cases.entrySet())
 		{
 			GlobalSendCase c = x.getValue();
-			ast.PayloadType pay = c.pay;
+			ast.PayloadType pay = (c.pay == null) ? new ast.name.Unit() : c.pay;
 			
 			if (c.pay instanceof LocalType)
 			{
