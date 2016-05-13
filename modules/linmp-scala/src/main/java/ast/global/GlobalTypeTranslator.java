@@ -16,7 +16,7 @@ import org.scribble.ast.global.GRecursion;
 import ast.AstFactory;
 import ast.PayloadType;
 import ast.local.LocalTypeParser;
-import ast.name.MessageLab;
+import ast.name.Label;
 import ast.name.RecVar;
 import ast.name.Role;
 
@@ -54,7 +54,7 @@ public class GlobalTypeTranslator
 					throw new RuntimeException("TODO: " + gmt);
 				}
 				MessageSigNode msn = ((MessageSigNode) gmt.msg);
-				MessageLab lab = this.factory.MessageLab(msn.op.toString());
+				Label lab = this.factory.MessageLab(msn.op.toString());
 				PayloadType pay = null;
 				if (msn.payloads.getElements().size() > 1)
 				{
@@ -78,7 +78,7 @@ public class GlobalTypeTranslator
 					}
 				}
 				GlobalType cont = parseSeq(is.subList(1, is.size()));
-				Map<MessageLab, GlobalSendCase> cases = new HashMap<>();
+				Map<Label, GlobalSendCase> cases = new HashMap<>();
 				cases.put(lab, this.factory.GlobalSendCase(pay, cont));
 				return this.factory.GlobalSend(src, dest, cases);
 			}
@@ -94,7 +94,7 @@ public class GlobalTypeTranslator
 						.collect(Collectors.toList());
 				Role src = null;
 				Role dest = null;
-				Map<MessageLab, GlobalSendCase> cases = new HashMap<>();
+				Map<Label, GlobalSendCase> cases = new HashMap<>();
 				for (GlobalType p : parsed)
 				{
 					if (!(p instanceof GlobalSend))

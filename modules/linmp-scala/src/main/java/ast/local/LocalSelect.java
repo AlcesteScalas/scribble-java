@@ -5,7 +5,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import ast.name.MessageLab;
+import ast.name.Label;
 import ast.name.RecVar;
 import ast.name.Role;
 
@@ -14,10 +14,10 @@ public class LocalSelect implements LocalType
 	//public final Role self;
 
 	public final Role dest;
-	public final Map<MessageLab, LocalCase> cases;
+	public final Map<Label, LocalCase> cases;
 	
 	//public LocalSelect(Role self, Role dest, Map<MessageLab, LocalCase> cases)
-	public LocalSelect(Role dest, Map<MessageLab, LocalCase> cases)
+	public LocalSelect(Role dest, Map<Label, LocalCase> cases)
 	{
 		//this.self = self;
 		this.dest = dest;

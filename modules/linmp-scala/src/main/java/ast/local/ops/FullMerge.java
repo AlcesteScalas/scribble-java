@@ -9,7 +9,7 @@ import ast.local.LocalRec;
 import ast.local.LocalSelect;
 import ast.local.LocalType;
 import ast.local.LocalTypeVisitor;
-import ast.name.MessageLab;
+import ast.name.Label;
 import ast.name.RecVar;
 
 import java.util.HashSet;
@@ -85,7 +85,7 @@ class FullMerge extends LocalTypeVisitor<LocalType>
 			return node;
 		}
 		
-		Map<MessageLab,LocalCase> newcases = mergeCases(node.cases, t2b.cases,
+		Map<Label,LocalCase> newcases = mergeCases(node.cases, t2b.cases,
 														node, t2b);
 		return new LocalBranch(node.src, newcases);
 	}
@@ -106,29 +106,29 @@ class FullMerge extends LocalTypeVisitor<LocalType>
 			return node;
 		}
 		
-		Map<MessageLab,LocalCase> newcases = mergeCases(node.cases, t2s.cases,
+		Map<Label,LocalCase> newcases = mergeCases(node.cases, t2s.cases,
 														node, t2s);
 		return new LocalSelect(node.dest, newcases);
 	}
 	
-	private Map<MessageLab,LocalCase> mergeCases(Map<MessageLab,LocalCase> vcases, Map<MessageLab,LocalCase> t2cases,
+	private Map<Label,LocalCase> mergeCases(Map<Label,LocalCase> vcases, Map<Label,LocalCase> t2cases,
 												 LocalType v, LocalType t2)
 	{
-		Set<MessageLab> labsv = vcases.keySet();
-		Set<MessageLab> labst2 = t2cases.keySet();
+		Set<Label> labsv = vcases.keySet();
+		Set<Label> labst2 = t2cases.keySet();
 		
-		Set<MessageLab> common = new HashSet<>(labsv);
+		Set<Label> common = new HashSet<>(labsv);
 		common.retainAll(labst2); // Labels common to visited and "other"
 
-		Set<MessageLab> onlyv = new HashSet<>(labsv);
+		Set<Label> onlyv = new HashSet<>(labsv);
 		onlyv.removeAll(labst2); // Labels only in the visited branching
 
-		Set<MessageLab> onlyt2 = new HashSet<>(labst2);
+		Set<Label> onlyt2 = new HashSet<>(labst2);
 		onlyt2.removeAll(labsv); // Labels only in the "other" branching
 
-		Map<MessageLab,LocalCase> newcases = new HashMap<>();
+		Map<Label,LocalCase> newcases = new HashMap<>();
 
-		for (MessageLab l: common)
+		for (Label l: common)
 		{
 			LocalCase vcl = vcases.get(l);
 			if (!vcl.pay.equals(t2cases.get(l).pay))

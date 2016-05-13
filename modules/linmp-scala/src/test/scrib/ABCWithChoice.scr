@@ -3,11 +3,11 @@ module ABCWithChoice;
 global protocol Proto(role A, role B, role C) {
     choice at A {
         Msg1a() from A to B;
-        Msg2a() from B to C;
+        Msg2() from B to C;
         Msg3() from C to A;
     } or {
         Msg1b() from A to B;
-        Msg2b() from B to C;
+        Msg2() from B to C;
         Msg3() from C to A;
     }
 }

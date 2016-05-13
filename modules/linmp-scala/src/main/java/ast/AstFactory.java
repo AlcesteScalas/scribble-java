@@ -14,7 +14,7 @@ import ast.local.LocalRec;
 import ast.local.LocalSelect;
 import ast.local.LocalType;
 import ast.name.BaseType;
-import ast.name.MessageLab;
+import ast.name.Label;
 import ast.name.RecVar;
 import ast.name.Role;
 
@@ -30,9 +30,9 @@ public class AstFactory
 		return new Role(name);
 	}
 
-	public MessageLab MessageLab(String name)
+	public Label MessageLab(String name)
 	{
-		return new MessageLab(name);
+		return new Label(name);
 	}
 
 	public RecVar RecVar(String name)
@@ -40,7 +40,7 @@ public class AstFactory
 		return new RecVar(name);
 	}
 	
-	public GlobalSend GlobalSend(Role src, Role dest, Map<MessageLab, GlobalSendCase> cases)
+	public GlobalSend GlobalSend(Role src, Role dest, Map<Label, GlobalSendCase> cases)
 	{
 		return new GlobalSend(src, dest, cases);
 	}
@@ -61,14 +61,14 @@ public class AstFactory
 	}
 	
 	//public LocalSelect LocalSelect(Role self, Role dest, Map<MessageLab, LocalCase> cases)
-	public LocalSelect LocalSelect(Role dest, Map<MessageLab, LocalCase> cases)
+	public LocalSelect LocalSelect(Role dest, Map<Label, LocalCase> cases)
 	{
 		//return new LocalSelect(self, dest, cases);
 		return new LocalSelect(dest, cases);
 	}
 	
 	//public LocalBranch LocalBranch(Role self, Role src, Map<MessageLab, LocalCase> cases)
-	public LocalBranch LocalBranch(Role src, Map<MessageLab, LocalCase> cases)
+	public LocalBranch LocalBranch(Role src, Map<Label, LocalCase> cases)
 	{
 		//return new LocalBranch(self, src, cases);
 		return new LocalBranch(src, cases);

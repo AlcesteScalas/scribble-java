@@ -9,7 +9,7 @@ import ast.binary.Rec;
 import ast.binary.Select;
 import ast.binary.Type;
 import ast.binary.Visitor;
-import ast.name.MessageLab;
+import ast.name.Label;
 import ast.name.RecVar;
 
 import java.util.HashSet;
@@ -81,7 +81,7 @@ class FullMerge extends Visitor<Type>
 		
 		Branch t2b = (Branch)t2;
 		
-		Map<MessageLab,Case> newcases = mergeCases(node.cases, t2b.cases,
+		Map<Label,Case> newcases = mergeCases(node.cases, t2b.cases,
 												   node, t2b);
 		return new Branch(newcases);
 	}
@@ -97,31 +97,31 @@ class FullMerge extends Visitor<Type>
 		
 		Select t2s = (Select)t2;
 		
-		Map<MessageLab,Case> newcases = mergeCases(node.cases, t2s.cases,
+		Map<Label,Case> newcases = mergeCases(node.cases, t2s.cases,
 												   node, t2s);
 		return new Select(newcases);
 	}
 	
 	// If reqSub is true, then merging requires that one set of labels
 	// is included in the other 
-	private Map<MessageLab,Case> mergeCases(Map<MessageLab,Case> vcases, Map<MessageLab,Case> t2cases,
+	private Map<Label,Case> mergeCases(Map<Label,Case> vcases, Map<Label,Case> t2cases,
 											Type v, Type t2)
 	{
-		Set<MessageLab> labsv = vcases.keySet();
-		Set<MessageLab> labst2 = t2cases.keySet();
+		Set<Label> labsv = vcases.keySet();
+		Set<Label> labst2 = t2cases.keySet();
 		
-		Set<MessageLab> common = new HashSet<>(labsv);
+		Set<Label> common = new HashSet<>(labsv);
 		common.retainAll(labst2); // Labels common to visited and "other"
 
-		Set<MessageLab> onlyv = new HashSet<>(labsv);
+		Set<Label> onlyv = new HashSet<>(labsv);
 		onlyv.removeAll(labst2); // Labels only in the visited branching
 
-		Set<MessageLab> onlyt2 = new HashSet<>(labst2);
+		Set<Label> onlyt2 = new HashSet<>(labst2);
 		onlyt2.removeAll(labsv); // Labels only in the "other" branching
 
-		Map<MessageLab,Case> newcases = new HashMap<>();
+		Map<Label,Case> newcases = new HashMap<>();
 
-		for (MessageLab l: common)
+		for (Label l: common)
 		{
 			Case vcl = vcases.get(l);
 			if (!vcl.pay.equals(t2cases.get(l).pay))

@@ -7,7 +7,7 @@ import ast.global.GlobalSendCase;
 import ast.global.GlobalType;
 import ast.global.GlobalTypeVisitor;
 import ast.local.LocalType;
-import ast.name.MessageLab;
+import ast.name.Label;
 import ast.name.RecVar;
 
 import java.util.Collection;
@@ -66,8 +66,8 @@ public class Sanitize extends GlobalTypeVisitor<GlobalType>
 	@Override
 	protected GlobalSend visit(GlobalSend node)
 	{
-		Map<MessageLab, GlobalSendCase> cases2 = new java.util.HashMap<MessageLab, GlobalSendCase>();
-		for (Map.Entry<MessageLab, GlobalSendCase> x: node.cases.entrySet())
+		Map<Label, GlobalSendCase> cases2 = new java.util.HashMap<Label, GlobalSendCase>();
+		for (Map.Entry<Label, GlobalSendCase> x: node.cases.entrySet())
 		{
 			GlobalSendCase c = x.getValue();
 			ast.PayloadType pay = (c.pay == null) ? new ast.name.Unit() : c.pay;

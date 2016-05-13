@@ -14,7 +14,7 @@ import ast.local.LocalSelect;
 import ast.local.LocalCase;
 import ast.local.LocalType;
 import ast.local.LocalTypeVisitor;
-import ast.name.MessageLab;
+import ast.name.Label;
 import ast.name.RecVar;
 import ast.name.Role;
 
@@ -112,7 +112,7 @@ public class Project extends LocalTypeVisitor<ast.binary.Type>
 	@Override
 	protected Type visit(LocalSelect node)
 	{
-		Map<MessageLab, ast.binary.Case> cases = node.cases.entrySet()
+		Map<Label, ast.binary.Case> cases = node.cases.entrySet()
 				.stream()
 				.collect(Collectors.toMap(e -> e.getKey(),
 										  e -> visit(e.getValue())));	
@@ -128,7 +128,7 @@ public class Project extends LocalTypeVisitor<ast.binary.Type>
 	@Override
 	protected Type visit(LocalBranch node)
 	{
-		Map<MessageLab, ast.binary.Case> cases = node.cases.entrySet()
+		Map<Label, ast.binary.Case> cases = node.cases.entrySet()
 				.stream()
 				.collect(Collectors.toMap(e -> e.getKey(),
 										  e -> visit(e.getValue())));	
@@ -141,7 +141,7 @@ public class Project extends LocalTypeVisitor<ast.binary.Type>
 		return visit(cases);
 	}
 	
-	private Type visit(Map<MessageLab, ast.binary.Case> cases)
+	private Type visit(Map<Label, ast.binary.Case> cases)
 	{
 		Iterator<Type> conts = cases.values().stream().map(c -> c.body).iterator();
 		Type res = conts.next();

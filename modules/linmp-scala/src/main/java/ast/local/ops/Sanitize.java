@@ -7,7 +7,7 @@ import ast.local.LocalRec;
 import ast.local.LocalSelect;
 import ast.local.LocalType;
 import ast.local.LocalTypeVisitor;
-import ast.name.MessageLab;
+import ast.name.Label;
 import ast.name.RecVar;
 
 import java.util.Collection;
@@ -66,8 +66,8 @@ public class Sanitize extends LocalTypeVisitor<LocalType>
 	@Override
 	protected LocalBranch visit(LocalBranch node)
 	{
-		Map<MessageLab, LocalCase> cases2 = new java.util.HashMap<MessageLab, LocalCase>();
-		for (Map.Entry<MessageLab, LocalCase> x: node.cases.entrySet())
+		Map<Label, LocalCase> cases2 = new java.util.HashMap<Label, LocalCase>();
+		for (Map.Entry<Label, LocalCase> x: node.cases.entrySet())
 		{
 			cases2.put(x.getKey(), visit(x.getValue()));
 		}
@@ -96,8 +96,8 @@ public class Sanitize extends LocalTypeVisitor<LocalType>
 	@Override
 	protected LocalSelect visit(LocalSelect node)
 	{
-		Map<MessageLab, LocalCase> cases2 = new java.util.HashMap<MessageLab, LocalCase>();
-		for (Map.Entry<MessageLab, LocalCase> x: node.cases.entrySet())
+		Map<Label, LocalCase> cases2 = new java.util.HashMap<Label, LocalCase>();
+		for (Map.Entry<Label, LocalCase> x: node.cases.entrySet())
 		{
 			cases2.put(x.getKey(), visit(x.getValue()));
 		}

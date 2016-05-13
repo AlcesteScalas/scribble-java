@@ -5,7 +5,7 @@ import java.util.Map;
 
 import ast.AstFactory;
 import ast.PayloadType;
-import ast.name.MessageLab;
+import ast.name.Label;
 import ast.name.RecVar;
 import ast.name.Role;
 
@@ -32,7 +32,7 @@ public class LocalTypeParser
 		}
 		else if (lt.contains("!") || lt.contains("?"))
 		{
-			Map<MessageLab, LocalCase> cases = parseLocalCases(lt.substring(lt.indexOf("{") + 1, lt.lastIndexOf("}")));
+			Map<Label, LocalCase> cases = parseLocalCases(lt.substring(lt.indexOf("{") + 1, lt.lastIndexOf("}")));
 			int o = lt.indexOf("!");
 			int i = lt.indexOf("?");
 			if (i == -1 || (o > -1 && o < i))
@@ -52,14 +52,14 @@ public class LocalTypeParser
 		}
 	}
 	
-	private Map<MessageLab, LocalCase> parseLocalCases(String s)
+	private Map<Label, LocalCase> parseLocalCases(String s)
 	{
 		s = s.trim();
 		String[] cs = s.split(",");
-		Map<MessageLab, LocalCase> cases = new HashMap<>();
+		Map<Label, LocalCase> cases = new HashMap<>();
 		for (String c : cs)
 		{
-			MessageLab lab = this.factory.MessageLab(c.substring(0, c.indexOf("(")).trim());
+			Label lab = this.factory.MessageLab(c.substring(0, c.indexOf("(")).trim());
 			String p = c.substring(c.indexOf("(") + 1, c.indexOf(")")).trim();
 			PayloadType pay = null;
 			if (!p.equals(""))

@@ -5,7 +5,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import ast.name.MessageLab;
+import ast.name.Label;
 import ast.name.RecVar;
 import ast.name.Role;
 
@@ -14,10 +14,10 @@ public class LocalBranch implements LocalType
 	//public final Role self;
 	
 	public final Role src;
-	public final Map<MessageLab, LocalCase> cases;
+	public final Map<Label, LocalCase> cases;
 	
 	//public LocalBranch(Role self, Role src, Map<MessageLab, LocalCase> cases)
-	public LocalBranch(Role src, Map<MessageLab, LocalCase> cases)
+	public LocalBranch(Role src, Map<Label, LocalCase> cases)
 	{
 		//this.self = self;
 		this.src = src;

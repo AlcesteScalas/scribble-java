@@ -6,7 +6,7 @@ import ast.global.GlobalSend;
 import ast.global.GlobalSendCase;
 import ast.global.GlobalType;
 import ast.global.GlobalTypeVisitor;
-import ast.name.MessageLab;
+import ast.name.Label;
 import ast.name.RecVar;
 
 import java.util.Map;
@@ -59,8 +59,8 @@ public class AlphaConvert extends GlobalTypeVisitor<GlobalType>
 	@Override
 	protected GlobalSend visit(GlobalSend node)
 	{
-		Map<MessageLab, GlobalSendCase> cases2 = new java.util.HashMap<>();
-		for (Map.Entry<MessageLab, GlobalSendCase> x: node.cases.entrySet())
+		Map<Label, GlobalSendCase> cases2 = new java.util.HashMap<>();
+		for (Map.Entry<Label, GlobalSendCase> x: node.cases.entrySet())
 		{
 			GlobalSendCase c = x.getValue();
 			cases2.put(x.getKey(), new GlobalSendCase(c.pay, visit(c.body)));

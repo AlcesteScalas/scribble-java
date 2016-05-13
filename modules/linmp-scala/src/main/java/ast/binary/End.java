@@ -20,6 +20,12 @@ public class End implements Type
 		return new java.util.HashSet<RecVar>();
 	}
 	
+	@Override
+	public Type.Action action()
+	{
+		return Type.Action.none();
+	}
+	
 	@Override 
 	public String toString()
 	{

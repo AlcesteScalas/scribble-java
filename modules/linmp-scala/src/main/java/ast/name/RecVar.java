@@ -24,7 +24,13 @@ public class RecVar extends NameNode implements GlobalType, LocalType, Type
 	{
 		return java.util.Collections.emptySet();
 	}
-
+	
+	@Override
+	public Type.Action action()
+	{
+		return Type.Action.input();
+	}
+	
 	@Override
 	public boolean canEqual(Object o)
 	{

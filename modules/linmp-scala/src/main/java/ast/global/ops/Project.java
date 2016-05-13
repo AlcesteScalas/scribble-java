@@ -8,7 +8,7 @@ import ast.global.GlobalType;
 import ast.global.GlobalTypeVisitor;
 import ast.local.LocalType;
 import ast.local.ops.Merge;
-import ast.name.MessageLab;
+import ast.name.Label;
 import ast.name.RecVar;
 import ast.name.Role;
 
@@ -106,7 +106,7 @@ public class Project extends GlobalTypeVisitor<LocalType>
 	@Override
 	protected LocalType visit(GlobalSend node)
 	{
-		Map<MessageLab, ast.local.LocalCase> cases = node.cases.entrySet()
+		Map<Label, ast.local.LocalCase> cases = node.cases.entrySet()
 				.stream()
 				.collect(Collectors.toMap(e -> e.getKey(),
 										  e -> visit(e.getValue())));	

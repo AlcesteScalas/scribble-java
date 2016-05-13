@@ -28,11 +28,17 @@ public class Rec implements Type
 	}
 	
 	@Override
+	public Type.Action action()
+	{
+		return body.action();
+	}
+	
+	@Override
 	public String toString()
 	{
 		return "mu " + this.recvar + "." + this.body;
 	}
-
+	
 	@Override
 	public int hashCode()
 	{

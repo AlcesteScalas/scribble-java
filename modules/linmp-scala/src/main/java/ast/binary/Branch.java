@@ -5,17 +5,17 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import ast.name.MessageLab;
+import ast.name.Label;
 import ast.name.RecVar;
 
 public class Branch implements Type
 {
 	//public final Role self;
 	
-	public final Map<MessageLab, Case> cases;
+	public final Map<Label, Case> cases;
 	
 	//public LocalBranch(Role self, Role src, Map<MessageLab, LocalCase> cases)
-	public Branch(Map<MessageLab, Case> cases)
+	public Branch(Map<Label, Case> cases)
 	{
 		//this.self = self;
 		this.cases = Collections.unmodifiableMap(cases);
@@ -29,7 +29,12 @@ public class Branch implements Type
 				.collect(Collectors.toSet());
 	}
 	
-
+	@Override
+	public Type.Action action()
+	{
+		return Type.Action.input();
+	}
+	
 	// A ? { l1 : S1, l2 : S2, ... }
 	@Override
 	public String toString()

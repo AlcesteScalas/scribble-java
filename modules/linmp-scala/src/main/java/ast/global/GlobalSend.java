@@ -5,7 +5,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import ast.name.MessageLab;
+import ast.name.Label;
 import ast.name.RecVar;
 import ast.name.Role;
 
@@ -13,9 +13,9 @@ public class GlobalSend implements GlobalType
 {
 	public final Role src;
 	public final Role dest;
-	public final Map<MessageLab, GlobalSendCase> cases;
+	public final Map<Label, GlobalSendCase> cases;
 	
-	public GlobalSend(Role src, Role dest, Map<MessageLab, GlobalSendCase> cases)
+	public GlobalSend(Role src, Role dest, Map<Label, GlobalSendCase> cases)
 	{
 		this.src = src;
 		this.dest = dest;
