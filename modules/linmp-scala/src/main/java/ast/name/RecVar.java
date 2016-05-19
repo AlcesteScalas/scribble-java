@@ -2,11 +2,12 @@ package ast.name;
 
 import java.util.Set;
 
-import ast.global.GlobalType;
-import ast.local.LocalType;
 import ast.binary.Type;
+import ast.global.GlobalType;
+import ast.linear.AbstractVariant;
+import ast.local.LocalType;
 
-public class RecVar extends NameNode implements GlobalType, LocalType, Type
+public class RecVar extends NameNode implements GlobalType, LocalType, Type, AbstractVariant
 {
 	public RecVar(String name)
 	{

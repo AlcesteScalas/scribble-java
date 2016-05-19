@@ -25,15 +25,15 @@ public class Main
 		GlobalType g = sbp.parse(mainmod, proto);
 		System.out.println("Translated:\n" + "    " + g);
 		
-		GlobalType gs = ast.global.ops.Sanitize.apply(g);
+		GlobalType gs = ast.global.ops.Sanitizer.apply(g);
 		System.out.println("\nSanitized:\n" + "    " + gs);
 		
-		Map<Role, LocalType> projs = ast.global.ops.Project.apply(gs, ast.local.ops.Merge::full);
+		Map<Role, LocalType> projs = ast.global.ops.Projector.apply(gs, ast.local.ops.Merge::full);
 		for (Entry<Role, LocalType> rl: projs.entrySet())
 		{
 			LocalType l = rl.getValue();
 			System.out.println("\nLocal projection for " + rl.getKey() + ":\n    " + l);
-			Map<Role, Type> p = ast.local.ops.Project.apply(l, ast.binary.ops.Merge::full);
+			Map<Role, Type> p = ast.local.ops.Projector.apply(l, ast.binary.ops.Merge::full);
 			for (Role r: l.roles())
 			{
 				Type b = p.get(r);

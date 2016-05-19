@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
 
 import org.scribble.main.ScribbleException;
 
-public class Project extends GlobalTypeVisitor<LocalType>
+public class Projector extends GlobalTypeVisitor<LocalType>
 {
 	private GlobalType gtype;
 	private Role role;
@@ -73,11 +73,11 @@ public class Project extends GlobalTypeVisitor<LocalType>
 	 */
 	public static LocalType apply(GlobalType g, Role r, Merge.Operator merge) throws ScribbleException
 	{
-		Project p = new Project(g, r, merge);
+		Projector p = new Projector(g, r, merge);
 		return p.process();
 	}
 	
-	private Project(GlobalType g, Role r, Merge.Operator merge)
+	private Projector(GlobalType g, Role r, Merge.Operator merge)
 	{
 		gtype = g;
 		role = r;

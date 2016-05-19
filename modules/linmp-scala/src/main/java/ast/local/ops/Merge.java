@@ -44,6 +44,6 @@ public class Merge
 	 */
 	public static LocalType full(LocalType t, LocalType u) throws ScribbleException
 	{
-		return FullMerge.apply(t, u);
+		return FullMerger.apply(t, u);
 	}
 }

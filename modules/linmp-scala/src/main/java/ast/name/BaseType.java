@@ -1,7 +1,5 @@
 package ast.name;
 
-import java.util.Set;
-
 import ast.PayloadType;
 
 public class BaseType extends NameNode implements PayloadType, ast.linear.Payload

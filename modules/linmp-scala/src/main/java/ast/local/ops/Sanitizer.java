@@ -19,7 +19,7 @@ import org.scribble.main.ScribbleException;
  * 
  *  @author Alceste Scalas <alceste.scalas@imperial.ac.uk>
  */
-public class Sanitize extends LocalTypeVisitor<LocalType>
+public class Sanitizer extends LocalTypeVisitor<LocalType>
 {
 	private Collection<RecVar> bound = new java.util.HashSet<RecVar>();
 	private Collection<String> errors = new java.util.LinkedList<String>();
@@ -36,11 +36,11 @@ public class Sanitize extends LocalTypeVisitor<LocalType>
 	 */
 	public static LocalType apply(LocalType lt) throws ScribbleException
 	{
-		Sanitize s = new Sanitize(lt);
+		Sanitizer s = new Sanitizer(lt);
 		return s.process();
 	}
 	
-	private Sanitize(LocalType lt)
+	private Sanitizer(LocalType lt)
 	{
 		ltype = lt;
 	}
@@ -82,7 +82,7 @@ public class Sanitize extends LocalTypeVisitor<LocalType>
 		{
 			try
 			{
-				pay = Sanitize.apply((LocalType)c.pay);
+				pay = Sanitizer.apply((LocalType)c.pay);
 			}
 			catch (ScribbleException e)
 			{
@@ -121,7 +121,7 @@ public class Sanitize extends LocalTypeVisitor<LocalType>
 			// The recursion re-binds a variable, let's alpha-convert
 			try
 			{
-				return visit(AlphaConvert.apply(node, var,
+				return visit(AlphaConverter.apply(node, var,
 														   new RecVar(var.name+"'")));
 			}
 			catch (ScribbleException e)

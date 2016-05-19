@@ -44,6 +44,6 @@ public class Merge
 	 */
 	public static Type full(Type t, Type u) throws ScribbleException
 	{
-		return FullMerge.apply(t, u);
+		return FullMerger.apply(t, u);
 	}
 }

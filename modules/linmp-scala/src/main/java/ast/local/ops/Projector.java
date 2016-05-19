@@ -27,7 +27,7 @@ import java.util.stream.Collectors;
 
 import org.scribble.main.ScribbleException;
 
-public class Project extends LocalTypeVisitor<ast.binary.Type>
+public class Projector extends LocalTypeVisitor<ast.binary.Type>
 {
 	private LocalType ltype;
 	private Role role;
@@ -79,11 +79,11 @@ public class Project extends LocalTypeVisitor<ast.binary.Type>
 	 */
 	public static Type apply(LocalType l, Role r, Merge.Operator merge) throws ScribbleException
 	{
-		Project p = new Project(l, r, merge);
+		Projector p = new Projector(l, r, merge);
 		return p.process();
 	}
 	
-	private Project(LocalType l, Role r, Merge.Operator merge)
+	private Projector(LocalType l, Role r, Merge.Operator merge)
 	{
 		ltype = l;
 		role = r;

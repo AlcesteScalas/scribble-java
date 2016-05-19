@@ -1,14 +1,14 @@
-package ast.binary.ops;
+package ast.local.ops;
 
 import java.util.Collection;
 
-import ast.binary.Branch;
-import ast.binary.Case;
-import ast.binary.End;
-import ast.binary.Rec;
-import ast.binary.Select;
-import ast.binary.Type;
-import ast.binary.Visitor;
+import ast.local.LocalBranch;
+import ast.local.LocalCase;
+import ast.local.LocalEnd;
+import ast.local.LocalRec;
+import ast.local.LocalSelect;
+import ast.local.LocalType;
+import ast.local.LocalTypeVisitor;
 import ast.name.Label;
 import ast.name.RecVar;
 
@@ -20,15 +20,14 @@ import java.util.stream.Collectors;
 
 import org.scribble.main.ScribbleException;
 
-/** Merging operator that only merges branches where one contains
- *  all the labels of the other (and mergeable continuations).
+/** Full merging operator between local types.
  *
  * @author Alceste Scalas <alceste.scalas@imperial.ac.uk>
  */
-class FullMerge extends Visitor<Type>
+class FullMerger extends LocalTypeVisitor<LocalType>
 {
 	private Collection<String> errors = new java.util.LinkedList<String>();
-	private Type visiting, t2; // We will update t2 during visit
+	private LocalType visiting, t2; // We will update t2 during visit
 	
 	/** Merge the two given local types
 	 * 
@@ -36,22 +35,22 @@ class FullMerge extends Visitor<Type>
 	 * @param u Second type to merge
 	 * @return
 	 */
-	public static Type apply(Type t, Type u) throws ScribbleException
+	public static LocalType apply(LocalType t, LocalType u) throws ScribbleException
 	{
-		FullMerge m = new FullMerge(t, u);
+		FullMerger m = new FullMerger(t, u);
 		return m.process();
 	}
 	
-	private FullMerge(Type t, Type u)
+	private FullMerger(LocalType t, LocalType u)
 	{
 		visiting = t;
 		t2 = u;
 	}
 
 	@Override
-	protected Type process() throws ScribbleException
+	protected LocalType process() throws ScribbleException
 	{
-		Type res = visit(visiting);
+		LocalType res = visit(visiting);
 		if (errors.isEmpty())
 		{
 			return res;
@@ -61,7 +60,7 @@ class FullMerge extends Visitor<Type>
 	}
 
 	@Override
-	protected End visit(End node)
+	protected LocalEnd visit(LocalEnd node)
 	{
 		if (!node.equals(t2))
 		{
@@ -71,41 +70,49 @@ class FullMerge extends Visitor<Type>
 	}
 
 	@Override
-	protected Branch visit(Branch node)
+	protected LocalBranch visit(LocalBranch node)
 	{
-		if (!(t2 instanceof Branch))
+		if (!(t2 instanceof LocalBranch))
 		{
 			cannotMerge(node, t2);
 			return node;
 		}
 		
-		Branch t2b = (Branch)t2;
+		LocalBranch t2b = (LocalBranch)t2;
 		
-		Map<Label,Case> newcases = mergeCases(node.cases, t2b.cases,
-												   node, t2b);
-		return new Branch(newcases);
+		if (!node.src.equals(t2b.src)) {
+			cannotMerge(node, t2);
+			return node;
+		}
+		
+		Map<Label,LocalCase> newcases = mergeCases(node.cases, t2b.cases,
+														node, t2b);
+		return new LocalBranch(node.src, newcases);
 	}
 	
 	@Override
-	protected Select visit(Select node)
+	protected LocalSelect visit(LocalSelect node)
 	{
-		if (!(t2 instanceof Select))
+		if (!(t2 instanceof LocalSelect))
 		{
 			cannotMerge(node, t2);
 			return node;
 		}
 		
-		Select t2s = (Select)t2;
+		LocalSelect t2s = (LocalSelect)t2;
 		
-		Map<Label,Case> newcases = mergeCases(node.cases, t2s.cases,
-												   node, t2s);
-		return new Select(newcases);
+		if (!node.dest.equals(t2s.dest)) {
+			cannotMerge(node, t2);
+			return node;
+		}
+		
+		Map<Label,LocalCase> newcases = mergeCases(node.cases, t2s.cases,
+														node, t2s);
+		return new LocalSelect(node.dest, newcases);
 	}
 	
-	// If reqSub is true, then merging requires that one set of labels
-	// is included in the other 
-	private Map<Label,Case> mergeCases(Map<Label,Case> vcases, Map<Label,Case> t2cases,
-											Type v, Type t2)
+	private Map<Label,LocalCase> mergeCases(Map<Label,LocalCase> vcases, Map<Label,LocalCase> t2cases,
+												 LocalType v, LocalType t2)
 	{
 		Set<Label> labsv = vcases.keySet();
 		Set<Label> labst2 = t2cases.keySet();
@@ -119,11 +126,11 @@ class FullMerge extends Visitor<Type>
 		Set<Label> onlyt2 = new HashSet<>(labst2);
 		onlyt2.removeAll(labsv); // Labels only in the "other" branching
 
-		Map<Label,Case> newcases = new HashMap<>();
+		Map<Label,LocalCase> newcases = new HashMap<>();
 
 		for (Label l: common)
 		{
-			Case vcl = vcases.get(l);
+			LocalCase vcl = vcases.get(l);
 			if (!vcl.pay.equals(t2cases.get(l).pay))
 			{
 				// Payloads mismatch
@@ -132,7 +139,7 @@ class FullMerge extends Visitor<Type>
 			}
 
 			this.t2 = t2cases.get(l).body; // Update t2 before visiting
-			newcases.put(l, new Case(vcl.pay, visit(vcl.body)));
+			newcases.put(l, new LocalCase(vcl.pay, visit(vcl.body)));
 		}
 
 		newcases.putAll(onlyv.stream()
@@ -143,15 +150,15 @@ class FullMerge extends Visitor<Type>
 	}
 
 	@Override
-	protected Rec visit(Rec node)
+	protected LocalRec visit(LocalRec node)
 	{
-		if (!(t2 instanceof Rec))
+		if (!(t2 instanceof LocalRec))
 		{
 			cannotMerge(node, t2);
 			return node;
 		}
 		
-		Rec t2r = (Rec)t2;
+		LocalRec t2r = (LocalRec)t2;
 		if (!node.recvar.equals(t2r.recvar))
 		{
 			cannotMerge(node, t2);
@@ -159,7 +166,7 @@ class FullMerge extends Visitor<Type>
 		}
 		
 		t2 = t2r.body;
-		return new Rec(node.recvar, visit(node.body));
+		return new LocalRec(node.recvar, visit(node.body));
 	}
 
 	@Override
@@ -172,7 +179,7 @@ class FullMerge extends Visitor<Type>
 		return node;
 	}
 	
-	private void cannotMerge(Type t1, Type t2)
+	private void cannotMerge(LocalType t1, LocalType t2)
 	{
 		errors.add("Cannot merge " + t1 + " and " + t2);
 	}

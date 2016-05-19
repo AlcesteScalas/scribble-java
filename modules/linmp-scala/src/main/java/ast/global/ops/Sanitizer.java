@@ -19,7 +19,7 @@ import org.scribble.main.ScribbleException;
  * 
  *  @author Alceste Scalas <alceste.scalas@imperial.ac.uk>
  */
-public class Sanitize extends GlobalTypeVisitor<GlobalType>
+public class Sanitizer extends GlobalTypeVisitor<GlobalType>
 {
 	private Collection<RecVar> bound = new java.util.HashSet<>();
 	private Collection<String> errors = new java.util.LinkedList<>();
@@ -36,11 +36,11 @@ public class Sanitize extends GlobalTypeVisitor<GlobalType>
 	 */
 	public static GlobalType apply(GlobalType g) throws ScribbleException
 	{
-		Sanitize s = new Sanitize(g);
+		Sanitizer s = new Sanitizer(g);
 		return s.process();
 	}
 	
-	private Sanitize(GlobalType g)
+	private Sanitizer(GlobalType g)
 	{
 		gtype = g;
 	}
@@ -76,7 +76,7 @@ public class Sanitize extends GlobalTypeVisitor<GlobalType>
 			{
 				try
 				{
-					pay = ast.local.ops.Sanitize.apply((LocalType)c.pay);
+					pay = ast.local.ops.Sanitizer.apply((LocalType)c.pay);
 				}
 				catch (ScribbleException e)
 				{
@@ -106,7 +106,7 @@ public class Sanitize extends GlobalTypeVisitor<GlobalType>
 			// The recursion re-binds a variable, let's alpha-convert
 			try
 			{
-				return visit(AlphaConvert.apply(node, var,
+				return visit(AlphaConverter.apply(node, var,
 															new RecVar(var.name+"'")));
 			}
 			catch (ScribbleException e)

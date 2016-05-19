@@ -10,7 +10,7 @@ import ast.name.RecVar;
  */
 public class Out implements Type
 {
-	public final Variant variant;
+	public final AbstractVariant variant;
 	
 	public Out(Variant v)
 	{

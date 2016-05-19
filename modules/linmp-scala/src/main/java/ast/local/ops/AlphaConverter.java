@@ -18,7 +18,7 @@ import org.scribble.main.ScribbleException;
  *
  *  @author Alceste Scalas <alceste.scalas@imperial.ac.uk>
  */
-public class AlphaConvert extends LocalTypeVisitor<LocalType>
+public class AlphaConverter extends LocalTypeVisitor<LocalType>
 {
 	private RecVar old; // Original variable
 	private RecVar conv; // Alpha-converted variable
@@ -34,11 +34,11 @@ public class AlphaConvert extends LocalTypeVisitor<LocalType>
 	 */
 	public static LocalType apply(LocalType g, RecVar old, RecVar conv) throws ScribbleException
 	{
-		AlphaConvert s = new AlphaConvert(g, old, conv);
+		AlphaConverter s = new AlphaConverter(g, old, conv);
 		return s.process();
 	}
 	
-	private AlphaConvert(LocalType g, RecVar old, RecVar conv)
+	private AlphaConverter(LocalType g, RecVar old, RecVar conv)
 	{
 		ltype = g;
 		this.old = old;

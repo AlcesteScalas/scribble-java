@@ -17,7 +17,7 @@ import org.scribble.main.ScribbleException;
  *
  *  @author Alceste Scalas <alceste.scalas@imperial.ac.uk>
  */
-public class AlphaConvert extends GlobalTypeVisitor<GlobalType>
+public class AlphaConverter extends GlobalTypeVisitor<GlobalType>
 {
 	private RecVar old; // Original variable
 	private RecVar conv; // Alpha-converted variable
@@ -33,11 +33,11 @@ public class AlphaConvert extends GlobalTypeVisitor<GlobalType>
 	 */
 	public static GlobalType apply(GlobalType g, RecVar old, RecVar conv) throws ScribbleException
 	{
-		AlphaConvert s = new AlphaConvert(g, old, conv);
+		AlphaConverter s = new AlphaConverter(g, old, conv);
 		return s.process();
 	}
 	
-	private AlphaConvert(GlobalType g, RecVar old, RecVar conv)
+	private AlphaConverter(GlobalType g, RecVar old, RecVar conv)
 	{
 		gtype = g;
 		this.old = old;

@@ -7,7 +7,7 @@ import java.util.stream.Collectors;
 import ast.name.Label;
 import ast.name.RecVar;
 
-public class Variant implements Type
+public class Variant implements AbstractVariant
 {
 	public final Map<Label, Case> cases;
 	
