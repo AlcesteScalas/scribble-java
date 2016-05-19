@@ -11,7 +11,7 @@ public class Variant implements AbstractVariant
 {
 	public final Map<Label, Case> cases;
 	
-	Variant(Map<Label, Case> cases)
+	public Variant(Map<Label, Case> cases)
 	{
 		this.cases = cases;
 	}
@@ -27,7 +27,7 @@ public class Variant implements AbstractVariant
 	@Override 
 	public String toString()
 	{
-		return "I(" + cases + ")";
+		return cases.toString();
 	}
 
 	@Override

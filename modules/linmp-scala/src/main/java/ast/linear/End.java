@@ -20,6 +20,12 @@ public class End implements Type
 		return java.util.Collections.emptySet();
 	}
 	
+	@Override
+	public Type dual()
+	{
+		return this;
+	}
+	
 	@Override 
 	public String toString()
 	{

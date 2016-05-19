@@ -37,7 +37,9 @@ public class Main
 			for (Role r: l.roles())
 			{
 				Type b = p.get(r);
-				System.out.println("Binary type towards " + r + ":\n" + "    " + b);
+				System.out.println("Binary type towards " + r + ":\n    " + b);
+				ast.linear.Type bl = ast.binary.ops.LinearEncoder.apply(b);
+				System.out.println("    Linear encoding:\n        " + bl);
 			}
 		}
 		

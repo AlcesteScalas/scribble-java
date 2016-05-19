@@ -8,7 +8,7 @@ import ast.name.RecVar;
  * 
  * @author Alceste Scalas <alceste.scalas@imperial.ac.uk>
  */
-public class Case implements Type
+public class Case
 {
 	public final Payload payload;
 	public final Type cont;
@@ -19,7 +19,6 @@ public class Case implements Type
 		this.cont = cont;
 	}
 	
-	@Override
 	public Set<RecVar> freeVariables()
 	{
 		// TODO Auto-generated method stub

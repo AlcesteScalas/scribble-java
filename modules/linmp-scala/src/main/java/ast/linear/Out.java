@@ -12,7 +12,7 @@ public class Out implements Type
 {
 	public final AbstractVariant variant;
 	
-	public Out(Variant v)
+	public Out(AbstractVariant v)
 	{
 		variant = v;
 	}
@@ -21,6 +21,12 @@ public class Out implements Type
 	public Set<RecVar> freeVariables()
 	{
 		return variant.freeVariables();
+	}
+	
+	@Override
+	public Type dual()
+	{
+		return new In(variant);
 	}
 	
 	@Override 

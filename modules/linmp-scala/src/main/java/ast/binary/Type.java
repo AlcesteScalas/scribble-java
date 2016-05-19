@@ -12,7 +12,7 @@ public interface Type
 {
 	/** Action of a session type (input or output).
 	 */
-	public class Action
+	static class Action
 	{
 		public final boolean isInput;
 		public final boolean isOutput;
@@ -38,6 +38,30 @@ public interface Type
 			assert(!isInput || !isOutput);
 			this.isInput = isInput;
 			this.isOutput = isOutput;
+		}
+		
+		public boolean isNone()
+		{
+			return (!isInput) && (!isOutput);
+		}
+		
+		@Override
+		public int hashCode()
+		{
+			return 977;
+		}
+		
+		@Override
+		public boolean equals(Object obj)
+		{
+			if (obj instanceof Action)
+			{
+				Action other = (Action)obj;
+				if ((isInput == other.isInput) && (isOutput == other.isOutput)){
+					return true;
+				}
+			}
+			return false;
 		}
 	}
 	

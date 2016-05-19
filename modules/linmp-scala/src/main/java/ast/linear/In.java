@@ -10,9 +10,9 @@ import ast.name.RecVar;
  */
 public class In implements Type
 {
-	public final Variant variant;
+	public final AbstractVariant variant;
 	
-	public In(Variant v)
+	public In(AbstractVariant v)
 	{
 		variant = v;
 	}
@@ -21,6 +21,12 @@ public class In implements Type
 	public Set<RecVar> freeVariables()
 	{
 		return variant.freeVariables();
+	}
+	
+	@Override
+	public Type dual()
+	{
+		return new Out(variant);
 	}
 	
 	@Override 

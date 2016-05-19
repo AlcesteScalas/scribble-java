@@ -14,4 +14,9 @@ public interface Type
 	 * @return the free variables in the type.
 	 */
 	abstract public Set<RecVar> freeVariables();
+	
+	/**
+	 * @return the dual of the type
+	 */
+	abstract public Type dual();
 }
