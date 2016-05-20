@@ -1,0 +1,8 @@
+module MapReduce;
+
+global protocol Proto(role A, role B, role C) {
+    Msg1b(String) from A to B;
+    Msg1c(String) from A to C;
+    Msg2b(Int) from B to A;
+    Msg2c(Int) from C to A;
+} 
