@@ -23,7 +23,7 @@ public class AlphaConverter extends LocalTypeVisitor<LocalType>
 	private RecVar old; // Original variable
 	private RecVar conv; // Alpha-converted variable
 	private boolean open = false; // Becomes true when "old" is traversed
-	static private LocalType ltype;
+	private final LocalType ltype;
 	
 	/** Sanitize the given local type
 	 * 

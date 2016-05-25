@@ -8,15 +8,15 @@ import ast.name.RecVar;
  * 
  * @author Alceste Scalas <alceste.scalas@imperial.ac.uk>
  */
-public interface Type
-{
+public interface Type extends Payload
+{	
 	/**
 	 * @return the free variables in the type.
 	 */
-	abstract public Set<RecVar> freeVariables();
+	Set<RecVar> freeVariables();
 	
 	/**
 	 * @return the dual of the type
 	 */
-	abstract public Type dual();
+	Type dual();
 }

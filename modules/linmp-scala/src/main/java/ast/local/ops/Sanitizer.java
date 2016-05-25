@@ -23,7 +23,7 @@ public class Sanitizer extends LocalTypeVisitor<LocalType>
 {
 	private Collection<RecVar> bound = new java.util.HashSet<RecVar>();
 	private Collection<String> errors = new java.util.LinkedList<String>();
-	static private LocalType ltype;
+	private final LocalType ltype;
 	
 	/** Sanitize the given global type
 	 * 

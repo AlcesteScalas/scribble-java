@@ -29,9 +29,9 @@ import org.scribble.main.ScribbleException;
 
 public class Projector extends LocalTypeVisitor<ast.binary.Type>
 {
-	private LocalType ltype;
-	private Role role;
-	private Merge.Operator merge;
+	private final LocalType ltype;
+	private final Role role;
+	private final Merge.Operator merge;
 	private Collection<String> errors = new java.util.LinkedList<>();
 	
 	/** Perform all projections of the given local type.

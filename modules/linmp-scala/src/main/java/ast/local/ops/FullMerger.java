@@ -27,7 +27,8 @@ import org.scribble.main.ScribbleException;
 class FullMerger extends LocalTypeVisitor<LocalType>
 {
 	private Collection<String> errors = new java.util.LinkedList<String>();
-	private LocalType visiting, t2; // We will update t2 during visit
+	private final LocalType visiting;
+	private LocalType t2; // We will update t2 during visit
 	
 	/** Merge the two given local types
 	 * 

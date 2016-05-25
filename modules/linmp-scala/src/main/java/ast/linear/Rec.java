@@ -6,8 +6,8 @@ import ast.name.RecVar;
 
 public class Rec implements AbstractVariant
 {
-	private final RecVar recvar;
-	private final AbstractVariant body;
+	public final RecVar recvar;
+	public final AbstractVariant body;
 	
 	public Rec(RecVar recvar, AbstractVariant body)
 	{

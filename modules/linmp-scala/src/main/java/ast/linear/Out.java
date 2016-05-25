@@ -17,6 +17,14 @@ public class Out implements Type
 		variant = v;
 	}
 	
+	/**
+	 * @return the variant carried by the type
+	 */
+	public AbstractVariant carried()
+	{
+		return variant;
+	}
+	
 	@Override
 	public Set<RecVar> freeVariables()
 	{
