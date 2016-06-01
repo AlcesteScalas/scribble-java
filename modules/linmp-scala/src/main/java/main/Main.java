@@ -40,6 +40,8 @@ public class Main
 				System.out.println("Binary type towards " + r + ":\n    " + b);
 				ast.linear.Type bl = ast.binary.ops.LinearEncoder.apply(b);
 				System.out.println("    Linear encoding:\n        " + bl);
+				String scalaProt = ast.linear.ops.ScalaProtocolExtractor.apply(bl);
+				System.out.println("    Scala protocol classes:\n" + scalaProt);
 			}
 		}
 		

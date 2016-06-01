@@ -22,6 +22,11 @@ public class ScalaChannelTypeExtractor extends Visitor<String>
 	private final Type visiting;
 	private Map<AbstractVariant, String> nameEnv;
 	
+	public static String apply(Type t) throws ScribbleException
+	{
+		return apply(t, DefaultNameEnvBuilder.apply(t));
+	}
+	
 	public static String apply(Type t, Map<AbstractVariant, String> nameEnv) throws ScribbleException
 	{
 		ScalaChannelTypeExtractor te = new ScalaChannelTypeExtractor(t, nameEnv);
@@ -46,26 +51,23 @@ public class ScalaChannelTypeExtractor extends Visitor<String>
 		throw new ScribbleException("Error(s) extracting channel type of " + visiting + ": "
 				                    + String.join(";", errors));
 	}
-
+	
 	@Override
 	protected String visit(End node)
 	{
-		// TODO Auto-generated method stub
-		return null;
+		return "Unit";
 	}
 
 	@Override
 	protected String visit(In node)
 	{
-		// TODO Auto-generated method stub
-		return null;
+		return "In[" + nameEnv.get(node.variant) + "]";
 	}
 
 	@Override
 	protected String visit(Out node)
 	{
-		// TODO Auto-generated method stub
-		return null;
+		return "Out[" + nameEnv.get(node.variant) + "]";
 	}
 
 }
