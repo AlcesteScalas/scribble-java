@@ -142,9 +142,15 @@ public class Projector extends GlobalTypeVisitor<LocalType>
 	}
 			
 	@Override
-	protected ast.local.LocalRec visit(GlobalRec node)
+	protected LocalType visit(GlobalRec node)
 	{
-		return new ast.local.LocalRec(node.recvar, visit(node.body));
+		LocalType brec = visit(node.body);
+		if (brec.equals(node.recvar))
+		{
+			// Projection produces an unguarded recursion, considered as "end"
+			return new ast.local.LocalEnd();
+		}
+		return new ast.local.LocalRec(node.recvar, brec);
 	}
 
 	@Override

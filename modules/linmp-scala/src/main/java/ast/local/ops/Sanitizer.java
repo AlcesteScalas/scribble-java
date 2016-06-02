@@ -89,6 +89,10 @@ public class Sanitizer extends LocalTypeVisitor<LocalType>
 				errors.add(e.toString());
 			}
 		}
+		else if (pay == null)
+		{
+			pay = new ast.name.Unit();
+		}
 		
 		return new LocalCase(pay, visit(c.body));
 	}

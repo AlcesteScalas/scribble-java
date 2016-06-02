@@ -1,8 +1,10 @@
 package ast.local;
 
+import java.util.Map;
 import java.util.Set;
 
 import ast.PayloadType;
+import ast.linear.Record;
 import ast.name.RecVar;
 import ast.name.Role;
 
@@ -32,6 +34,22 @@ public interface LocalType extends PayloadType
 		return ast.local.ops.Projector.apply(this, r, ast.binary.ops.Merge::full);
 	}
 	
+	/** Project the local type into a mapping from roles to partial (binary)
+	 * types.
+	 * 
+	 * @return the mapping from roles to partial types representing the projection
+	 * @throws ScribbleException in case of error
+	 */
+	default Map<Role, ast.binary.Type> partial() throws ScribbleException
+	{
+		Map<Role, ast.binary.Type> types = new java.util.HashMap<>();
+		for (Role r: roles())
+		{
+			types.put(r, partial(r));
+		}
+		return types;
+	}
+	
 	/** Project the local type onto the given role,
 	 * returning the linear encoding of the resulting binary type type.
 	 * 
@@ -42,5 +60,20 @@ public interface LocalType extends PayloadType
 	default ast.linear.Type linear(Role r) throws ScribbleException
 	{
 		return ast.binary.ops.LinearEncoder.apply(partial(r));
+	}
+	
+	/** Project the local type into a record of linear types (one per role).
+	 * 
+	 * @return the record of linear types representing the projection
+	 * @throws ScribbleException in case of error
+	 */
+	default Record linear() throws ScribbleException
+	{
+		Map<Role, ast.linear.Type> types = new java.util.HashMap<>();
+		for (Role r: roles())
+		{
+			types.put(r, linear(r));
+		}
+		return new Record(this, types);
 	}
 }

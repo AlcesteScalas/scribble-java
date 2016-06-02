@@ -9,6 +9,7 @@ import ast.binary.End;
 import ast.binary.Rec;
 import ast.binary.Select;
 import ast.binary.Visitor;
+import ast.local.LocalType;
 import ast.linear.AbstractVariant;
 import ast.linear.In;
 import ast.linear.Out;
@@ -94,15 +95,20 @@ public class LinearEncoder extends Visitor<Type>
 		
 		for (Map.Entry<Label, Case> e: cases.entrySet())
 		{
-			Label l = e.getKey();
-			Case c = e.getValue();
-			Payload pay = (c.pay instanceof Payload
-						   ? (Payload)c.pay
-						   : new ast.name.BaseType("TODO")); // FIXME !!!11
-			Type cont = visit(c.body);
-			ast.linear.Case cs = new ast.linear.Case(pay,
-													 dualCont ? cont.dual() : cont);
-			cases2.put(l, cs);
+			try{
+				Label l = e.getKey();
+				Case c = e.getValue();
+				Payload pay = (c.pay instanceof Payload
+						? (Payload)c.pay : ((LocalType)c.pay).linear());
+				Type cont = visit(c.body);
+				ast.linear.Case cs = new ast.linear.Case(pay,
+						dualCont ? cont.dual() : cont);
+				cases2.put(l, cs);
+			}
+			catch (ScribbleException exc)
+			{
+				errors.add("Error encoding " + e + ": " + exc);
+			}
 		}
 		
 		return new Variant(cases2);
