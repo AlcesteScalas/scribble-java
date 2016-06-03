@@ -11,6 +11,7 @@ import ast.linear.AbstractVariant;
 import ast.linear.Case;
 import ast.linear.End;
 import ast.linear.In;
+import ast.linear.NameEnv;
 import ast.linear.Out;
 import ast.linear.Rec;
 import ast.linear.Record;
@@ -20,7 +21,7 @@ import ast.linear.Visitor;
 import ast.name.Label;
 import ast.name.RecVar;
 
-public class DefaultNameEnvBuilder extends Visitor<Map<AbstractVariant, String>>
+public class DefaultNameEnvBuilder extends Visitor<NameEnv>
 {
 	private final Type visiting;
 	
@@ -37,37 +38,36 @@ public class DefaultNameEnvBuilder extends Visitor<Map<AbstractVariant, String>>
 	}
 	
 	@Override
-	protected Map<AbstractVariant, String> process() throws ScribbleException
+	protected NameEnv process() throws ScribbleException
 	{
-		Map<AbstractVariant, String> res = visit(visiting);
-		return res;
+		return visit(visiting);
 	}
 	
 	@Override
-	protected Map<AbstractVariant, String> visit(End node)
+	protected NameEnv visit(End node)
 	{
-		return new HashMap<>();
+		return new NameEnv();
 	}
 
 	@Override
-	protected Map<AbstractVariant, String> visit(In node)
+	protected NameEnv visit(In node)
 	{
 		return visit(node.variant);
 	}
 
 	@Override
-	protected Map<AbstractVariant, String> visit(Out node)
+	protected NameEnv visit(Out node)
 	{
 		return visit(node.variant);
 	}
 	
-	private Map<AbstractVariant, String> visit(AbstractVariant v)
+	private NameEnv visit(AbstractVariant v)
 	{
 		// FIXME: what about adding an AbstractVariant visitor?
 		if (v instanceof Variant)
 		{
 			Variant vrnt = (Variant)v;
-			Map<AbstractVariant, String> res = new HashMap<>();
+			NameEnv res = new NameEnv();
 			res.put(v, fromLabels(vrnt.cases.keySet()));
 			
 			for (Case c: vrnt.cases.values())
@@ -91,7 +91,7 @@ public class DefaultNameEnvBuilder extends Visitor<Map<AbstractVariant, String>>
 		else if (v instanceof Rec)
 		{
 			AbstractVariant body = ((Rec)v).body;
-			Map<AbstractVariant, String> res = visit(body);
+			NameEnv res = visit(body);
 			// Ensure that the recursive variant, its variable and its body
 			// are mapped to the same name 
 			res.put(v, res.get(body));
@@ -101,7 +101,7 @@ public class DefaultNameEnvBuilder extends Visitor<Map<AbstractVariant, String>>
 		else if (v instanceof RecVar)
 		{
 			// The RecVar is associated to a name in the Rec case above
-			return new HashMap<>();
+			return new NameEnv();
 		}
 		else
 		{
