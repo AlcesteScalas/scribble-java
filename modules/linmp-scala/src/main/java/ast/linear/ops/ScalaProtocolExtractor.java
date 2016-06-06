@@ -12,9 +12,12 @@ import ast.linear.Record;
 import ast.linear.Type;
 import ast.linear.Variant;
 import ast.linear.Visitor;
+import ast.local.LocalNameEnv;
+import ast.local.LocalType;
 import ast.name.BaseType;
 import ast.name.Label;
 import ast.name.RecVar;
+import ast.name.Role;
 
 import java.util.Collection;
 import java.util.Map;
@@ -95,7 +98,11 @@ public class ScalaProtocolExtractor extends Visitor<String>
 				}
 				else if (c.payload instanceof Record)
 				{
-					throw new RuntimeException("TODO"); // FIXME!
+					// Let's generate the protocols of the record channels
+					for (Type lt: ((Record)c.payload).values())
+					{
+						res += "\n" + visit(lt);
+					}
 				}
 				else
 				{
@@ -123,7 +130,19 @@ public class ScalaProtocolExtractor extends Visitor<String>
 					}
 					else if (c.payload instanceof Record)
 					{
-						throw new RuntimeException("TODO"); // FIXME!
+						// The record was originated from a local type:
+						// let's find out its name
+						LocalType origin = ((Record)c.payload).origin;
+						try {
+							// FIXME: what about custom name environments?
+							LocalNameEnv env = ast.local.ops.DefaultNameEnvBuilder.apply(origin);
+							return env.get(origin);
+						}
+						catch (ScribbleException e)
+						{
+							errors.add("Cannot determine name of " + c.payload + ": " + e);
+							return "";
+						}
 					}
 					else
 					{
@@ -163,17 +182,20 @@ public class ScalaProtocolExtractor extends Visitor<String>
 			{
 				payload = c.payload.toString();
 			}
-			else if (c.payload instanceof Type)
+			else if (c.payload instanceof Record)
 			{
-				Type p = (Type)c.payload;
-				try
-				{
-					payload = ScalaChannelTypeExtractor.apply(p, nameEnv);
+				// The record was originated from a local type:
+				// let's find out its name
+				LocalType origin = ((Record)c.payload).origin;
+				try {
+					// FIXME: what about custom name environments?
+					LocalNameEnv env = ast.local.ops.DefaultNameEnvBuilder.apply(origin);
+					payload = env.get(origin);
 				}
 				catch (ScribbleException e)
 				{
-					errors.add("Cannot extract protocol of " + node + ": " + e);
-					return "";
+					errors.add("Cannot determine name of " + c.payload + ": " + e);
+					payload = "ERROR";
 				}
 			}
 			else

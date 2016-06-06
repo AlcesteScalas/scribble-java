@@ -1,6 +1,5 @@
 package ast.linear.ops;
 
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -24,7 +23,7 @@ public class DefaultNameEnvBuilder extends Visitor<NameEnv>
 {
 	private final Type visiting;
 	
-	public static Map<AbstractVariant, String> apply(Type t) throws ScribbleException
+	public static NameEnv apply(Type t) throws ScribbleException
 	{
 		DefaultNameEnvBuilder b = new DefaultNameEnvBuilder(t);
 		
@@ -67,13 +66,17 @@ public class DefaultNameEnvBuilder extends Visitor<NameEnv>
 		{
 			Variant vrnt = (Variant)v;
 			NameEnv res = new NameEnv();
-			res.put(v, fromLabels(vrnt.cases.keySet()));
+			res.put(v, nameChoiceFromLabels(vrnt.cases.keySet()));
 			
 			for (Case c: vrnt.cases.values())
 			{
 				if (c.payload instanceof Record)
 				{
-					throw new RuntimeException("TODO"); // FIXME!
+					Record rec = (Record)c.payload;
+					for (Type lt: rec.values())
+					{
+						res.putAll(visit(lt));
+					}
 				}
 				else if (c.payload instanceof ast.name.BaseType)
 				{
@@ -108,8 +111,14 @@ public class DefaultNameEnvBuilder extends Visitor<NameEnv>
 		}
 	}
 	
-	private String fromLabels(Set<Label> labels)
+	/** Give a name to a choice among the given set of labels.
+	 *
+	 * @param labels Label sto chose from
+	 * @return a name for the given choice
+	 */
+	public static String nameChoiceFromLabels(Set<Label> labels)
 	{
+		// First sort the labels
 		java.util.List<String> ls = new java.util.ArrayList<>(new java.util.TreeSet<String>(labels.stream().map(l -> l.name).collect(Collectors.toSet())));
 		String base = ls.remove(0);
 		return ls.stream().reduce(base, (l1, l2) -> l1 + "Or" + l2);
