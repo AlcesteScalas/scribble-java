@@ -2,6 +2,7 @@ package ast.linear;
 
 import java.util.Set;
 
+import ast.name.Label;
 import ast.name.RecVar;
 
 public class Rec implements AbstractVariant
@@ -14,7 +15,19 @@ public class Rec implements AbstractVariant
 		this.recvar = recvar;
 		this.body = body;
 	}
-
+	
+	@Override
+	public Payload payload(Label l)
+	{
+		return body.payload(l);
+	}
+	
+	@Override
+	public Type continuation(Label l)
+	{
+		return body.continuation(l);
+	}
+	
 	@Override
 	public Set<RecVar> freeVariables()
 	{

@@ -17,6 +17,18 @@ public class Variant implements AbstractVariant
 	}
 	
 	@Override
+	public Payload payload(Label l)
+	{
+		return cases.get(l).payload;
+	}
+	
+	@Override
+	public Type continuation(Label l)
+	{
+		return cases.get(l).cont;
+	}
+	
+	@Override
 	public Set<RecVar> freeVariables()
 	{
 		return cases.values().stream()

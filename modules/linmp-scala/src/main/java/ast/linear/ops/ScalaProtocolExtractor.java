@@ -6,6 +6,7 @@ import ast.linear.AbstractVariant;
 import ast.linear.Case;
 import ast.linear.End;
 import ast.linear.In;
+import ast.linear.NameEnv;
 import ast.linear.Out;
 import ast.linear.Rec;
 import ast.linear.Record;
@@ -17,10 +18,8 @@ import ast.local.LocalType;
 import ast.name.BaseType;
 import ast.name.Label;
 import ast.name.RecVar;
-import ast.name.Role;
 
 import java.util.Collection;
-import java.util.Map;
 
 /** Build the Scala case classes definitions corresponding to a linear I/O type.
  * 
@@ -30,21 +29,21 @@ public class ScalaProtocolExtractor extends Visitor<String>
 {
 	private Collection<String> errors = new java.util.LinkedList<String>();
 	private final Type visiting;
-	private Map<AbstractVariant, String> nameEnv;
+	private NameEnv nameEnv;
 	
 	public static String apply(Type t) throws ScribbleException
 	{
 		return apply(t, DefaultNameEnvBuilder.apply(t));
 	}
 	
-	public static String apply(Type t, Map<AbstractVariant, String> nameEnv) throws ScribbleException
+	public static String apply(Type t, NameEnv nameEnv) throws ScribbleException
 	{
 		ScalaProtocolExtractor te = new ScalaProtocolExtractor(t, nameEnv);
 		
 		return te.process();
 	}
 	
-	private ScalaProtocolExtractor(Type t, Map<AbstractVariant, String> nameEnv)
+	private ScalaProtocolExtractor(Type t, NameEnv nameEnv)
 	{
 		this.visiting = t;
 		this.nameEnv = nameEnv;

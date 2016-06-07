@@ -2,6 +2,7 @@ package ast.linear;
 
 import java.util.Set;
 
+import ast.name.Label;
 import ast.name.RecVar;
 
 /** Base class for (possibly recursive) variant types.
@@ -11,7 +12,17 @@ import ast.name.RecVar;
 public interface AbstractVariant
 {
 	/**
+	 * @return the payload type carried by the variant for the given label.
+	 */
+	Payload payload(Label l);
+	
+	/**
+	 * @return the continuation type carried by the variant for the given label.
+	 */
+	Type continuation(Label l);
+	
+	/**
 	 * @return the free variables in the type.
 	 */
-	abstract public Set<RecVar> freeVariables();
+	Set<RecVar> freeVariables();
 }
