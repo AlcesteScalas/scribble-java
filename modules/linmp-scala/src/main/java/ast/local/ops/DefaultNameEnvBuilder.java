@@ -1,16 +1,19 @@
 package ast.local.ops;
 
 import java.util.Collection;
+import java.util.Map;
 
 import org.scribble.main.ScribbleException;
 
 import ast.local.LocalBranch;
+import ast.local.LocalCase;
 import ast.local.LocalEnd;
 import ast.local.LocalNameEnv;
 import ast.local.LocalRec;
 import ast.local.LocalSelect;
 import ast.local.LocalType;
 import ast.local.LocalTypeVisitor;
+import ast.name.Label;
 import ast.name.RecVar;
 
 public class DefaultNameEnvBuilder extends LocalTypeVisitor<LocalNameEnv>
@@ -39,7 +42,7 @@ public class DefaultNameEnvBuilder extends LocalTypeVisitor<LocalNameEnv>
 			return res;
 		}
 		throw new ScribbleException("Error(s) assigning names to " + visiting + ": "
-				                    + String.join(";", errors));
+				                    + String.join("; ", errors));
 	}
 
 	@Override
@@ -53,6 +56,7 @@ public class DefaultNameEnvBuilder extends LocalTypeVisitor<LocalNameEnv>
 	{
 		LocalNameEnv res = new LocalNameEnv();
 		res.put(node, ast.linear.ops.DefaultNameEnvBuilder.nameChoiceFromLabels(node.cases.keySet()));
+		res.putAll(visit(node.cases));
 		return res;
 	}
 
@@ -61,9 +65,24 @@ public class DefaultNameEnvBuilder extends LocalTypeVisitor<LocalNameEnv>
 	{
 		LocalNameEnv res = new LocalNameEnv();
 		res.put(node, ast.linear.ops.DefaultNameEnvBuilder.nameChoiceFromLabels(node.cases.keySet()));
+		res.putAll(visit(node.cases));
 		return res;
 	}
 
+	private LocalNameEnv visit(Map<Label, LocalCase> cases)
+	{
+		LocalNameEnv res = new LocalNameEnv();
+		for (LocalCase c: cases.values())
+		{
+			if (c.pay instanceof LocalType)
+			{
+				res.putAll(visit((LocalType)c.pay));
+			}
+			res.putAll(visit(c.body));
+		}
+		return res;
+	}
+	
 	@Override
 	protected LocalNameEnv visit(LocalRec node)
 	{

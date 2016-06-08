@@ -24,6 +24,9 @@ import ast.name.Role;
 
 public class ScalaProtocolExtractor extends LocalTypeVisitor<String>
 {
+	static String BINARY_CLASSES_NS = "binary";
+	static String MULTIPARTY_CLASSES_NS = "mp";
+	
 	// Simple pair of a binary type and its naming environment
 	private class LinearTypeNameEnv
 	{
@@ -34,6 +37,12 @@ public class ScalaProtocolExtractor extends LocalTypeVisitor<String>
 		{
 			this.t = t;
 			this.env = ast.linear.ops.DefaultNameEnvBuilder.apply(t);
+		}
+		
+		public LinearTypeNameEnv(ast.linear.Type t, ast.linear.NameEnv env)
+		{
+			this.t = t;
+			this.env = env;
 		}
 	}
 	
@@ -102,7 +111,96 @@ public class ScalaProtocolExtractor extends LocalTypeVisitor<String>
 	{
 		String className = nameEnv.get(node);
 				
-		// The tuple of underlying channels
+		List<String> chanspecs = getChanspecs();
+		
+		// Save the current tracker status (we'll restore it before returning)
+		LinearTypeNameEnv lte = ctracker.get(node.src);
+		// Note: we use the fact that we know lte.t is In or Out (not End)
+		AbstractVariant v = getCarried(lte.t);
+
+		String res = "case class " + className + "(" + String.join(", ", chanspecs) + ") {\n";
+		res += "  def receive() // TODO\n";
+		res += "}\n";
+		
+		// Ensure that labels are sorted
+		for (Label l: new java.util.ArrayList<>(new java.util.TreeSet<>(node.cases.keySet())))
+		{
+			LocalCase c = node.cases.get(l);
+			// Update the channel involved in the interaction
+			ctracker.put(node.src, new LinearTypeNameEnv(v.continuation(l), lte.env));
+			
+			if (c.pay instanceof LocalType)
+			{
+				res += "\n" + "TODO: extract payload classes!"; // FIXME
+			}
+			res += "\n" + visit(c.body);
+		}
+		
+		// Restore the channel tracker status before returning
+		ctracker.put(node.src, lte);
+		
+		return res;
+	}
+	
+	@Override
+	protected String visit(LocalSelect node)
+	{
+		String className = nameEnv.get(node);
+		assert(className != null);
+		
+		List<String> chanspecs = getChanspecs();
+		
+		// Save the current tracker status (we'll restore it before returning)
+		LinearTypeNameEnv lte = ctracker.get(node.dest);
+		// Note: we use the fact that we know lte.t is In or Out (not End)
+		AbstractVariant v = getCarried(lte.t);
+		
+		String res = "case class " + className + "(" + String.join(", ", chanspecs) + ") {\n";
+		res += "  def send(v: " + lte.env.get(lte.t) + ") // TODO\n";
+		res += "}\n";
+		
+		// Ensure that labels are sorted
+		for (Label l: new java.util.ArrayList<>(new java.util.TreeSet<>(node.cases.keySet())))
+		{
+			LocalCase c = node.cases.get(l);
+			// Update the channel involved in the interaction
+			// Note: we dualise the continuation, since it follows an output!
+			ctracker.put(node.dest, new LinearTypeNameEnv(v.continuation(l).dual(), lte.env));
+			
+			if (c.pay instanceof LocalType)
+			{
+				res += "\n" + "TODO: extract payload classes!"; // FIXME
+			}
+			res += "\n" + visit(c.body);
+		}
+		
+		// Restore the channel tracker status before returning
+		ctracker.put(node.dest, lte);
+		
+		return res;
+	}
+	
+	// Get the variant carried by a linear type t, throwing a runtime exception
+	// if t is End
+	private AbstractVariant getCarried(ast.linear.Type t)
+	{
+		if (t instanceof In)
+		{
+			return ((In)t).carried();
+		}
+		else if (t instanceof Out)
+		{
+			return ((Out)t).carried();
+		}
+		else
+		{
+			throw new RuntimeException("BUG: expecting In/Out underlying type, got " + t);
+		}
+	}
+	
+	// Determine the channel types underlying a multiparty session object
+	private List<String> getChanspecs()
+	{
 		List<String> chanspecs = new java.util.LinkedList<>();
 		for (Role r: roles)
 		{
@@ -121,36 +219,9 @@ public class ScalaProtocolExtractor extends LocalTypeVisitor<String>
 			}
 			chanspecs.add(chanspec);
 		}
-		
-		String res = "case class " + className + "(" + String.join(", ", chanspecs) + ")";
-		
-		LinearTypeNameEnv lte = ctracker.get(node.src);
-		// Ensure labels are sorted
-		for (Label l: new java.util.ArrayList<>(new java.util.TreeSet<>(node.cases.keySet())))
-		{
-			LocalCase c = node.cases.get(l);
-			// Update the channel involved in the interaction
-			// Note: we use the fact that we know that lte.t is an input type
-			AbstractVariant v = ((In)lte.t).variant;
-			lte.t = v.continuation(l); 
-			
-			if (c.pay instanceof LocalType)
-			{
-				res += "\n" + "TODO: extract payload classes!"; // FIXME
-			}
-			res += "\n" + visit(c.body);
-		}
-		
-		return res;
+		return chanspecs;
 	}
-
-	@Override
-	protected String visit(LocalSelect node)
-	{
-		// TODO Auto-generated method stub
-		return null;
-	}
-
+	
 	@Override
 	protected String visit(LocalRec node)
 	{

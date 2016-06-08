@@ -19,20 +19,43 @@ import ast.linear.Visitor;
 import ast.name.Label;
 import ast.name.RecVar;
 
+/** Build for a standard naming environment which is suitable for a given
+ * linear type.
+ * 
+ * @author Alceste Scalas <alceste.scalas@imperial.ac.uk>
+ */
 public class DefaultNameEnvBuilder extends Visitor<NameEnv>
 {
 	private final Type visiting;
+	private final String prefix;
 	
+	/**
+	 * @param t Linear type to build the naming environment for
+	 * @return a naming environment suitable for {@code t}
+	 * @throws ScribbleException in case of errors (e.g., ill-formedness of {@code t})
+	 */
 	public static NameEnv apply(Type t) throws ScribbleException
 	{
-		DefaultNameEnvBuilder b = new DefaultNameEnvBuilder(t);
+		return apply(t, "");
+	}
+	
+	/**
+	 * @param t linear type to build the naming environment for
+	 * @param prefix added to all generated names (used e.g. for namespaces) 
+	 * @return a naming environment suitable for {@code t}
+	 * @throws ScribbleException in case of errors (e.g., ill-formedness of {@code t})
+	 */
+	public static NameEnv apply(Type t, String prefix) throws ScribbleException
+	{
+		DefaultNameEnvBuilder b = new DefaultNameEnvBuilder(t, prefix);
 		
 		return b.process();
 	}
 	
-	private DefaultNameEnvBuilder(Type t)
+	private DefaultNameEnvBuilder(Type t, String prefix)
 	{
 		visiting = t;
+		this.prefix = prefix;
 	}
 	
 	@Override
@@ -66,7 +89,7 @@ public class DefaultNameEnvBuilder extends Visitor<NameEnv>
 		{
 			Variant vrnt = (Variant)v;
 			NameEnv res = new NameEnv();
-			res.put(v, nameChoiceFromLabels(vrnt.cases.keySet()));
+			res.put(v, prefix + nameChoiceFromLabels(vrnt.cases.keySet()));
 			
 			for (Case c: vrnt.cases.values())
 			{

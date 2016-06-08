@@ -57,7 +57,7 @@ class FullMerger extends LocalTypeVisitor<LocalType>
 			return res;
 		}
 		throw new ScribbleException("Error(s) merging " +visiting+ " and " +t2+ ": "
-				                    + String.join(";", errors));
+				                    + String.join("; ", errors));
 	}
 
 	@Override

@@ -31,6 +31,10 @@ public class ScalaProtocolExtractor extends Visitor<String>
 	private final Type visiting;
 	private NameEnv nameEnv;
 	
+	// Should we also include continuations?
+	// When false, we will generate message classes for multiparty types
+	private boolean withConts;
+	
 	public static String apply(Type t) throws ScribbleException
 	{
 		return apply(t, DefaultNameEnvBuilder.apply(t));
@@ -38,15 +42,16 @@ public class ScalaProtocolExtractor extends Visitor<String>
 	
 	public static String apply(Type t, NameEnv nameEnv) throws ScribbleException
 	{
-		ScalaProtocolExtractor te = new ScalaProtocolExtractor(t, nameEnv);
+		ScalaProtocolExtractor te = new ScalaProtocolExtractor(t, nameEnv, true);
 		
 		return te.process();
 	}
 	
-	private ScalaProtocolExtractor(Type t, NameEnv nameEnv)
+	protected ScalaProtocolExtractor(Type t, NameEnv nameEnv, Boolean withConts)
 	{
 		this.visiting = t;
 		this.nameEnv = nameEnv;
+		this.withConts = withConts;
 	}
 	
 	@Override
@@ -58,7 +63,7 @@ public class ScalaProtocolExtractor extends Visitor<String>
 			return res;
 		}
 		throw new ScribbleException("Error(s) extracting protocol of " + visiting + ": "
-				                    + String.join(";", errors));
+				                    + String.join("; ", errors));
 	}
 
 	@Override
@@ -202,7 +207,11 @@ public class ScalaProtocolExtractor extends Visitor<String>
 				throw new RuntimeException("BUG: unsupported payload " + c.payload);
 			}
 			String cont = ScalaChannelTypeExtractor.apply(c.cont, nameEnv);
-			res = "case class " + l + "(p: " + payload + ")(val cont: " + cont + ")";
+			res = "case class " + l + "(p: " + payload + ")";
+			if (withConts)
+			{
+				res += "(val cont: " + cont + ")";
+			}
 			if (xtnds != null)
 			{
 				res += " extends " + xtnds;

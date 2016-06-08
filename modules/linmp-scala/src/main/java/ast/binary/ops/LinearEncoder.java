@@ -64,7 +64,7 @@ public class LinearEncoder extends Visitor<Type>
 			return res;
 		}
 		throw new ScribbleException("Error(s) encoding " +visiting+ ": "
-				                    + String.join(";", errors));
+				                    + String.join("; ", errors));
 	}
 
 	@Override

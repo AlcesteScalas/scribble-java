@@ -5,6 +5,7 @@ import java.util.Set;
 import ast.binary.Type;
 import ast.global.GlobalType;
 import ast.linear.AbstractVariant;
+import ast.linear.Payload;
 import ast.local.LocalType;
 
 public class RecVar extends NameNode implements GlobalType, LocalType, Type, AbstractVariant
@@ -14,6 +15,22 @@ public class RecVar extends NameNode implements GlobalType, LocalType, Type, Abs
 		super(name);
 	}
 	
+	
+	
+	@Override
+	public Payload payload(Label l)
+	{
+		throw new RuntimeException("BUG: trying to get the payload of " + this);
+	}
+	
+	@Override
+	public ast.linear.Type continuation(Label l)
+	{
+		throw new RuntimeException("BUG: trying to get the continuation of " + this);
+	}
+
+
+
 	@Override
 	public Set<RecVar> freeVariables()
 	{

@@ -54,7 +54,7 @@ public class Sanitizer extends LocalTypeVisitor<LocalType>
 			return res;
 		}
 		throw new ScribbleException("Error(s) validating " + ltype + ": "
-				                    + String.join(";", errors));
+				                    + String.join("; ", errors));
 	}
 	
 	@Override

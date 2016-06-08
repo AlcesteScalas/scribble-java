@@ -43,6 +43,8 @@ public class Main
 				String scalaProt = ast.linear.ops.ScalaProtocolExtractor.apply(bl);
 				System.out.println("    Scala protocol classes:\n" + scalaProt);
 			}
+			String scalaMPProt = ast.local.ops.ScalaProtocolExtractor.apply(l);
+			System.out.println("    Scala protocol classes for local type:\n" + scalaMPProt);
 		}
 		
 	}

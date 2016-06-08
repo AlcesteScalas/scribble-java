@@ -49,7 +49,7 @@ public class ScalaChannelTypeExtractor extends Visitor<String>
 			return res;
 		}
 		throw new ScribbleException("Error(s) extracting channel type of " + visiting + ": "
-				                    + String.join(";", errors));
+				                    + String.join("; ", errors));
 	}
 	
 	@Override
