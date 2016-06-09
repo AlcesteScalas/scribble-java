@@ -33,16 +33,16 @@ public class Main
 		{
 			LocalType l = rl.getValue();
 			System.out.println("\nLocal projection for " + rl.getKey() + ":\n    " + l);
-			Map<Role, Type> p = ast.local.ops.Projector.apply(l, ast.binary.ops.Merge::full);
-			for (Role r: l.roles())
-			{
-				Type b = p.get(r);
-				System.out.println("Binary type towards " + r + ":\n    " + b);
-				ast.linear.Type bl = ast.binary.ops.LinearEncoder.apply(b);
-				System.out.println("    Linear encoding:\n        " + bl);
-				String scalaProt = ast.linear.ops.ScalaProtocolExtractor.apply(bl);
-				System.out.println("    Scala protocol classes:\n" + scalaProt);
-			}
+//			Map<Role, Type> p = ast.local.ops.Projector.apply(l, ast.binary.ops.Merge::full);
+//			for (Role r: l.roles())
+//			{
+//				Type b = p.get(r);
+//				System.out.println("Binary type towards " + r + ":\n    " + b);
+//				ast.linear.Type bl = ast.binary.ops.LinearEncoder.apply(b);
+//				System.out.println("    Linear encoding:\n        " + bl);
+//				String scalaProt = ast.linear.ops.ScalaProtocolExtractor.apply(bl);
+//				System.out.println("    Scala protocol classes:\n" + scalaProt);
+//			}
 			String scalaMPProt = ast.local.ops.ScalaProtocolExtractor.apply(l);
 			System.out.println("    Scala protocol classes for local type:\n" + scalaMPProt);
 		}

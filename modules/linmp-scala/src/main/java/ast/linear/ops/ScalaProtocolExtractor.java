@@ -27,31 +27,65 @@ import java.util.Collection;
  */
 public class ScalaProtocolExtractor extends Visitor<String>
 {
+	/** Options for class generation. */
+	public static class Option {
+		/** Default class generation for CPS linear interaction. */
+		static class Default extends Option { };
+
+		/** Class generation for output messages (without continuations). */
+		public class MPOutputMessages extends Option
+		{
+			private final Collection<String> classNames;
+
+			/**
+			 * @param classNames output message classes to be generated (descendants will be automatically included).
+			 */
+			public MPOutputMessages(Collection<String> classNames)
+			{
+				this.classNames = classNames;
+			}
+		}
+
+		/** Class generation for output messages (without continuations). */
+		public class MPInputMessages extends Option
+		{
+			private final Collection<String> classNames;
+			private final String contPrefix;
+
+			/**
+			 * @param classNames output message classes to be generated (descendants will be automatically included)
+			 * @param contPrefix prefix for continuation class names (used for namespacing)
+			 */
+			public MPInputMessages(Collection<String> classNames, String contPrefix)
+			{
+				this.classNames = classNames;
+				this.contPrefix = contPrefix;
+			}
+		}
+	}
+	
 	private Collection<String> errors = new java.util.LinkedList<String>();
 	private final Type visiting;
 	private NameEnv nameEnv;
-	
-	// Should we also include continuations?
-	// When false, we will generate message classes for multiparty types
-	private boolean withConts;
+	private Option option;
 	
 	public static String apply(Type t) throws ScribbleException
 	{
-		return apply(t, DefaultNameEnvBuilder.apply(t));
+		return apply(t, DefaultNameEnvBuilder.apply(t), new Option.Default());
 	}
 	
-	public static String apply(Type t, NameEnv nameEnv) throws ScribbleException
+	public static String apply(Type t, NameEnv nameEnv, Option opt) throws ScribbleException
 	{
-		ScalaProtocolExtractor te = new ScalaProtocolExtractor(t, nameEnv, true);
+		ScalaProtocolExtractor te = new ScalaProtocolExtractor(t, nameEnv, opt);
 		
 		return te.process();
 	}
 	
-	protected ScalaProtocolExtractor(Type t, NameEnv nameEnv, Boolean withConts)
+	protected ScalaProtocolExtractor(Type t, NameEnv nameEnv, Option opt)
 	{
 		this.visiting = t;
 		this.nameEnv = nameEnv;
-		this.withConts = withConts;
+		this.option = opt;
 	}
 	
 	@Override
@@ -178,7 +212,39 @@ public class ScalaProtocolExtractor extends Visitor<String>
 	// If not null, xtnds is the class extended by each case class
 	private String fromVariantCase(Type node, Label l, Case c, String xtnds)
 	{
+		String contPfx = ""; // Prefixes for namespacing of continuation classes
+		
+		if (option instanceof Option.Default)
+		{
+			// Nothing to do here
+		}
+		else if (option instanceof Option.MPInputMessages)
+		{
+			Option.MPInputMessages o = (Option.MPInputMessages)option;
+			
+			// If the abstract class is not required, skip it
+			if ((!xtnds.isEmpty()) && (!o.classNames.contains(xtnds)))
+			{
+				return "";
+			}
+		}
+		else if (option instanceof Option.MPOutputMessages)
+		{
+			Option.MPOutputMessages o = (Option.MPOutputMessages)option;
+			
+			// If the abstract class is not required, skip it
+			if ((!xtnds.isEmpty()) && (!o.classNames.contains(xtnds)))
+			{
+				return "";
+			}
+		}
+		else
+		{
+			throw new RuntimeException("BUG: unsupported option " + option);
+		}
+		
 		String res;
+		
 		try {
 			String payload;
 			
@@ -207,11 +273,38 @@ public class ScalaProtocolExtractor extends Visitor<String>
 				throw new RuntimeException("BUG: unsupported payload " + c.payload);
 			}
 			String cont = ScalaChannelTypeExtractor.apply(c.cont, nameEnv);
-			res = "case class " + l + "(p: " + payload + ")";
-			if (withConts)
+			res = "case class " + l.name + "(p: " + payload; // Provide ")" below!
+			if (option instanceof Option.Default)
 			{
-				res += "(val cont: " + cont + ")";
+				res += ")(val cont: " + cont + ")";
 			}
+			else if (option instanceof Option.MPInputMessages)
+			{
+				Option.MPInputMessages o = (Option.MPInputMessages)option;
+				// If the class is not required, skip it - FIXME: do it earlier
+				if ((xtnds.isEmpty()) && (!o.classNames.contains(l.name)))
+				{
+					return "";
+				}
+				
+				res += ", cont: " + o.contPrefix + cont + ")";
+			}
+			else if (option instanceof Option.MPOutputMessages)
+			{
+				Option.MPOutputMessages o = (Option.MPOutputMessages)option;
+				// If the class is not required, skip it - FIXME: do it earlier
+				if ((xtnds.isEmpty()) && (!o.classNames.contains(l.name)))
+				{
+					return "";
+				}
+				
+				res += ")";
+			}
+			else
+			{
+				throw new RuntimeException("BUG: unsupported option " + option);
+			}
+			
 			if (xtnds != null)
 			{
 				res += " extends " + xtnds;

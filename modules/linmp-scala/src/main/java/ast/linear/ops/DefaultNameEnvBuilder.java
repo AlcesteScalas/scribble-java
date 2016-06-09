@@ -27,35 +27,22 @@ import ast.name.RecVar;
 public class DefaultNameEnvBuilder extends Visitor<NameEnv>
 {
 	private final Type visiting;
-	private final String prefix;
 	
 	/**
-	 * @param t Linear type to build the naming environment for
+	 * @param t linear type to build the naming environment for
 	 * @return a naming environment suitable for {@code t}
 	 * @throws ScribbleException in case of errors (e.g., ill-formedness of {@code t})
 	 */
 	public static NameEnv apply(Type t) throws ScribbleException
 	{
-		return apply(t, "");
-	}
-	
-	/**
-	 * @param t linear type to build the naming environment for
-	 * @param prefix added to all generated names (used e.g. for namespaces) 
-	 * @return a naming environment suitable for {@code t}
-	 * @throws ScribbleException in case of errors (e.g., ill-formedness of {@code t})
-	 */
-	public static NameEnv apply(Type t, String prefix) throws ScribbleException
-	{
-		DefaultNameEnvBuilder b = new DefaultNameEnvBuilder(t, prefix);
+		DefaultNameEnvBuilder b = new DefaultNameEnvBuilder(t);
 		
 		return b.process();
 	}
 	
-	private DefaultNameEnvBuilder(Type t, String prefix)
+	private DefaultNameEnvBuilder(Type t)
 	{
 		visiting = t;
-		this.prefix = prefix;
 	}
 	
 	@Override
@@ -89,7 +76,7 @@ public class DefaultNameEnvBuilder extends Visitor<NameEnv>
 		{
 			Variant vrnt = (Variant)v;
 			NameEnv res = new NameEnv();
-			res.put(v, prefix + nameChoiceFromLabels(vrnt.cases.keySet()));
+			res.put(v, nameChoiceFromLabels(vrnt.cases.keySet()));
 			
 			for (Case c: vrnt.cases.values())
 			{

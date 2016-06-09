@@ -91,10 +91,27 @@ public class ScalaProtocolExtractor extends LocalTypeVisitor<String>
 	@Override
 	protected String process() throws ScribbleException
 	{
-		String res = visit(visiting);
+		List<String> linProtoClasses = new java.util.LinkedList<>(); 
+		List<String> msgProtoClasses = new java.util.LinkedList<>();
+		// Pick roles in alphabetical order from channel tracker
+		for (Role r: new java.util.ArrayList<>(new java.util.TreeSet<>(ctracker.keySet())))
+		{
+			ast.linear.Type t = ctracker.get(r).t;
+			linProtoClasses.add(ast.linear.ops.ScalaProtocolExtractor.apply(t));
+			msgProtoClasses.add(ast.linear.ops.ScalaMessageExtractor.apply(t));
+		}
+
+		String mpProtoClasses = visit(visiting);
 		if (errors.isEmpty())
 		{
-			return res;
+			return ("package object " + MULTIPARTY_CLASSES_NS + " {\n" +
+					mpProtoClasses +
+					"}\n\n" +
+					String.join("\n", msgProtoClasses) +
+					"\npackage object " + BINARY_CLASSES_NS + " {\n" +
+					String.join("\n", linProtoClasses) +
+					"}\n"
+					);
 		}
 		throw new ScribbleException("Error(s) extracting protocol of " + visiting + ": "
 				                    + String.join(";", errors));
