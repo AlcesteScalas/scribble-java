@@ -10,9 +10,9 @@ import java.util.Collection;
 
 public class ScalaMessageExtractor
 {
-	public static String inputs(Type t, Collection<String> classNames, String contNS) throws ScribbleException
+	public static String inputs(Type t, Collection<String> classNames) throws ScribbleException
 	{
-		return apply(t, DefaultNameEnvBuilder.apply(t), new Option().new MPInputMessages(classNames, contNS));
+		return apply(t, DefaultNameEnvBuilder.apply(t), new Option().new MPInputMessages(classNames));
 	}
 	
 	public static String outputs(Type t, Collection<String> classNames) throws ScribbleException

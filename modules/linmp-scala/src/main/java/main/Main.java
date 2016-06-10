@@ -10,7 +10,7 @@ import org.scribble.main.ScribbleException;
 import ast.ScribProtocolTranslator;
 import ast.global.GlobalType;
 import ast.local.LocalType;
-import ast.binary.Type;
+// import ast.binary.Type;
 import ast.name.Role;
 
 public class Main

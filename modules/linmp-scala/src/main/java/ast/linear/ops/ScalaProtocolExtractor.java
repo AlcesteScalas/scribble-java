@@ -50,16 +50,13 @@ public class ScalaProtocolExtractor extends Visitor<String>
 		public class MPInputMessages extends Option
 		{
 			private final Collection<String> classNames;
-			private final String contPrefix;
 
 			/**
 			 * @param classNames output message classes to be generated (descendants will be automatically included)
-			 * @param contPrefix prefix for continuation class names (used for namespacing)
 			 */
-			public MPInputMessages(Collection<String> classNames, String contPrefix)
+			public MPInputMessages(Collection<String> classNames)
 			{
 				this.classNames = classNames;
-				this.contPrefix = contPrefix;
 			}
 		}
 	}
@@ -123,12 +120,39 @@ public class ScalaProtocolExtractor extends Visitor<String>
 		if (av instanceof Variant)
 		{
 			String res;
+			Boolean skip;  // Should we skip class generation?
 			Variant v = (Variant)av;
 			if (v.cases.size() == 1)
 			{
 				Label l = v.cases.keySet().iterator().next();
 				Case c = v.cases.get(l);
-				res = fromVariantCase(node, l, c, null);
+				
+				if (option instanceof Option.Default)
+				{
+					skip = false;
+				}
+				else if (option instanceof Option.MPInputMessages)
+				{
+					skip = !((Option.MPInputMessages)option).classNames.contains(l);
+				}
+				else if (option instanceof Option.MPOutputMessages)
+				{
+					// If the abstract class is not required, skip it
+					skip = !((Option.MPOutputMessages)option).classNames.contains(l);
+				}
+				else
+				{
+					throw new RuntimeException("BUG: unsupported option " + option);
+				}
+				
+				if (skip)
+				{
+					res = "";
+				}
+				else
+				{
+					res = fromVariantCase(node, l, c, "");
+				}
 				
 				if (c.payload instanceof BaseType)
 				{
@@ -152,13 +176,42 @@ public class ScalaProtocolExtractor extends Visitor<String>
 			else if (v.cases.size() > 1)
 			{
 				String xtnd = nameEnv.get(v);
-				java.util.List<Label> ls = new java.util.ArrayList<>(new java.util.TreeSet<>(v.cases.keySet()));
-				res = "sealed abstract class " + xtnd + "\n";
-				for (Label l: ls)
+				
+				if (option instanceof Option.Default)
 				{
-					Case c = v.cases.get(l);
-					res += fromVariantCase(node, l, c, xtnd);
+					skip = false;
 				}
+				else if (option instanceof Option.MPInputMessages)
+				{
+					// If the abstract class is not required, skip it
+					skip = !((Option.MPInputMessages)option).classNames.contains(xtnd);
+				}
+				else if (option instanceof Option.MPOutputMessages)
+				{
+					// If the abstract class is not required, skip it
+					skip = !((Option.MPOutputMessages)option).classNames.contains(xtnd);
+				}
+				else
+				{
+					throw new RuntimeException("BUG: unsupported option " + option);
+				}
+				
+				// Sort labels before (recursively) generating code
+				java.util.List<Label> ls = new java.util.ArrayList<>(new java.util.TreeSet<>(v.cases.keySet()));
+				if (!skip)
+				{
+					res = "sealed abstract class " + xtnd + "\n";
+					for (Label l: ls)
+					{
+						Case c = v.cases.get(l);
+						res += fromVariantCase(node, l, c, xtnd);
+					}
+				}
+				else
+				{
+					res = "";
+				}
+				
 				for (Label l: ls)
 				{
 					Case c = v.cases.get(l);
@@ -209,40 +262,10 @@ public class ScalaProtocolExtractor extends Visitor<String>
 		}
 	}
 	
-	// If not null, xtnds is the class extended by each case class
+	// If not empty, xtnds is the class extended by each case class
+	// If skip is true, then no case classes will be generated
 	private String fromVariantCase(Type node, Label l, Case c, String xtnds)
 	{
-		String contPfx = ""; // Prefixes for namespacing of continuation classes
-		
-		if (option instanceof Option.Default)
-		{
-			// Nothing to do here
-		}
-		else if (option instanceof Option.MPInputMessages)
-		{
-			Option.MPInputMessages o = (Option.MPInputMessages)option;
-			
-			// If the abstract class is not required, skip it
-			if ((!xtnds.isEmpty()) && (!o.classNames.contains(xtnds)))
-			{
-				return "";
-			}
-		}
-		else if (option instanceof Option.MPOutputMessages)
-		{
-			Option.MPOutputMessages o = (Option.MPOutputMessages)option;
-			
-			// If the abstract class is not required, skip it
-			if ((!xtnds.isEmpty()) && (!o.classNames.contains(xtnds)))
-			{
-				return "";
-			}
-		}
-		else
-		{
-			throw new RuntimeException("BUG: unsupported option " + option);
-		}
-		
 		String res;
 		
 		try {
@@ -272,32 +295,65 @@ public class ScalaProtocolExtractor extends Visitor<String>
 			{
 				throw new RuntimeException("BUG: unsupported payload " + c.payload);
 			}
-			String cont = ScalaChannelTypeExtractor.apply(c.cont, nameEnv);
-			res = "case class " + l.name + "(p: " + payload; // Provide ")" below!
+			String cont = "ERROR";
 			if (option instanceof Option.Default)
 			{
-				res += ")(val cont: " + cont + ")";
+				if (c.cont instanceof End)
+				{
+					// Do not generate vacuous continuations
+					cont = "";
+				}
+				else
+				{
+					cont = ScalaChannelTypeExtractor.apply(c.cont, nameEnv);
+				}
 			}
 			else if (option instanceof Option.MPInputMessages)
 			{
-				Option.MPInputMessages o = (Option.MPInputMessages)option;
-				// If the class is not required, skip it - FIXME: do it earlier
-				if ((xtnds.isEmpty()) && (!o.classNames.contains(l.name)))
+				// If we are generating input messages, we are interested
+				// in the name of the class carried by the continuation
+				ast.linear.Type lcnt = c.cont;
+				if (lcnt instanceof In)
 				{
-					return "";
+					cont = nameEnv.get(((In)lcnt).carried());
+					assert(cont != null);
 				}
-				
-				res += ", cont: " + o.contPrefix + cont + ")";
+				else if (lcnt instanceof Out)
+				{
+					cont = nameEnv.get(((Out)lcnt).carried());
+					assert(cont != null);
+				}
+				else if (lcnt instanceof End)
+				{
+					cont = "";
+				}
+			}
+			
+			res = "case class " + l.name + "(p: " + payload; // Provide ")" below!
+			if (option instanceof Option.Default)
+			{
+				if (cont.isEmpty())
+				{
+					res +=")";
+				}
+				else
+				{
+					res += ")(val cont: " + cont + ")";
+				}
+			}
+			else if (option instanceof Option.MPInputMessages)
+			{
+				if (cont.isEmpty())
+				{
+					res +=")";
+				}
+				else
+				{
+					res += ", cont: " + cont + ")";
+				}
 			}
 			else if (option instanceof Option.MPOutputMessages)
 			{
-				Option.MPOutputMessages o = (Option.MPOutputMessages)option;
-				// If the class is not required, skip it - FIXME: do it earlier
-				if ((xtnds.isEmpty()) && (!o.classNames.contains(l.name)))
-				{
-					return "";
-				}
-				
 				res += ")";
 			}
 			else
@@ -305,7 +361,7 @@ public class ScalaProtocolExtractor extends Visitor<String>
 				throw new RuntimeException("BUG: unsupported option " + option);
 			}
 			
-			if (xtnds != null)
+			if (!xtnds.isEmpty())
 			{
 				res += " extends " + xtnds;
 			}

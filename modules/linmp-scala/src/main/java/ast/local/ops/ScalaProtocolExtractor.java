@@ -3,6 +3,7 @@ package ast.local.ops;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 
 import org.scribble.main.ScribbleException;
 
@@ -24,8 +25,7 @@ import ast.name.Role;
 
 public class ScalaProtocolExtractor extends LocalTypeVisitor<String>
 {
-	static String BINARY_CLASSES_NS = "binary";
-	static String MULTIPARTY_CLASSES_NS = "mp";
+	public static String BINARY_CLASSES_NS = "binary";
 	
 	// Simple pair of a binary type and its naming environment
 	private class LinearTypeNameEnv
@@ -68,6 +68,12 @@ public class ScalaProtocolExtractor extends LocalTypeVisitor<String>
 	// Sorted the roles
 	private final List<Role> roles;
 	
+	// Classes used for input
+	private Set<String> inputClassNames = new java.util.HashSet<>();
+	
+	// Classes used for inputting
+	private Set<String> outputClassNames = new java.util.HashSet<>();
+	
 	public static String apply(LocalType t) throws ScribbleException
 	{
 		return apply(t, DefaultNameEnvBuilder.apply(t));
@@ -92,29 +98,44 @@ public class ScalaProtocolExtractor extends LocalTypeVisitor<String>
 	protected String process() throws ScribbleException
 	{
 		List<String> linProtoClasses = new java.util.LinkedList<>(); 
-		List<String> msgProtoClasses = new java.util.LinkedList<>();
+		List<String> msgInProtoClasses = new java.util.LinkedList<>();
+		List<String> msgOutProtoClasses = new java.util.LinkedList<>();
+		
 		// Pick roles in alphabetical order from channel tracker
 		for (Role r: new java.util.ArrayList<>(new java.util.TreeSet<>(ctracker.keySet())))
 		{
 			ast.linear.Type t = ctracker.get(r).t;
 			linProtoClasses.add(ast.linear.ops.ScalaProtocolExtractor.apply(t));
-			msgProtoClasses.add(ast.linear.ops.ScalaMessageExtractor.apply(t));
 		}
 
 		String mpProtoClasses = visit(visiting);
-		if (errors.isEmpty())
+		if (!errors.isEmpty())
 		{
-			return ("package object " + MULTIPARTY_CLASSES_NS + " {\n" +
-					mpProtoClasses +
-					"}\n\n" +
-					String.join("\n", msgProtoClasses) +
-					"\npackage object " + BINARY_CLASSES_NS + " {\n" +
-					String.join("\n", linProtoClasses) +
-					"}\n"
-					);
+			throw new ScribbleException("Error(s) extracting protocol of " + visiting + ": " + String.join(";", errors));
 		}
-		throw new ScribbleException("Error(s) extracting protocol of " + visiting + ": "
-				                    + String.join(";", errors));
+		
+		// Pick roles in alphabetical order from channel tracker
+		for (Role r: new java.util.ArrayList<>(new java.util.TreeSet<>(ctracker.keySet())))
+		{
+			ast.linear.Type t = ctracker.get(r).t;
+			msgInProtoClasses.add(ast.linear.ops.ScalaMessageExtractor.inputs(
+					t, inputClassNames));
+			msgOutProtoClasses.add(ast.linear.ops.ScalaMessageExtractor.outputs(
+					t, outputClassNames));
+		}
+		
+		return (
+				"// Input message types for multiparty sessions\n" +
+				String.join("\n", msgInProtoClasses) +
+				"\n// Output message types for multiparty sessions\n" +
+				String.join("\n", msgOutProtoClasses) +
+				"\n// Multiparty session classes\n" +
+				mpProtoClasses +
+				"// Classes representing messages in binary sessions\n" +
+				"\npackage object " + BINARY_CLASSES_NS + " {\n" +
+				String.join("\n", linProtoClasses) +
+				"}\n"
+				);
 	}
 
 	@Override
@@ -127,6 +148,7 @@ public class ScalaProtocolExtractor extends LocalTypeVisitor<String>
 	protected String visit(LocalBranch node)
 	{
 		String className = nameEnv.get(node);
+		assert(className != null);
 				
 		List<String> chanspecs = getChanspecs();
 		
@@ -134,7 +156,11 @@ public class ScalaProtocolExtractor extends LocalTypeVisitor<String>
 		LinearTypeNameEnv lte = ctracker.get(node.src);
 		// Note: we use the fact that we know lte.t is In or Out (not End)
 		AbstractVariant v = getCarried(lte.t);
-
+		
+		// Remember that the underlying variant is used for input
+		assert(lte.env.get(v) != null);
+		inputClassNames.add(lte.env.get(v));
+		
 		String res = "case class " + className + "(" + String.join(", ", chanspecs) + ") {\n";
 		res += "  def receive() // TODO\n";
 		res += "}\n";
@@ -171,6 +197,10 @@ public class ScalaProtocolExtractor extends LocalTypeVisitor<String>
 		LinearTypeNameEnv lte = ctracker.get(node.dest);
 		// Note: we use the fact that we know lte.t is In or Out (not End)
 		AbstractVariant v = getCarried(lte.t);
+		
+		// Remember that the underlying variant is used for output
+		assert(lte.env.get(v) != null);
+		outputClassNames.add(lte.env.get(v));
 		
 		String res = "case class " + className + "(" + String.join(", ", chanspecs) + ") {\n";
 		res += "  def send(v: " + lte.env.get(lte.t) + ") // TODO\n";
@@ -227,7 +257,8 @@ public class ScalaProtocolExtractor extends LocalTypeVisitor<String>
 			chanspec += r.name + ": ";
 			try
 			{
-				chanspec += ast.linear.ops.ScalaChannelTypeExtractor.apply(t, env);
+				chanspec += ast.linear.ops.ScalaChannelTypeExtractor.apply(
+						t, env, BINARY_CLASSES_NS + ".");
 			}
 			catch (ScribbleException e)
 			{

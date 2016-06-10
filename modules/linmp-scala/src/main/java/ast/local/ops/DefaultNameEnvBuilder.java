@@ -18,6 +18,8 @@ import ast.name.RecVar;
 
 public class DefaultNameEnvBuilder extends LocalTypeVisitor<LocalNameEnv>
 {
+	public static String MULTIPARTY_CLASSES_PREFIX = "MP";
+	
 	private Collection<String> errors = new java.util.LinkedList<String>();
 	private final LocalType visiting;
 	
@@ -55,7 +57,7 @@ public class DefaultNameEnvBuilder extends LocalTypeVisitor<LocalNameEnv>
 	protected LocalNameEnv visit(LocalBranch node)
 	{
 		LocalNameEnv res = new LocalNameEnv();
-		res.put(node, ast.linear.ops.DefaultNameEnvBuilder.nameChoiceFromLabels(node.cases.keySet()));
+		res.put(node, MULTIPARTY_CLASSES_PREFIX + ast.linear.ops.DefaultNameEnvBuilder.nameChoiceFromLabels(node.cases.keySet()));
 		res.putAll(visit(node.cases));
 		return res;
 	}
@@ -64,7 +66,7 @@ public class DefaultNameEnvBuilder extends LocalTypeVisitor<LocalNameEnv>
 	protected LocalNameEnv visit(LocalSelect node)
 	{
 		LocalNameEnv res = new LocalNameEnv();
-		res.put(node, ast.linear.ops.DefaultNameEnvBuilder.nameChoiceFromLabels(node.cases.keySet()));
+		res.put(node, MULTIPARTY_CLASSES_PREFIX + ast.linear.ops.DefaultNameEnvBuilder.nameChoiceFromLabels(node.cases.keySet()));
 		res.putAll(visit(node.cases));
 		return res;
 	}

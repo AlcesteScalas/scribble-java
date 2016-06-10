@@ -8,6 +8,7 @@ import org.scribble.main.ScribbleException;
 import ast.linear.AbstractVariant;
 import ast.linear.End;
 import ast.linear.In;
+import ast.linear.NameEnv;
 import ast.linear.Out;
 import ast.linear.Type;
 import ast.linear.Visitor;
@@ -21,23 +22,30 @@ public class ScalaChannelTypeExtractor extends Visitor<String>
 	private Collection<String> errors = new java.util.LinkedList<String>();
 	private final Type visiting;
 	private Map<AbstractVariant, String> nameEnv;
+	private final String carriedPrefix;
 	
 	public static String apply(Type t) throws ScribbleException
 	{
 		return apply(t, DefaultNameEnvBuilder.apply(t));
 	}
 	
-	public static String apply(Type t, Map<AbstractVariant, String> nameEnv) throws ScribbleException
+	public static String apply(Type t, NameEnv nameEnv) throws ScribbleException
 	{
-		ScalaChannelTypeExtractor te = new ScalaChannelTypeExtractor(t, nameEnv);
+		return apply(t, nameEnv, "");
+	}
+	
+	public static String apply(Type t, NameEnv nameEnv, String carriedPrefix) throws ScribbleException
+	{
+		ScalaChannelTypeExtractor te = new ScalaChannelTypeExtractor(t, nameEnv, carriedPrefix);
 		
 		return te.process();
 	}
 	
-	private ScalaChannelTypeExtractor(Type t, Map<AbstractVariant, String> nameEnv)
+	private ScalaChannelTypeExtractor(Type t, NameEnv nameEnv, String carriedPrefix)
 	{
 		this.visiting = t;
 		this.nameEnv = nameEnv;
+		this.carriedPrefix = carriedPrefix;
 	}
 	
 	@Override
@@ -61,13 +69,17 @@ public class ScalaChannelTypeExtractor extends Visitor<String>
 	@Override
 	protected String visit(In node)
 	{
-		return "In[" + nameEnv.get(node.variant) + "]";
+		String carried = nameEnv.get(node.variant);
+		assert(carried != null);
+		return "In[" + carriedPrefix + carried + "]";
 	}
 
 	@Override
 	protected String visit(Out node)
 	{
-		return "Out[" + nameEnv.get(node.variant) + "]";
+		String carried = nameEnv.get(node.variant);
+		assert(carried != null);
+		return "Out[" + carriedPrefix + carried + "]";
 	}
 
 }
