@@ -24,11 +24,14 @@ import org.scribble.codegen.java.util.InterfaceBuilder;
 import org.scribble.codegen.java.util.JavaBuilder;
 import org.scribble.codegen.java.util.MethodBuilder;
 import org.scribble.codegen.java.util.TypeBuilder;
+import org.scribble.main.RuntimeScribbleException;
+import org.scribble.main.ScribbleException;
 import org.scribble.model.local.EndpointState;
 import org.scribble.model.local.EndpointState.Kind;
 import org.scribble.model.local.IOAction;
 import org.scribble.sesstype.name.GProtocolName;
 import org.scribble.sesstype.name.Role;
+import org.scribble.visit.JobContext;
 
 // Cf. StateChannelApiGenerator
 // TODO: concrete state channel "to" casts for supertype i/f's (the info is there in the Java type hierachy though)
@@ -53,7 +56,7 @@ public class IOInterfacesGenerator extends ApiGenerator
 	//private final Map<EndpointState, Set<InterfaceBuilder>> branchSuccs = new HashMap<>();
 	private final Map<String, List<IOAction>> branchSuccs = new HashMap<>();  // key: HandleInterface name  // Sorted when collected
 
-	public IOInterfacesGenerator(StateChannelApiGenerator apigen, boolean subtypes)
+	public IOInterfacesGenerator(StateChannelApiGenerator apigen, boolean subtypes) throws RuntimeScribbleException, ScribbleException
 	{
 		super(apigen.getJob(), apigen.getGProtocolName());
 		this.apigen = apigen;
@@ -61,19 +64,26 @@ public class IOInterfacesGenerator extends ApiGenerator
 
 		GProtocolName fullname = apigen.getGProtocolName();
 		Role self = getSelf();
-		EndpointState init = this.job.getContext().getEndpointGraph(fullname, self).init;
+		//EndpointState init = this.job.getContext().getEndpointGraph(fullname, self).init;
+		JobContext jc = this.job.getContext();
+		EndpointState init = job.minEfsm ? jc.getMinimisedEndpointGraph(fullname, self).init : jc.getEndpointGraph(fullname, self).init;
+		
+		Set<IOAction> as = EndpointState.getAllReachableActions(init);
+		if (as.stream().anyMatch((a) -> !a.isSend() && !a.isReceive()))  // HACK FIXME (connect/disconnect)
+		{
+			throw new RuntimeScribbleException("[TODO] I/O Interface generation not supported for: " + as.stream().filter((a) -> !a.isSend() && !a.isReceive()).collect(Collectors.toList()));
+		}
 
 		generateActionAndSuccessorInterfacesAndCollectPreActions(new HashSet<>(), init);
 		generateIOStateInterfacesFirstPass(new HashSet<>(), init);
 		collectPreds();
 		
-		EndpointState term = EndpointState.findTerminalState(new HashSet<>(), init);
+		//EndpointState term = EndpointState.findTerminalState(new HashSet<>(), init);
+		EndpointState term = EndpointState.getTerminal(init);
 		ClassBuilder endsock = null;
 		if (term != null)
 		{
 			endsock = (ClassBuilder) this.apigen.getType(ScribSocketGenerator.GENERATED_ENDSOCKET_NAME);
-			endsock.addImports(getIOInterfacePackageName(this.gpn, self) + ".*");
-				
 			for (InterfaceBuilder ib : this.preds.get(term))
 			{
 				endsock.addInterfaces(ib.getName());
@@ -84,6 +94,7 @@ public class IOInterfacesGenerator extends ApiGenerator
 					ib.addImports(SessionApiGenerator.getStateChannelPackageName(this.gpn, self) + ".EndSocket");
 				}
 			}
+			endsock.addImports(getIOInterfacePackageName(this.gpn, self) + ".*");
 		}
 		
 		generateIOStateInterfacesSecondPass(new HashSet<>(), init);
@@ -116,6 +127,7 @@ public class IOInterfacesGenerator extends ApiGenerator
 					{
 						MethodBuilder mb = addEndSocketToCastMethod(endsock, cast.getReturn(), "throw new RuntimeScribbleException(\"Invalid cast of EndSocket: \" + cast);");
 						if (mb != null)
+
 						{
 							mb.addModifiers(JavaBuilder.PUBLIC);
 							mb.addAnnotations("@Override");
@@ -154,7 +166,7 @@ public class IOInterfacesGenerator extends ApiGenerator
 	}
 	
 	// Factor out FSM visitor?
-	private void generateActionAndSuccessorInterfacesAndCollectPreActions(Set<EndpointState> visited, EndpointState s)
+	private void generateActionAndSuccessorInterfacesAndCollectPreActions(Set<EndpointState> visited, EndpointState s) throws ScribbleException
 	{
 		if (visited.contains(s) || s.isTerminal())
 		{
@@ -162,9 +174,14 @@ public class IOInterfacesGenerator extends ApiGenerator
 		}
 		visited.add(s);
 
-		Set<IOAction> as = s.getAcceptable();
+		Set<IOAction> as = s.getTakeable();
 		for (IOAction a : as.stream().sorted(IOStateInterfaceGenerator.IOACTION_COMPARATOR).collect(Collectors.toList()))
 		{
+			if (!a.isSend() && !a.isReceive())  // TODO (connect/disconnect)
+			{
+				throw new RuntimeException("TODO: " + a);
+			}
+
 			if (!this.actions.containsKey(a))
 			{
 				this.actions.put(a, new ActionInterfaceGenerator(this.apigen, s, a).generateType());
@@ -191,7 +208,7 @@ public class IOInterfacesGenerator extends ApiGenerator
 				}
 			}
 			
-			EndpointState succ = s.accept(a);
+			EndpointState succ = s.take(a);
 			putPreAction(succ, a);
 
 			if (s.getStateKind() == Kind.POLY_INPUT)
@@ -211,7 +228,7 @@ public class IOInterfacesGenerator extends ApiGenerator
 	}
 
 	// Generates partial IO State Interfaces
-	private void generateIOStateInterfacesFirstPass(Set<EndpointState> visited, EndpointState s)
+	private void generateIOStateInterfacesFirstPass(Set<EndpointState> visited, EndpointState s) throws ScribbleException
 	{
 		if (visited.contains(s) || s.isTerminal())
 		{
@@ -225,7 +242,7 @@ public class IOInterfacesGenerator extends ApiGenerator
 			IOStateInterfaceGenerator ifgen = null;
 			switch (s.getStateKind())
 			{
-				case OUTPUT:
+				case OUTPUT:  // Send, connect, disconnect
 					ifgen = new SelectInterfaceGenerator(this.apigen, this.actions, s);
 					break;
 				case UNARY_INPUT:
@@ -238,15 +255,15 @@ public class IOInterfacesGenerator extends ApiGenerator
 					break;
 				case TERMINAL:
 				default:
-					throw new RuntimeException("TODO:");
+					throw new RuntimeException("(TODO) I/O interface generation: " + s.getStateKind());
 			}
 			this.iostates.put(key, ifgen.generateType());
 		}
 		
 		visited.add(s);
-		for (IOAction a : s.getAcceptable())
+		for (IOAction a : s.getTakeable())
 		{
-			generateIOStateInterfacesFirstPass(visited, s.accept(a));
+			generateIOStateInterfacesFirstPass(visited, s.take(a));
 		}
 	}
 
@@ -262,7 +279,6 @@ public class IOInterfacesGenerator extends ApiGenerator
 		if (succifs != null)
 		{
 			InterfaceBuilder iostate = this.iostates.get(IOStateInterfaceGenerator.getIOStateInterfaceName(getSelf(), s));
-
 			if (this.SUBTYPES) // HACK moved here from addSupertypeInterfaces to ensure duplicate inherited to's get overridden
 			{
 				// Generate Succ I/f supertype "to" cast methods for supertype to's
@@ -299,13 +315,13 @@ public class IOInterfacesGenerator extends ApiGenerator
 		}
 
 		visited.add(s);
-		for (IOAction a : s.getAcceptable())
+		for (IOAction a : s.getTakeable())
 		{
-			generateIOStateInterfacesSecondPass(visited, s.accept(a));
+			generateIOStateInterfacesSecondPass(visited, s.take(a));
 		}
 	}
 
-	private void generateHandleInterfaces(Set<EndpointState> visited, EndpointState s)
+	private void generateHandleInterfaces(Set<EndpointState> visited, EndpointState s) throws ScribbleException
 	{
 		if (visited.contains(s) || s.isTerminal())
 		{
@@ -324,9 +340,9 @@ public class IOInterfacesGenerator extends ApiGenerator
 		}
 		
 		visited.add(s);
-		for (IOAction a : s.getAcceptable())
+		for (IOAction a : s.getTakeable())
 		{
-			generateHandleInterfaces(visited, s.accept(a));
+			generateHandleInterfaces(visited, s.take(a));
 		}
 	}
 
@@ -400,9 +416,9 @@ public class IOInterfacesGenerator extends ApiGenerator
 		}
 				
 		visited.add(s);
-		for (IOAction a : s.getAcceptable())
+		for (IOAction a : s.getTakeable())
 		{
-			generateHandleInterfacesSecondPass(visited, s.accept(a));
+			generateHandleInterfacesSecondPass(visited, s.take(a));
 		}
 	}
 	
@@ -417,13 +433,14 @@ public class IOInterfacesGenerator extends ApiGenerator
 		Role self = getSelf();
 		String scname = this.apigen.getSocketClassName(s);
 		String ioname = IOStateInterfaceGenerator.getIOStateInterfaceName(self, s);
-		TypeBuilder tb = this.apigen.getType(scname);
 		
+		TypeBuilder tb = this.apigen.getType(scname);
+
 		// Add I/O State Interface to each ScribSocket (except CaseSocket)
 		// Do here (not inside I/O State Interface generators) because multiple states can share the same I/O State Interface
 		tb.addImports(getIOInterfacePackageName(this.gpn, self) + ".*");
 		tb.addInterfaces(ioname + getConcreteSuccessorParameters(s));
-		
+	
 		InterfaceBuilder iostate = this.iostates.get(ioname);
 		MethodBuilder mb = addToCastMethod(iostate, scname);
 		if (mb != null)
@@ -475,7 +492,7 @@ public class IOInterfacesGenerator extends ApiGenerator
 			System.out.println("BBB: " + handle);*/
 			//for (IOAction a : this.branchSuccs.get(handle))
 			// FIXME: move back into HandlerInterfaceGenerator
-			for (IOAction a : s.getAcceptable().stream().sorted(IOStateInterfaceGenerator.IOACTION_COMPARATOR).collect(Collectors.toList()))
+			for (IOAction a : s.getTakeable().stream().sorted(IOStateInterfaceGenerator.IOACTION_COMPARATOR).collect(Collectors.toList()))
 			{
 				if (first)
 				{
@@ -496,7 +513,7 @@ public class IOInterfacesGenerator extends ApiGenerator
 				{
 					tmp += SuccessorInterfaceGenerator.getSuccessorInterfaceName(a);
 				}*/
-				EndpointState succ = s.accept(a);
+				EndpointState succ = s.take(a);
 				if (succ.isTerminal())
 				{
 					tmp += ScribSocketGenerator.GENERATED_ENDSOCKET_NAME;
@@ -585,9 +602,9 @@ public class IOInterfacesGenerator extends ApiGenerator
 		}
 		
 		visited.add(s);
-		for (IOAction a : s.getAcceptable())
+		for (IOAction a : s.getTakeable())
 		{
-			addIOStateInterfacesToStateChannels(visited, s.accept(a));
+			addIOStateInterfacesToStateChannels(visited, s.take(a));
 		}
 	}
 	
@@ -882,8 +899,8 @@ public class IOInterfacesGenerator extends ApiGenerator
 	private String getConcreteSuccessorParameters(EndpointState s)
 	{
 		return "<" +
-				s.getAcceptable().stream().sorted(IOStateInterfaceGenerator.IOACTION_COMPARATOR)
-						.map((a) -> this.getSuccName.apply(s.accept(a))).collect(Collectors.joining(", "))
+				s.getTakeable().stream().sorted(IOStateInterfaceGenerator.IOACTION_COMPARATOR)
+						.map((a) -> this.getSuccName.apply(s.take(a))).collect(Collectors.joining(", "))
 				+ ">";
 	}
 	
@@ -916,6 +933,10 @@ public class IOInterfacesGenerator extends ApiGenerator
 			Set<InterfaceBuilder> tmp = new HashSet<>();
 			for (IOAction a : this.preActions.get(s))  // sort?
 			{
+				if (!a.isSend() && !a.isReceive())  // TODO (connect/disconnect)
+				{
+					throw new RuntimeException("TODO: " + a);
+				}
 				tmp.add(this.succs.get(a));
 			}
 			this.preds.put(s, tmp);
@@ -931,7 +952,7 @@ public class IOInterfacesGenerator extends ApiGenerator
 			String key = HandleInterfaceGenerator.getHandleInterfaceName(self, s);  // HandleInterface name
 
 			List<IOAction> curr1 = new LinkedList<>();
-			this.branchPostActions.get(s).forEach((a) -> curr1.addAll(s.accept(a).getAcceptable()));  // TODO: flatmap
+			this.branchPostActions.get(s).forEach((a) -> curr1.addAll(s.take(a).getTakeable()));  // TODO: flatmap
 			//List<IOAction> curr2 = curr1.stream().sorted(IOStateInterfaceGenerator.IOACTION_COMPARATOR).collect(Collectors.toList());
 			
 			List<IOAction> tmp = this.branchSuccs.get(key);

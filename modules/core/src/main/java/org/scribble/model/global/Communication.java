@@ -5,6 +5,7 @@ import org.scribble.sesstype.Payload;
 import org.scribble.sesstype.name.MessageId;
 import org.scribble.sesstype.name.Role;
 
+@Deprecated
 public class Communication extends IOAction implements PathElement
 {
 	//private static int counter = 1;
@@ -19,12 +20,12 @@ public class Communication extends IOAction implements PathElement
 		this.src = src;
 	}
 	
-	@Override
+	/*@Override
 	public int hashCode()
 	{
 		//return 827 * this.id;
 		return 827 * this.src.hashCode() + super.hashCode();
-	}
+	}*/
 	
 	@Override
 	public boolean equals(Object o)
@@ -59,5 +60,18 @@ public class Communication extends IOAction implements PathElement
 	public boolean canEqual(Object o)
 	{
 		return o instanceof Communication;
+	}
+
+	@Override
+	//public GModelAction toGlobal(Role self)
+	public GIOAction toGlobal(Role self)
+	{
+		throw new RuntimeException("TODO: " + this + ", " + self);
+	}
+
+	@Override
+	public IOAction toDual(Role self)
+	{
+		throw new RuntimeException("TODO: " + this + ", " + self);
 	}
 }

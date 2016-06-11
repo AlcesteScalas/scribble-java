@@ -17,6 +17,7 @@ import org.scribble.parser.ScribModuleLoader;
 import org.scribble.parser.ScribParser;
 import org.scribble.sesstype.name.ModuleName;
 import org.scribble.util.Pair;
+import org.scribble.util.ScribParserException;
 
 
 // Scribble tool context for main module
@@ -25,7 +26,12 @@ import org.scribble.util.Pair;
 // Resource and ResourceLocator should be made abstract from (file)paths (cf. use of toPath in ScribbleModuleLoader)
 public class MainContext
 {
+	//public final boolean jUnit;
 	public final boolean debug;
+	public final boolean useOldWF;
+	public final boolean noLiveness;
+	public final boolean minEfsm;
+	public final boolean fair;
 	
 	public final ModuleName main;
 
@@ -41,9 +47,16 @@ public class MainContext
 	private final Map<ModuleName, Pair<Resource, Module>> parsed = new HashMap<>();
 	
 	// FIXME: make Path abstract as e.g. URI -- locator is abstract but Path is coupled to concrete DirectoryResourceLocator
-	public MainContext(boolean debug, ResourceLocator locator, Path mainpath)
+	//public MainContext(boolean jUnit, boolean debug, ResourceLocator locator, Path mainpath, boolean useOldWF, boolean noLiveness)
+	public MainContext(boolean debug, ResourceLocator locator, Path mainpath, boolean useOldWF, boolean noLiveness, boolean minEfsm, boolean fair) throws ScribParserException
 	{
+		//this.jUnit = jUnit;
 		this.debug = debug;
+		this.useOldWF = useOldWF;
+		this.noLiveness = noLiveness;
+		this.minEfsm = minEfsm;
+		this.fair = fair;
+
 		this.antlrParser = new AntlrParser();
 		this.scribParser = new ScribParser();
 		this.locator = locator; 
@@ -61,7 +74,7 @@ public class MainContext
 	}
 	
 	// FIXME: checking main module resource exists at specific location should be factored out to front-end (e.g. CommandLine) -- main module resource is specified at local front end level of abstraction, while MainContext uses abstract resource loading
-	private Pair<Resource, Module> loadMainModule(Path mainpath)
+	private Pair<Resource, Module> loadMainModule(Path mainpath) throws ScribParserException
 	{
 		//Pair<Resource, Module> p = this.loader.loadMainModule(mainpath);
 		Resource res = DirectoryResourceLocator.getResourceByFullPath(mainpath);  // FIXME: hardcoded to DirectoryResourceLocator -- main module loading should be factored out to front end (e.g. CommandLine)
@@ -82,7 +95,7 @@ public class MainContext
 		}
 	}
 
-	private void loadAllModules(Pair<Resource, Module> module)
+	private void loadAllModules(Pair<Resource, Module> module) throws ScribParserException
 	{
 		this.parsed.put(module.right.getFullModuleName(), module);
 		for (ImportDecl<?> id : module.right.getImportDecls())

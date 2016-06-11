@@ -8,6 +8,9 @@ import static demo.fase.smtp.Smtp.Smtp.Smtp._220;
 import static demo.fase.smtp.Smtp.Smtp.Smtp._250;
 import static demo.fase.smtp.Smtp.Smtp.Smtp._250d;
 
+import java.io.IOException;
+
+import org.scribble.main.ScribbleRuntimeException;
 import org.scribble.net.Buf;
 import org.scribble.net.scribsock.LinearSocket;
 import org.scribble.net.session.SSLSocketChannelWrapper;
@@ -17,6 +20,9 @@ import org.scribble.net.session.SocketChannelEndpoint;
 import demo.fase.smtp.Smtp.Smtp.Smtp;
 import demo.fase.smtp.Smtp.Smtp.channels.C.Smtp_C_1;
 import demo.fase.smtp.Smtp.Smtp.channels.C.Smtp_C_1_Future;
+import demo.fase.smtp.Smtp.Smtp.channels.C.Smtp_C_3;
+import demo.fase.smtp.Smtp.Smtp.channels.C.Smtp_C_3_Handler;
+import demo.fase.smtp.Smtp.Smtp.channels.C.Smtp_C_4;
 import demo.fase.smtp.Smtp.Smtp.channels.C.ioifaces.Branch_C_S_250__S_250d;
 import demo.fase.smtp.Smtp.Smtp.channels.C.ioifaces.Case_C_S_250__S_250d;
 import demo.fase.smtp.Smtp.Smtp.channels.C.ioifaces.Select_C_S_Ehlo;
@@ -51,7 +57,7 @@ public class FaseClient
 		{
 			se.connect(Smtp.S, SocketChannelEndpoint::new, host, port);
 
-			Buf<Smtp_C_1_Future> b1 = new Buf<>();
+			Buf<Smtp_C_1_Future> f1 = new Buf<>();
 			Smtp_C_1 s1 = new Smtp_C_1(se);
 
 			/*
@@ -65,9 +71,9 @@ public class FaseClient
 			)
 			.to(Select_C_S_Quit.cast).send(S, new Quit());
 			/*/
-			doInit1(
+			doInit(
 				LinearSocket.wrapClient(
-					doInit1(s1.async(S, _220, b1))
+					doInit(s1.async(S, _220, f1))
 						.send(S, new StartTls())
 						.async(S, _220)
 				, S, SSLSocketChannelWrapper::new)
@@ -75,11 +81,11 @@ public class FaseClient
 			.send(S, new Quit());
 			//*/
 
-			System.out.println("b1: " + b1.val.sync().msg);
+			System.out.println("f1: " + f1.val.sync().msg);
 		}
 	}
 
-	private Succ_In_S_250 doInit(Select_C_S_Ehlo<?> s) throws Exception
+	private Succ_In_S_250 doInitWithCasts(Select_C_S_Ehlo<?> s) throws Exception
 	{
 		Branch_C_S_250__S_250d<?, ?> b =
 				s.send(S, new Ehlo("test")).to(Branch_C_S_250__S_250d.cast);
@@ -103,7 +109,7 @@ public class FaseClient
 		S1 extends Branch_C_S_250__S_250d<S2, S1>,
 		S2 extends Succ_In_S_250
 	>
-	S2 doInit1(Select_C_S_Ehlo<S1> s) throws Exception
+	S2 doInit(Select_C_S_Ehlo<S1> s) throws Exception
 	{
 		Branch_C_S_250__S_250d<S2, S1> b = s.send(S, new Ehlo("test"));
 		Buf<_250> b1 = new Buf<>();
@@ -120,7 +126,7 @@ public class FaseClient
 			}
 		}
 	}
-	
+
 	public static <S, B extends Buf<?>> S printBuf(S s, B b)
 	{
 		System.out.print(b.val);
@@ -132,4 +138,37 @@ public class FaseClient
 		System.out.println(b.val);
 		return s;
 	}
+	
+	class MySmtpC3Handler implements Smtp_C_3_Handler
+	{
+		@Override
+		public void receive(Smtp_C_3 s3, demo.fase.smtp.Smtp.Smtp.ops._250d op, Buf<_250d> arg) throws ScribbleRuntimeException, IOException, ClassNotFoundException
+		{
+			s3.branch(S, this);
+		}
+
+		@Override
+		public void receive(Smtp_C_4 s4, demo.fase.smtp.Smtp.Smtp.ops._250 op, Buf<_250> arg) throws ScribbleRuntimeException, IOException, ClassNotFoundException
+		{
+			try
+			{
+				doInit(
+					LinearSocket.wrapClient(
+						s4.send(S, new StartTls())
+							.async(S, _220)
+					, S, SSLSocketChannelWrapper::new)
+				)
+				.send(S, new Quit());
+			}
+			catch (ScribbleRuntimeException | IOException | ClassNotFoundException x)
+			{
+				throw x;
+			}
+			catch (Exception x)
+			{
+				throw new ScribbleRuntimeException(x);
+			}
+		}
+	}
 }
+

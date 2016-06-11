@@ -19,6 +19,8 @@ import java.util.List;
 
 
 
+
+
 //import org.antlr.runtime.RecognitionException;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -28,12 +30,14 @@ import org.scribble.main.MainContext;
 import org.scribble.main.ScribbleException;
 import org.scribble.main.resource.DirectoryResourceLocator;
 import org.scribble.main.resource.ResourceLocator;
+import org.scribble.util.ScribParserException;
 import org.scribble.visit.Job;
 
 /**
  * Runs good and bad tests in Scribble.
  * 
  */
+@Deprecated  // Not currently used (via AllTest instead)
 @RunWith(value = Parameterized.class)
 public class TestWellFormedness {
 	private String filename;
@@ -70,9 +74,9 @@ public class TestWellFormedness {
 
 	@Test
 	public void tests() throws Exception {
-		try {
+		/*try {
 			MainContext mc = newMainContext();
-			Job job = new Job(mc.debug, mc.getParsedModules(), mc.main);
+			Job job = new Job(mc.debug, mc.getParsedModules(), mc.main, mc.useOldWF, mc.noLiveness);
 
 			job.checkWellFormedness();
 			if (hasErrors) fail("Should throw an error.");
@@ -80,6 +84,17 @@ public class TestWellFormedness {
 			if (!hasErrors) {
 				throw e;
 			}
+		}*/
+		MainContext mc = newMainContext();
+		Job job = new Job(mc.debug, mc.getParsedModules(), mc.main, mc.useOldWF, mc.noLiveness, mc.minEfsm, mc.fair);
+		ScribbleException x = job.testWellFormednessCheck();
+		if (!hasErrors && x != null)
+		{
+			throw x;
+		}
+		else if (hasErrors && x == null)
+		{
+			fail("Should throw an error.");
 		}
 	}
 
@@ -87,6 +102,11 @@ public class TestWellFormedness {
 	private MainContext newMainContext()
 	{
 		boolean debug = false;
+		boolean useOldWF = false;
+		boolean noLiveness = false;
+		boolean minEfsm = false;
+		boolean fair = true;  // FIXME?
+
 		Path mainpath = Paths.get(filename);
 		List<Path> impaths = new ArrayList<Path>();
 		
@@ -95,6 +115,13 @@ public class TestWellFormedness {
 		impaths.add(Paths.get(dir));
 		
 		ResourceLocator locator = new DirectoryResourceLocator(impaths);
-		return new MainContext(debug, locator, mainpath);
+		try
+		{
+			return new MainContext(debug, locator, mainpath, useOldWF, noLiveness, minEfsm, fair);
+		}
+		catch (ScribParserException e)
+		{
+			throw new RuntimeException(e);
+		}
 	}
 }

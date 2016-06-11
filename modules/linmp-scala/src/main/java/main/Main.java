@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import org.scribble.main.ScribbleException;
+import org.scribble.util.ScribParserException;
 
 import ast.ScribProtocolTranslator;
 import ast.global.GlobalType;
@@ -15,7 +16,7 @@ import ast.name.Role;
 
 public class Main
 {
-	public static void main(String[] args) throws ScribbleException
+	public static void main(String[] args) throws ScribbleException, ScribParserException
 	{
 		Path mainmod = Paths.get(args[0]);
 		String proto = "Proto";  // Hardcoded to look for protocol named "Proto"

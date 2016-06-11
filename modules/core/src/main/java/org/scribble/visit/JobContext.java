@@ -1,5 +1,6 @@
 package org.scribble.visit;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -7,11 +8,15 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.scribble.ast.Module;
+import org.scribble.main.ScribbleException;
+import org.scribble.model.local.AutParser;
 import org.scribble.model.local.EndpointGraph;
+import org.scribble.model.wf.WFState;
 import org.scribble.sesstype.name.GProtocolName;
 import org.scribble.sesstype.name.LProtocolName;
 import org.scribble.sesstype.name.ModuleName;
 import org.scribble.sesstype.name.Role;
+import org.scribble.util.ScribUtil;
 
 // Global "static" context information for a Job
 // Mutable: projections are added mutably later -- replaceModule also mutable setter
@@ -26,6 +31,10 @@ public class JobContext
 	private final Map<LProtocolName, Module> projected = new HashMap<>();
 
 	private final Map<LProtocolName, EndpointGraph> graphs = new HashMap<>();
+	//private final Map<GProtocolName, GModel> gmodels = new HashMap<>();
+	private final Map<GProtocolName, WFState> gmodels = new HashMap<>();
+	
+	private final Map<LProtocolName, EndpointGraph> minimised = new HashMap<>();  // Toolchain currently depends on single instance of each graph (state id equality), e.g. cannot re-build or re-minimise, would not be the same graph instance
 	
 	public JobContext(Map<ModuleName, Module> parsed, ModuleName main)
 	{
@@ -145,18 +154,94 @@ public class JobContext
 		return this.projected.get(Projector.projectFullProtocolName(fullname, role));
 	}
 	
-	public void addEndpointGraph(LProtocolName lpn, EndpointGraph graph)
+	//public void addGlobalModel(GProtocolName fullname, GModel model)
+	public void addGlobalModel(GProtocolName fullname, WFState model)
 	{
-		this.graphs.put(lpn, graph);
+		this.gmodels.put(fullname, model);
+	}
+	
+	//public GModel getGlobalModel(GProtocolName fullname)
+	public WFState getGlobalModel(GProtocolName fullname)
+	{
+		return this.gmodels.get(fullname);
+	}
+	
+	public void addEndpointGraph(LProtocolName fullname, EndpointGraph graph)
+	{
+		this.graphs.put(fullname, graph);
 	}
 	
 	public EndpointGraph getEndpointGraph(GProtocolName fullname, Role role)
 	{
-		return this.graphs.get(Projector.projectFullProtocolName(fullname, role));
+		//return this.graphs.get(Projector.projectFullProtocolName(fullname, role));
+		return getEndpointGraph(Projector.projectFullProtocolName(fullname, role));
+	}
+
+  // Full projected name
+	public EndpointGraph getEndpointGraph(LProtocolName fullname)
+	{
+		return this.graphs.get(fullname);
 	}
 	
+	public void addMinimisedEndpointGraph(LProtocolName fullname, EndpointGraph graph)
+	{
+		this.minimised.put(fullname, graph);
+	}
+	
+	public EndpointGraph getMinimisedEndpointGraph(GProtocolName fullname, Role role)
+	{
+		return getMinimisedEndpointGraph(Projector.projectFullProtocolName(fullname, role));
+	}
+
+  // Full projected name
+	public EndpointGraph getMinimisedEndpointGraph(LProtocolName fullname)
+	{
+		EndpointGraph minimised = this.minimised.get(fullname);
+		if (minimised == null)
+		{
+			try
+			{
+				String aut = runAut(getEndpointGraph(fullname).init.toAut(), fullname + ".aut");
+				minimised = new AutParser().parse(aut);
+				addMinimisedEndpointGraph(fullname, minimised);
+			}
+			catch (ScribbleException e)
+			{
+				throw new RuntimeException(e);
+			}
+		}
+		return minimised;
+	}
+
 	public Module getMainModule()
 	{
 		return getModule(this.main);
+	}
+
+	// Duplicated from CommandLine.runDot
+	// Minimises the FSM up to bisimulation
+	// N.B. ltsconvert will typically re-number the states
+	private static String runAut(String fsm, String aut) throws ScribbleException
+	{
+		String tmpName = aut + ".tmp";
+		File tmp = new File(tmpName);
+		if (tmp.exists())  // Factor out with CommandLine.runDot (file exists check)
+		{
+			throw new RuntimeException("Cannot overwrite: " + tmpName);
+		}
+		try
+		{
+			ScribUtil.writeToFile(tmpName, fsm);
+			String[] res = ScribUtil.runProcess("ltsconvert", "-ebisim", "-iaut", "-oaut", tmpName);
+			if (!res[1].isEmpty())
+			{
+				throw new RuntimeException(res[1]);
+			}
+			return res[0];
+		}
+		finally
+		{
+			tmp.delete();
+		}
 	}
 }

@@ -1,12 +1,13 @@
 package org.scribble.codegen.java.endpointapi.ioifaces;
 
 import org.scribble.codegen.java.endpointapi.ReceiveSocketGenerator;
-import org.scribble.codegen.java.endpointapi.SendSocketGenerator;
+import org.scribble.codegen.java.endpointapi.OutputSocketGenerator;
 import org.scribble.codegen.java.endpointapi.SessionApiGenerator;
 import org.scribble.codegen.java.endpointapi.StateChannelApiGenerator;
 import org.scribble.codegen.java.util.AbstractMethodBuilder;
 import org.scribble.codegen.java.util.InterfaceBuilder;
 import org.scribble.codegen.java.util.JavaBuilder;
+import org.scribble.main.ScribbleException;
 import org.scribble.model.local.EndpointState;
 import org.scribble.model.local.IOAction;
 import org.scribble.model.local.Receive;
@@ -25,7 +26,7 @@ public class ActionInterfaceGenerator extends IOInterfaceGenerator
 	}
 
 	@Override
-	public InterfaceBuilder generateType()
+	public InterfaceBuilder generateType() throws ScribbleException
 	{
 		GProtocolName gpn = this.apigen.getGProtocolName();
 
@@ -62,7 +63,7 @@ public class ActionInterfaceGenerator extends IOInterfaceGenerator
 		}
 		else //if (this.a instanceof Send)
 		{
-			SendSocketGenerator.setSendHeaderWithoutReturnType(this.apigen, this.a, mb);
+			OutputSocketGenerator.setSendHeaderWithoutReturnType(this.apigen, this.a, mb);
 		}
 		/*EndpointState succ = this.curr.accept(this.a);
 		if (succ.isTerminal())
@@ -115,7 +116,7 @@ public class ActionInterfaceGenerator extends IOInterfaceGenerator
 	public static String getActionString(IOAction a)  // FIXME: peer not needed for inputs
 	{
 		//String name = a.peer + "$" + a.mid;
-		String name = a.peer + "_" + a.mid;
+		String name = a.obj + "_" + a.mid;
 		for (PayloadType<?> pay : a.payload.elems)
 		{
 			//name += "$" + pay;

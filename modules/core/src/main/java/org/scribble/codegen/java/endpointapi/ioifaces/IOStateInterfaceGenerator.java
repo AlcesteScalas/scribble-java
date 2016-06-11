@@ -14,6 +14,7 @@ import org.scribble.codegen.java.util.InterfaceBuilder;
 import org.scribble.codegen.java.util.JavaBuilder;
 import org.scribble.codegen.java.util.TypeBuilder;
 import org.scribble.main.RuntimeScribbleException;
+import org.scribble.main.ScribbleException;
 import org.scribble.model.local.EndpointState;
 import org.scribble.model.local.IOAction;
 import org.scribble.sesstype.name.GProtocolName;
@@ -44,13 +45,13 @@ public abstract class IOStateInterfaceGenerator extends IOInterfaceGenerator
 	}
 	
 	@Override
-	public InterfaceBuilder generateType()
+	public InterfaceBuilder generateType() throws ScribbleException
 	{
 		constructInterface();
 		return this.ib;
 	}
 
-	protected void constructInterface()
+	protected void constructInterface() throws ScribbleException
 	{
 		addHeader();
 		addSuccessorParamsAndActionInterfaces();
@@ -74,7 +75,7 @@ public abstract class IOStateInterfaceGenerator extends IOInterfaceGenerator
 	protected void addCastField()
 	{
 		String ifname = getIOStateInterfaceName(this.apigen.getSelf(), this.curr);
-		Set<IOAction> as = this.curr.getAcceptable();
+		Set<IOAction> as = this.curr.getTakeable();
 
 		FieldBuilder cast = this.ib.newField("cast");
 		cast.addModifiers(TypeBuilder.PUBLIC, TypeBuilder.STATIC, TypeBuilder.FINAL);
@@ -85,12 +86,15 @@ public abstract class IOStateInterfaceGenerator extends IOInterfaceGenerator
 	protected void addSuccessorParamsAndActionInterfaces()
 	{
 		int i = 1;
-		for (IOAction a : this.curr.getAcceptable().stream().sorted(IOACTION_COMPARATOR).collect(Collectors.toList()))
+		for (IOAction a : this.curr.getTakeable().stream().sorted(IOACTION_COMPARATOR).collect(Collectors.toList()))
 		{
-			String actif = this.actions.get(a).getName();
-			this.ib.addParameters("__Succ" + i + " extends " + SuccessorInterfaceGenerator.getSuccessorInterfaceName(a));
-			this.ib.addInterfaces(actif + "<__Succ" + i + ">");
-			i++;
+			if (a.isSend() || a.isReceive())  // HACK FIXME
+			{
+				String actif = this.actions.get(a).getName();
+				this.ib.addParameters("__Succ" + i + " extends " + SuccessorInterfaceGenerator.getSuccessorInterfaceName(a));
+				this.ib.addInterfaces(actif + "<__Succ" + i + ">");
+				i++;
+			}
 		}
 	}
 
@@ -117,8 +121,9 @@ public abstract class IOStateInterfaceGenerator extends IOInterfaceGenerator
 			case UNARY_INPUT: name = "Receive"; break;
 			case POLY_INPUT:  name = "Branch";  break;
 			case TERMINAL:    throw new RuntimeScribbleException("Shouldn't get in here: " + s);
+			default:          throw new RuntimeException("(TODO) I/O interface generation: " + s.getStateKind());
 		}
-		return name + "_" + self + "_" + s.getAcceptable().stream().sorted(IOACTION_COMPARATOR)
+		return name + "_" + self + "_" + s.getTakeable().stream().sorted(IOACTION_COMPARATOR)
 				.map((a) -> ActionInterfaceGenerator.getActionString(a)).collect(Collectors.joining("__"));
 	}
 }

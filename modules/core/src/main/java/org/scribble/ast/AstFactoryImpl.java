@@ -3,7 +3,9 @@ package org.scribble.ast;
 import java.util.List;
 
 import org.scribble.ast.global.GChoice;
+import org.scribble.ast.global.GConnect;
 import org.scribble.ast.global.GContinue;
+import org.scribble.ast.global.GDisconnect;
 import org.scribble.ast.global.GDo;
 import org.scribble.ast.global.GInteractionNode;
 import org.scribble.ast.global.GInteractionSeq;
@@ -13,8 +15,12 @@ import org.scribble.ast.global.GProtocolDecl;
 import org.scribble.ast.global.GProtocolDef;
 import org.scribble.ast.global.GProtocolHeader;
 import org.scribble.ast.global.GRecursion;
+import org.scribble.ast.global.GWrap;
+import org.scribble.ast.local.LAccept;
 import org.scribble.ast.local.LChoice;
+import org.scribble.ast.local.LConnect;
 import org.scribble.ast.local.LContinue;
+import org.scribble.ast.local.LDisconnect;
 import org.scribble.ast.local.LDo;
 import org.scribble.ast.local.LInteractionNode;
 import org.scribble.ast.local.LInteractionSeq;
@@ -25,6 +31,8 @@ import org.scribble.ast.local.LProtocolHeader;
 import org.scribble.ast.local.LReceive;
 import org.scribble.ast.local.LRecursion;
 import org.scribble.ast.local.LSend;
+import org.scribble.ast.local.LWrapClient;
+import org.scribble.ast.local.LWrapServer;
 import org.scribble.ast.local.SelfRoleDecl;
 import org.scribble.ast.name.NameNode;
 import org.scribble.ast.name.PayloadElemNameNode;
@@ -41,6 +49,7 @@ import org.scribble.ast.name.simple.OpNode;
 import org.scribble.ast.name.simple.RecVarNode;
 import org.scribble.ast.name.simple.RoleNode;
 import org.scribble.del.DefaultDel;
+import org.scribble.del.DelegationElemDel;
 import org.scribble.del.ImportModuleDel;
 import org.scribble.del.ModuleDel;
 import org.scribble.del.NonRoleArgListDel;
@@ -51,7 +60,9 @@ import org.scribble.del.RoleDeclDel;
 import org.scribble.del.RoleDeclListDel;
 import org.scribble.del.ScribDel;
 import org.scribble.del.global.GChoiceDel;
+import org.scribble.del.global.GConnectDel;
 import org.scribble.del.global.GContinueDel;
+import org.scribble.del.global.GDisconnectDel;
 import org.scribble.del.global.GDoDel;
 import org.scribble.del.global.GInteractionSeqDel;
 import org.scribble.del.global.GMessageTransferDel;
@@ -59,8 +70,12 @@ import org.scribble.del.global.GProtocolBlockDel;
 import org.scribble.del.global.GProtocolDeclDel;
 import org.scribble.del.global.GProtocolDefDel;
 import org.scribble.del.global.GRecursionDel;
+import org.scribble.del.global.GWrapDel;
+import org.scribble.del.local.LAcceptDel;
 import org.scribble.del.local.LChoiceDel;
+import org.scribble.del.local.LConnectDel;
 import org.scribble.del.local.LContinueDel;
+import org.scribble.del.local.LDisconnectDel;
 import org.scribble.del.local.LDoDel;
 import org.scribble.del.local.LInteractionSeqDel;
 import org.scribble.del.local.LProjectionDeclDel;
@@ -70,6 +85,8 @@ import org.scribble.del.local.LProtocolDefDel;
 import org.scribble.del.local.LReceiveDel;
 import org.scribble.del.local.LRecursionDel;
 import org.scribble.del.local.LSendDel;
+import org.scribble.del.local.LWrapClientDel;
+import org.scribble.del.local.LWrapServerDel;
 import org.scribble.del.name.AmbigNameNodeDel;
 import org.scribble.del.name.DataTypeNodeDel;
 import org.scribble.del.name.MessageSigNameNodeDel;
@@ -103,6 +120,7 @@ public class AstFactoryImpl implements AstFactory
 	}
 
 	@Override
+	//public PayloadElemList PayloadElemList(List<PayloadElem<?>> payloadelems)
 	public PayloadElemList PayloadElemList(List<PayloadElem> payloadelems)
 	{
 		PayloadElemList p = new PayloadElemList(payloadelems);
@@ -110,12 +128,30 @@ public class AstFactoryImpl implements AstFactory
 		return p;
 	}
 
-	@Override
+	/*@Override
 	public PayloadElem PayloadElem(PayloadElemNameNode name)
 	{
 		PayloadElem pe = new PayloadElem(name);
 		pe = del(pe, createDefaultDelegate());
 		return pe;
+	}*/
+
+	@Override
+	//public UnaryPayloadElem DataTypeElem(PayloadElemNameNode<DataTypeKind> name)
+	public UnaryPayloadElem UnaryPayloadElem(PayloadElemNameNode name)
+	{
+		UnaryPayloadElem de= new UnaryPayloadElem(name);
+		de = del(de, createDefaultDelegate());
+		return de;
+	}
+
+	@Override
+	public DelegationElem DelegationElem(GProtocolNameNode proto, RoleNode role)
+	{
+		DelegationElem de = new DelegationElem(proto, role);
+		//de = del(de, createDefaultDelegate());
+		de = del(de, new DelegationElemDel());
+		return de;
 	}
 	
 	@Override
@@ -159,9 +195,9 @@ public class AstFactoryImpl implements AstFactory
 	}
 
 	@Override
-	public GProtocolDecl GProtocolDecl(GProtocolHeader header, GProtocolDef def)
+	public GProtocolDecl GProtocolDecl(List<GProtocolDecl.Modifiers> modifiers, GProtocolHeader header, GProtocolDef def)
 	{
-		GProtocolDecl gpd = new GProtocolDecl(header, def);
+		GProtocolDecl gpd = new GProtocolDecl(modifiers, header, def);
 		gpd = del(gpd, new GProtocolDeclDel());
 		return gpd;
 	}
@@ -189,6 +225,14 @@ public class AstFactoryImpl implements AstFactory
 		rd = del(rd, new RoleDeclDel());
 		return rd;
 	}
+
+	/*@Override
+	public ConnectDecl ConnectDecl(RoleNode src, RoleNode role)
+	{
+		ConnectDecl cd = new ConnectDecl(src, role);
+		cd = del(cd, new ConnectDeclDel());
+		return cd;
+	}*/
 
 	@Override
 	public NonRoleParamDeclList NonRoleParamDeclList(List<NonRoleParamDecl<NonRoleParamKind>> pds)
@@ -236,6 +280,32 @@ public class AstFactoryImpl implements AstFactory
 		GMessageTransfer gmt = new GMessageTransfer(src, msg, dests);
 		gmt = del(gmt, new GMessageTransferDel());
 		return gmt;
+	}
+
+	@Override
+	public GConnect GConnect(RoleNode src, MessageNode msg, RoleNode dest)
+	//public GConnect GConnect(RoleNode src, RoleNode dest)
+	{
+		GConnect gc = new GConnect(src, msg, dest);
+		//GConnect gc = new GConnect(src, dest);
+		gc = del(gc, new GConnectDel());
+		return gc;
+	}
+
+	@Override
+	public GDisconnect GDisconnect(RoleNode src, RoleNode dest)
+	{
+		GDisconnect gc = new GDisconnect(src, dest);
+		gc = del(gc, new GDisconnectDel());
+		return gc;
+	}
+
+	@Override
+	public GWrap GWrap(RoleNode src, RoleNode dest)
+	{
+		GWrap gw = new GWrap(src, dest);
+		gw = del(gw, new GWrapDel());
+		return gw;
 	}
 
 	@Override
@@ -467,6 +537,50 @@ public class AstFactoryImpl implements AstFactory
 		LReceive ls = new LReceive(src, msg, dests);
 		ls = del(ls, new LReceiveDel());
 		return ls;
+	}
+	
+	@Override
+	public LConnect LConnect(RoleNode src, MessageNode msg, RoleNode dest)
+	//public LConnect LConnect(RoleNode src, RoleNode dest)
+	{
+		LConnect lc = new LConnect(src, msg, dest);
+		//LConnect lc = new LConnect(src, dest);
+		lc = del(lc, new LConnectDel());
+		return lc;
+	}
+
+	@Override
+	public LAccept LAccept(RoleNode src, MessageNode msg, RoleNode dest)
+	//public LAccept LAccept(RoleNode src, RoleNode dest)
+	{
+		LAccept la = new LAccept(src, msg, dest);
+		//LAccept la = new LAccept(src, dest);
+		la = del(la, new LAcceptDel());
+		return la;
+	}
+
+	@Override
+	public LDisconnect LDisconnect(RoleNode self, RoleNode peer)
+	{
+		LDisconnect lc = new LDisconnect(self, peer);
+		lc = del(lc, new LDisconnectDel());
+		return lc;
+	}
+
+	@Override
+	public LWrapClient LWrapClient(RoleNode self, RoleNode peer)
+	{
+		LWrapClient lwc = new LWrapClient(self, peer);
+		lwc = del(lwc, new LWrapClientDel());
+		return lwc;
+	}
+
+	@Override
+	public LWrapServer LWrapServer(RoleNode self, RoleNode peer)
+	{
+		LWrapServer lws = new LWrapServer(self, peer);
+		lws = del(lws, new LWrapServerDel());
+		return lws;
 	}
 
 	@Override

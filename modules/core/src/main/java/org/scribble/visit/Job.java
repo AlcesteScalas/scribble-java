@@ -12,6 +12,7 @@ import org.scribble.codegen.java.endpointapi.SessionApiGenerator;
 import org.scribble.codegen.java.endpointapi.StateChannelApiGenerator;
 import org.scribble.codegen.java.endpointapi.ioifaces.IOInterfacesGenerator;
 import org.scribble.del.local.LProtocolDeclDel;
+import org.scribble.main.RuntimeScribbleException;
 import org.scribble.main.ScribbleException;
 import org.scribble.sesstype.name.GProtocolName;
 import org.scribble.sesstype.name.LProtocolName;
@@ -22,29 +23,61 @@ import org.scribble.sesstype.name.Role;
 public class Job
 {
 	// FIXME: verbose/debug printing parameter: should be in MainContext, but currently cannot access that class directly from here
+	//public final boolean jUnit;
 	public final boolean debug;
+	public final boolean useOldWf;
+	public final boolean noLiveness;
+	public final boolean minEfsm;  // Currently only affects EFSM output (i.e. -fsm, -dot) and API gen -- doesn't affect model checking
+	public final boolean fair;
 	
 	private final JobContext jcontext;  // Mutable (Visitor passes replace modules)
 	
 	// Just take MainContext as arg? -- would need to fix Maven dependencies
-	public Job(boolean debug, Map<ModuleName, Module> parsed, ModuleName main)
+	//public Job(boolean jUnit, boolean debug, Map<ModuleName, Module> parsed, ModuleName main, boolean useOldWF, boolean noLiveness)
+	public Job(boolean debug, Map<ModuleName, Module> parsed, ModuleName main, boolean useOldWF, boolean noLiveness, boolean minEfsm, boolean fair)
 	{
+		//this.jUnit = jUnit;
 		this.debug = debug;
+		this.useOldWf = useOldWF;
+		this.noLiveness = noLiveness;
+		this.minEfsm = minEfsm;
+		this.fair = fair;
+
 		this.jcontext = new JobContext(parsed, main);
 	}
 
+//<<<<<<< HEAD
 	public void checkLinearMPScalaWellFormedness() throws ScribbleException
 	{
 		checkWellFormedness();  // TODO: do the required checks
+	}
+//=======
+	public ScribbleException testWellFormednessCheck()
+	{
+		try
+		{
+			checkWellFormedness();
+		}
+		catch (ScribbleException x)
+		{
+			return x;
+		}
+		return null;
+//>>>>>>> c8632ac4e2f0be6d39fe1bb20efc1302521dee6b
 	}
 
 	public void checkWellFormedness() throws ScribbleException
 	{
 		runContextBuildingPasses();
-		runVisitorPassOnAllModules(WFChoiceChecker.class);  // For enabled roles and disjoint enabling messages
-		//runVisitorPassOnAllModules(WFChoicePathChecker.class);
+		runVisitorPassOnAllModules(WFChoiceChecker.class);  // For enabled roles and disjoint enabling messages -- includes connectedness checks
+		////runVisitorPassOnAllModules(WFChoicePathChecker.class);
 		runProjectionPasses();
-		runVisitorPassOnAllModules(ReachabilityChecker.class);
+		runVisitorPassOnAllModules(ReachabilityChecker.class);  // Moved before GlobalModelChecker.class, OK?
+		if (!this.useOldWf)
+		{
+			runVisitorPassOnAllModules(GlobalModelChecker.class);
+		}
+		//runVisitorPassOnAllModules(ReachabilityChecker.class);
 	}
 	
 	private void runContextBuildingPasses() throws ScribbleException
@@ -55,7 +88,7 @@ public class Job
 		runVisitorPassOnAllModules(RoleCollector.class);  // Actually, this is the second part of protocoldecl context building
 		runVisitorPassOnAllModules(ProtocolDefInliner.class);
 		runVisitorPassOnAllModules(InlinedProtocolUnfolder.class);
-		//runNodeVisitorPass(GlobalModelBuilder.class);  // Incomplete
+		//runVisitorPassOnAllModules(GlobalModelBuilder.class);
 	}
 
 	// Due to Projector not being a subprotocol visitor, so "external" subprotocols may not be visible in ModuleContext building for the projections of the current root Module
@@ -72,9 +105,11 @@ public class Job
 	private void runProjectionContextBuildingPasses() throws ScribbleException
 	{
 		runVisitorPassOnProjectedModules(ModuleContextBuilder.class);
-		runVisitorPassOnProjectedModules(ProjectedChoiceSubjectFixer.class);  // Must come before other passes to fix DUMMY role occurrences
 		runVisitorPassOnProjectedModules(ProtocolDeclContextBuilder.class);
 		runVisitorPassOnProjectedModules(RoleCollector.class);  // NOTE: doesn't collect from choice subjects (may be invalid until projected choice subjs fixed)
+		runVisitorPassOnProjectedModules(ProjectedChoiceDoPruner.class);
+		// Disable ProjectedChoiceSubjectFixer (local choice subject inference) for more general global WF
+		runVisitorPassOnProjectedModules(ProjectedChoiceSubjectFixer.class);  // Must come before other passes that need DUMMY role occurrences to be fixed
 		runVisitorPassOnProjectedModules(ProjectedRoleDeclFixer.class);  // Possibly could do after inlining, and do role collection on the inlined version
 		runVisitorPassOnProjectedModules(ProtocolDefInliner.class);
 		runVisitorPassOnProjectedModules(InlinedProtocolUnfolder.class);
@@ -93,7 +128,7 @@ public class Job
 				Collectors.toMap((lpn) -> lpn, (lpn) -> this.jcontext.getModule(lpn.getPrefix())));
 	}
 	
-  // Endpoint graphs are "inlined", so only a single graph is built (cf. projection output)
+  /*// Endpoint graphs are "inlined", so only a single graph is built (cf. projection output)
 	public void buildGraph(GProtocolName fullname, Role role) throws ScribbleException  // Need to visit from Module for visitor context
 	{
 		debugPrintPass("Running " + EndpointGraphBuilder.class + " for " + fullname + "@" + role);
@@ -101,10 +136,15 @@ public class Job
 		
 		//System.out.println("AAA: " + this.jcontext.getProjection(fullname, role));
 
-		this.jcontext.getProjection(fullname, role).accept(new EndpointGraphBuilder(this)); 
+		Module proj = this.jcontext.getProjection(fullname, role);
+		if (proj == null)
+		{
+			throw new ScribbleException("Shouldn't see this: " + fullname);  // Should be suppressed by an earlier failure
+		}
+		proj.accept(new EndpointGraphBuilder(this)); 
 			// Builds FSMs for all local protocols in this module as root (though each projected module contains a single local protocol)
 			// Subprotocols "inlined" by FsmBuilder (scoped subprotocols not supported)
-	}
+	}*/
 
 	public Map<String, String> generateSessionApi(GProtocolName fullname) throws ScribbleException
 	{
@@ -117,17 +157,29 @@ public class Job
 	// FIXME: refactor an EndpointApiGenerator
 	public Map<String, String> generateStateChannelApi(GProtocolName fullname, Role self, boolean subtypes) throws ScribbleException
 	{
-		if (this.jcontext.getEndpointGraph(fullname, self) == null)
+		/*if (this.jcontext.getEndpointGraph(fullname, self) == null)
 		{
 			buildGraph(fullname, self);
-		}
+		}*/
 		debugPrintPass("Running " + StateChannelApiGenerator.class + " for " + fullname + "@" + self);
 		StateChannelApiGenerator apigen = new StateChannelApiGenerator(this, fullname, self);
-		IOInterfacesGenerator iogen = new IOInterfacesGenerator(apigen, subtypes);
+		IOInterfacesGenerator iogen = null;
+		try
+		{
+			iogen = new IOInterfacesGenerator(apigen, subtypes);
+		}
+		catch (RuntimeScribbleException e)
+		{
+			//System.err.println("[Warning] Skipping I/O Interface generation for protocol featuring: " + fullname);
+			System.err.println("[Warning] Skipping I/O Interface generation for: " + fullname + "\n  Cause: " + e.getMessage());
+		}
 		// Construct the Generators first, to build all the types -- then call generate to "compile" all Builders to text (further building changes will not be output)
 		Map<String, String> api = new HashMap<>(); // filepath -> class source  // Store results?
 		api.putAll(apigen.generateApi());
-		api.putAll(iogen.generateApi());
+		if (iogen != null)
+		{
+			api.putAll(iogen.generateApi());
+		}
 		return api;
 	}
 	

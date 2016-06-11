@@ -1,16 +1,10 @@
 package org.scribble.del.global;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.scribble.ast.AstFactoryImpl;
-import org.scribble.ast.InteractionNode;
 import org.scribble.ast.ScribNode;
 import org.scribble.ast.global.GInteractionNode;
 import org.scribble.ast.global.GInteractionSeq;
@@ -20,14 +14,11 @@ import org.scribble.ast.local.LNode;
 import org.scribble.del.InteractionSeqDel;
 import org.scribble.del.ScribDelBase;
 import org.scribble.main.ScribbleException;
-import org.scribble.model.global.ModelAction;
-import org.scribble.sesstype.kind.Global;
-import org.scribble.sesstype.name.Role;
+import org.scribble.model.global.GModelState;
 import org.scribble.visit.GlobalModelBuilder;
 import org.scribble.visit.Projector;
 import org.scribble.visit.ProtocolDefInliner;
 import org.scribble.visit.env.InlineProtocolEnv;
-import org.scribble.visit.env.ModelEnv;
 import org.scribble.visit.env.ProjectionEnv;
 
 public class GInteractionSeqDel extends InteractionSeqDel
@@ -65,9 +56,11 @@ public class GInteractionSeqDel extends InteractionSeqDel
 	{
 		GInteractionSeq gis = (GInteractionSeq) visited;
 		List<LInteractionNode> lis = new LinkedList<>();
-		for (InteractionNode<Global> gi : gis.getInteractions())
+		for (GInteractionNode gi : gis.getInteractions())
 		{
 			LNode ln = (LNode) ((ProjectionEnv) gi.del().env()).getProjection();
+			//LNode ln = ((GInteractionNodeDel) gi.del()).project(gi, self);  // FIXME: won't work for do
+			// FIXME: move node-specific projects to G nodes (not dels) and take child projections as params, bit like reconstruct
 			if (ln instanceof LInteractionSeq)  // Self comm sequence
 			{
 				lis.addAll(((LInteractionSeq) ln).getInteractions());
@@ -84,12 +77,43 @@ public class GInteractionSeqDel extends InteractionSeqDel
 				lis.clear();
 			}
 		}*/
-		LInteractionSeq projection = AstFactoryImpl.FACTORY.LInteractionSeq(lis);
+		LInteractionSeq projection = gis.project(proj.peekSelf(), lis);
 		proj.pushEnv(proj.popEnv().setProjection(projection));
 		return (GInteractionSeq) ScribDelBase.popAndSetVisitorEnv(this, proj, gis);
 	}
 	
-	@Override
+	public GInteractionSeq visitForGlobalModelBuilding(GlobalModelBuilder conv, GInteractionSeq child)
+	{
+		GModelState entry = conv.builder.getEntry();
+		GModelState exit = conv.builder.getExit();
+		try
+		{
+			for (int i = 0; i < child.getInteractions().size(); i++)
+			{
+				if (i == child.getInteractions().size() - 1)
+				{
+					conv.builder.setExit(exit);
+					child.getInteractions().get(i).accept(conv);
+				}
+				else
+				{
+					GModelState tmp = conv.builder.newState(Collections.emptySet());
+					conv.builder.setExit(tmp);
+					child.getInteractions().get(i).accept(conv);
+					conv.builder.setEntry(conv.builder.getExit());  // exit may not be tmp, entry/exit can be modified, e.g. continue
+				}
+			}
+		}
+		catch (ScribbleException e)
+		{
+			throw new RuntimeException("Shouldn't get in here: " + e);
+		}
+		//conv.builder.setExit(exit);
+		conv.builder.setEntry(entry);
+		return child;	
+	}
+
+	/*@Override
 	public void enterModelBuilding(ScribNode parent, ScribNode child, GlobalModelBuilder builder) throws ScribbleException
 	{
 		ScribDelBase.pushVisitorEnv(this, builder);
@@ -98,13 +122,13 @@ public class GInteractionSeqDel extends InteractionSeqDel
 	@Override
 	public GInteractionSeq leaveModelBuilding(ScribNode parent, ScribNode child, GlobalModelBuilder builder, ScribNode visited) throws ScribbleException
 	{
-		GInteractionSeq gis = (GInteractionSeq) visited;
-		Set<ModelAction> all = new HashSet<>();
-		Map<Role, ModelAction> leaves = null;
+		/*GInteractionSeq gis = (GInteractionSeq) visited;
+		Set<GModelAction> all = new HashSet<>();
+		Map<Role, GModelAction> leaves = null;
 		for (InteractionNode<Global> gi : gis.getInteractions())
 		{
 			ModelEnv env = ((ModelEnv) gi.del().env());
-			Set<ModelAction> as = env.getActions();
+			Set<GModelAction> as = env.getActions();
 			all.addAll(as);
 			if (leaves == null)
 			{
@@ -112,7 +136,7 @@ public class GInteractionSeqDel extends InteractionSeqDel
 			}
 			else
 			{
-				Set<ModelAction> init = as.stream().filter((a) -> a.getDependencies().isEmpty()).collect(Collectors.toSet());
+				Set<GModelAction> init = as.stream().filter((a) -> a.getDependencies().isEmpty()).collect(Collectors.toSet());
 				addDeps(leaves, init);
 				setLeaves(leaves, env.getLeaves().values());
 			}
@@ -122,25 +146,27 @@ public class GInteractionSeqDel extends InteractionSeqDel
 		env = env.setActions(all, leaves);
 		builder.pushEnv(env);
 		GInteractionSeq tmp = (GInteractionSeq) ScribDelBase.popAndSetVisitorEnv(this, builder, visited);
-		return tmp;
+		return tmp;* /
+		throw new RuntimeException("TODO: " + visited);
 	}
 	
-	private static void addDeps(Map<Role, ModelAction> leaves, Set<ModelAction> next)
+	private static void addDeps(Map<Role, GModelAction> leaves, Set<GModelAction> next)
 	{
-		for (ModelAction a : next)
+		/*for (GModelAction a : next)
 		{
 			if (leaves.containsKey(a.src))
 			{
 				a.addDependency(leaves.get(a.src));
 			}
-		}
+		}* /
+		throw new RuntimeException("TODO: ");
 	}
 	
-	private static void setLeaves(Map<Role, ModelAction> leaves, Collection<ModelAction> as)
+	private static void setLeaves(Map<Role, GModelAction> leaves, Collection<GModelAction> as)
 	{
-		for (ModelAction a : as)
+		for (GModelAction a : as)
 		{
 			leaves.put(a.src, a);
 		}
-	}
+	}*/
 }

@@ -16,6 +16,7 @@ import org.scribble.parser.ScribParser;
 import org.scribble.sesstype.kind.Global;
 import org.scribble.sesstype.name.GProtocolName;
 import org.scribble.sesstype.name.ModuleName;
+import org.scribble.util.ScribParserException;
 import org.scribble.visit.Job;
 
 import ast.global.GlobalType;
@@ -23,7 +24,7 @@ import ast.global.GlobalTypeTranslator;
 
 public class ScribProtocolTranslator
 {
-	public GlobalType parse(Path mainmod, String simplename) throws ScribbleException
+	public GlobalType parse(Path mainmod, String simplename) throws ScribbleException, ScribParserException
 	{
 		Module main = parseMainScribModule(mainmod);
 		ProtocolDecl<Global> pd = main.getProtocolDecl(new GProtocolName(simplename));
@@ -32,7 +33,7 @@ public class ScribProtocolTranslator
 	}
 
 	// TODO: doesn't support Scribble module imports yet
-	private Module parseMainScribModule(Path mainmod) throws ScribbleException
+	private Module parseMainScribModule(Path mainmod) throws ScribbleException, ScribParserException
 	{
 		AntlrParser antlrParser = new AntlrParser();
 		ScribParser scribParser = new ScribParser();
@@ -42,7 +43,7 @@ public class ScribProtocolTranslator
 		Module main = (Module) scribParser.parse(antlrParser.parseAntlrTree(res));
 		Map<ModuleName, Module> parsed = new HashMap<>();
 		parsed.put(main.getFullModuleName(), main);
-		Job job = new Job(false, parsed, main.getFullModuleName());
+		Job job = new Job(false, parsed, main.getFullModuleName(), false, false, false, false);
 		job.checkLinearMPScalaWellFormedness();  // FIXME TODO
 		return job.getContext().getMainModule();
 	}

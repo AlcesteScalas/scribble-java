@@ -7,10 +7,12 @@ import org.scribble.ast.Choice;
 import org.scribble.ast.InteractionSeq;
 import org.scribble.ast.ProtocolDecl;
 import org.scribble.ast.ScribNode;
+import org.scribble.ast.global.GProtocolDecl;
 import org.scribble.main.ScribbleException;
 import org.scribble.sesstype.kind.ProtocolKind;
 import org.scribble.visit.env.WFChoiceEnv;
 
+// Note: now only used for choice subject and enabled checking 
 // FIXME: refactor as distinct enabling messages checker (cf. GChoiceDel, WFChoicePathChecker)
 public class WFChoiceChecker extends UnfoldingVisitor<WFChoiceEnv>
 {
@@ -27,20 +29,30 @@ public class WFChoiceChecker extends UnfoldingVisitor<WFChoiceEnv>
 	@Override
 	protected WFChoiceEnv makeRootProtocolDeclEnv(ProtocolDecl<? extends ProtocolKind> pd)
 	{
-		return new WFChoiceEnv();
+		return new WFChoiceEnv(new HashSet<>(pd.header.roledecls.getRoles()),
+				!(pd.isGlobal() && ((GProtocolDecl) pd).modifiers.contains(GProtocolDecl.Modifiers.EXPLICIT)));  // FIXME: consider locals; also, explicit modifier should be carried over to local projections
 	}
 
 	@Override
 	public ScribNode visit(ScribNode parent, ScribNode child) throws ScribbleException
 	{
-		if (child instanceof Choice<?>)
+		if (child instanceof GProtocolDecl)
 		{
-			return visitOverrideForChoice((InteractionSeq<?>) parent, (Choice<?>) child);
+			GProtocolDecl gpd = (GProtocolDecl) child;
+			if (gpd.isAuxModifier())
+			{
+				return child;  // bypass aux protocols  // FIXME: integrate bypass functionality into made enter/visit/leave pattern
+			}
 		}
-		else
+
+		if (getJob().useOldWf)
 		{
-			return super.visit(parent, child);
+			if (child instanceof Choice<?>)  // Only needed for old WF (for distinct enabling message checking)  // FIXME: maybe move connectedness checking to a separate pass, i.e. vanilla UnfoldingVisitor (if retained as syntactic check)
+			{
+				return visitOverrideForChoice((InteractionSeq<?>) parent, (Choice<?>) child);
+			}
 		}
+		return super.visit(parent, child);
 	}
 
 	private ScribNode visitOverrideForChoice(InteractionSeq<?> parent, Choice<?> child) throws ScribbleException
@@ -48,7 +60,7 @@ public class WFChoiceChecker extends UnfoldingVisitor<WFChoiceEnv>
 		if (child instanceof Choice<?>)
 		{
 			Choice<?> cho = (Choice<?>) child;
-			if (!this.visited.contains(cho))
+			if (!this.visited.contains(cho))  // ** Old WF breaks connectedness checking, e.g. rec X { choice at A { connect A to B; continue X; } } because of choice visit pruning
 			{
 				this.visited.add(cho);
 				//ScribNode n = cho.visitChildren(this);

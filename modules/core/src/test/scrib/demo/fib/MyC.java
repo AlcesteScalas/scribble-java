@@ -11,7 +11,6 @@ import demo.fib.Fib.Adder.Adder;
 import demo.fib.Fib.Adder.channels.C.Adder_C_1;
 import demo.fib.Fib.Adder.roles.C;
 
-
 public class MyC
 {
 	public static void main(String[] args) throws Exception
@@ -22,8 +21,6 @@ public class MyC
 			se.connect(Adder.S, SocketChannelEndpoint::new, "localhost", 8888);
 
 			Adder_C_1 s1 = new Adder_C_1(se);
-			
-			//Buff<Integer> buf = new Buff<>(1);
 			
 			//System.out.println("Client: " + buf.val);
 		}
