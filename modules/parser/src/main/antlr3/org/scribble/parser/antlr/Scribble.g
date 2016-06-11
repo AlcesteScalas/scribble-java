@@ -155,7 +155,7 @@ tokens
 	LOCALSEND = 'local-send';
 	LOCALRECEIVE = 'local-receive';*/
 	
-	PAYLOADHACK = 'payload-hack';  // FIXME
+	//PAYLOADHACK = 'payload-hack';  // FIXME
 }
 
 

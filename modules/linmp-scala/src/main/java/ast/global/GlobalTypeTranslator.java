@@ -46,24 +46,24 @@ public class GlobalTypeTranslator
 				Role src = this.factory.Role(gmt.src.toString());
 				if (gmt.getDestinations().size() > 1)
 				{
-					throw new RuntimeException("TODO: " + gmt);
+					throw new RuntimeException("[TODO]: " + gmt);
 				}
 				Role dest = this.factory.Role(gmt.getDestinations().get(0).toString());
 				if (!gmt.msg.isMessageSigNode())
 				{
-					throw new RuntimeException("TODO: " + gmt);
+					throw new RuntimeException("[TODO]: " + gmt);
 				}
 				MessageSigNode msn = ((MessageSigNode) gmt.msg);
 				Label lab = this.factory.MessageLab(msn.op.toString());
 				PayloadType pay = null;
 				if (msn.payloads.getElements().size() > 1)
 				{
-					throw new RuntimeException("TODO: " + gmt);
+					throw new RuntimeException("[TODO]: " + gmt);
 				}
 				else if (!msn.payloads.getElements().isEmpty())
 				{
 					String tmp = msn.payloads.getElements().get(0).toString().trim();
-					if (tmp.length() > 1 && tmp.startsWith("\"") && tmp.endsWith("\""))
+					/*if (tmp.length() > 1 && tmp.startsWith("\"") && tmp.endsWith("\""))  // Obsoleted by DELEGATION payloadelement
 					{
 						tmp = tmp.substring(1, tmp.length() - 1);
 						pay = this.ltp.parse(tmp);
@@ -71,6 +71,17 @@ public class GlobalTypeTranslator
 						{
 							throw new RuntimeException("Shouldn't get in here: " + tmp);
 						}
+					}*/
+					int i = tmp.indexOf('@');
+					if (i != -1)
+					{
+						String proto = tmp.substring(0, i);
+						String role = tmp.substring(i+1, tmp.length());
+						System.out.println("111: " + proto + ", " + role);
+						
+						.. get proto, project for role (via apply(GlobalType g, Role r, Merge.Operator merge)), use as payload
+						
+						pay = this.factory.BaseType(tmp);
 					}
 					else
 					{
@@ -86,7 +97,7 @@ public class GlobalTypeTranslator
 			{
 				if (is.size() > 1)
 				{
-					throw new RuntimeException("TODO: " + is);
+					throw new RuntimeException("[TODO]: " + is);
 				}
 				GChoice gc = (GChoice) first; 
 				List<GlobalType> parsed = gc.getBlocks().stream()
@@ -115,7 +126,7 @@ public class GlobalTypeTranslator
 			{
 				if (is.size() > 1)
 				{
-					throw new RuntimeException("TODO: " + is);
+					throw new RuntimeException("[TODO]: " + is);
 				}
 				GRecursion gr = (GRecursion) first;
 				RecVar recvar = this.factory.RecVar(gr.recvar.toString());
