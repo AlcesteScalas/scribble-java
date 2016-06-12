@@ -22,7 +22,7 @@ import ast.global.GlobalTypeTranslator;
 
 public class ScribProtocolTranslator
 {
-	public GlobalType parse(Path mainmod, String simplename) throws ScribbleException, ScribParserException
+	public GlobalType parseAndCheck(Path mainmod, String simplename) throws ScribbleException, ScribParserException
 	{
 		/*Module main = parseMainScribModule(mainmod);
 		Job job = new Job(false, parsed, main.getFullModuleName(), false, false, false, false);*/
