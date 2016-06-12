@@ -15,5 +15,9 @@
   		<groupId>org.scribble</groupId>
   		<artifactId>scribble-parser</artifactId>
   	</dependency>
+  	<dependency>
+  		<groupId>org.scribble</groupId>
+  		<artifactId>scribble-cli</artifactId>
+  	</dependency>
   </dependencies>
 </project>

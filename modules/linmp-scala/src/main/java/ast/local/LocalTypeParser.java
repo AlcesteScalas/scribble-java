@@ -9,6 +9,7 @@ import ast.name.Label;
 import ast.name.RecVar;
 import ast.name.Role;
 
+@Deprecated
 public class LocalTypeParser
 {
 	private final AstFactory factory = new AstFactory();

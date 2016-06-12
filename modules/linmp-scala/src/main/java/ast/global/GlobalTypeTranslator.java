@@ -1,36 +1,59 @@
 package ast.global;
 
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import org.scribble.ast.MessageSigNode;
+import org.scribble.ast.context.ModuleContext;
 import org.scribble.ast.global.GChoice;
 import org.scribble.ast.global.GContinue;
 import org.scribble.ast.global.GInteractionNode;
 import org.scribble.ast.global.GMessageTransfer;
+import org.scribble.ast.global.GProtocolBlock;
+import org.scribble.ast.global.GProtocolDecl;
 import org.scribble.ast.global.GProtocolDef;
 import org.scribble.ast.global.GRecursion;
+import org.scribble.del.global.GProtocolDefDel;
+import org.scribble.main.ScribbleException;
+import org.scribble.sesstype.SessionTypeFactory;
+import org.scribble.sesstype.name.GProtocolName;
+import org.scribble.visit.JobContext;
 
 import ast.AstFactory;
 import ast.PayloadType;
-import ast.local.LocalTypeParser;
+import ast.local.ops.Sanitizer;
 import ast.name.Label;
 import ast.name.RecVar;
 import ast.name.Role;
 
 public class GlobalTypeTranslator
 {
-	private final AstFactory factory = new AstFactory();
-	private final LocalTypeParser ltp = new LocalTypeParser();
+	private final JobContext jobc;
+	private final ModuleContext mainc;
 	
-	public GlobalType translate(GProtocolDef gpd)
+	private final AstFactory factory = new AstFactory();
+	//private final LocalTypeParser ltp = new LocalTypeParser();
+	
+	public GlobalTypeTranslator(JobContext jobc, ModuleContext mainc)
+	{
+		this.jobc = jobc;
+		this.mainc = mainc;
+	}
+
+	public GlobalType translate(GProtocolDecl gpd) throws ScribbleException
+	{
+		GProtocolDef inlined = ((GProtocolDefDel) gpd.def.del()).getInlinedProtocolDef();
+		return translate(inlined);
+	}
+	
+	public GlobalType translate(GProtocolDef gpd) throws ScribbleException
 	{
 		return parseSeq(gpd.getBlock().getInteractionSeq().getInteractions());
 	}
 	
-	private GlobalType parseSeq(List<GInteractionNode> is)
+	private GlobalType parseSeq(List<GInteractionNode> is) throws ScribbleException
 	{
 		//List<GInteractionNode> is = block.getInteractionSeq().getInteractions();
 		if (is.isEmpty())
@@ -75,13 +98,15 @@ public class GlobalTypeTranslator
 					int i = tmp.indexOf('@');
 					if (i != -1)
 					{
-						String proto = tmp.substring(0, i);
-						String role = tmp.substring(i+1, tmp.length());
-						System.out.println("111: " + proto + ", " + role);
+						GProtocolName proto = SessionTypeFactory.parseGlobalProtocolName(tmp.substring(0, i));  // Should already be full name (DelegationElem disamb)
+						Role role = new Role(tmp.substring(i+1, tmp.length()));
+
+						GProtocolName fullname = (GProtocolName) this.mainc.getVisibleProtocolDeclFullName(proto);
+						GProtocolDecl gpd = (GProtocolDecl) this.jobc.getModule(fullname.getPrefix()).getProtocolDecl(fullname.getSimpleName());  // FIXME: cast
 						
-						.. get proto, project for role (via apply(GlobalType g, Role r, Merge.Operator merge)), use as payload
-						
-						pay = this.factory.BaseType(tmp);
+						// FIXME: recursive protocoldecl references via delegation (or otherwise?)
+						GlobalType gt = new GlobalTypeTranslator(this.jobc, this.mainc).translate(gpd);
+						pay = Sanitizer.apply(ast.global.ops.Projector.apply(gt, role, ast.local.ops.Merge::full));
 					}
 					else
 					{
@@ -100,9 +125,14 @@ public class GlobalTypeTranslator
 					throw new RuntimeException("[TODO]: " + is);
 				}
 				GChoice gc = (GChoice) first; 
-				List<GlobalType> parsed = gc.getBlocks().stream()
+				/*List<GlobalType> parsed = gc.getBlocks().stream()
 						.map((b) -> parseSeq(b.getInteractionSeq().getInteractions()))
-						.collect(Collectors.toList());
+						.collect(Collectors.toList());*/
+				List<GlobalType> parsed = new LinkedList<>();
+				for (GProtocolBlock b : gc.getBlocks())
+				{
+					parsed.add(parseSeq(b.getInteractionSeq().getInteractions()));
+				}
 				Role src = null;
 				Role dest = null;
 				Map<Label, GlobalSendCase> cases = new HashMap<>();

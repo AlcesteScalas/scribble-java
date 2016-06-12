@@ -1,0 +1,44 @@
+module Game;
+
+
+global protocol Proto(role Client, role S1, role S2)
+{
+	choice at S1
+	{
+		playAsA() from S1 to Client;
+		//playAsA() from S1 to S2;
+		do Game(Client, S1, S2);
+	}
+	or
+	{
+		playAsB(Game@B) from S1 to Client;  // FIXME: handle delegation in model checking
+		//playAsB() from S1 to S2;
+	}
+	or
+	{
+		playAsC(Game@C) from S1 to Client;
+		//playAsC() from S1 to S2;
+	}
+}
+
+
+global protocol Game(role A, role B, role C)
+{
+	// Randonmly made up for now
+	rec X
+	{
+		choice at A
+		{
+			1() from A to B;
+			1() from B to C;
+			1() from C to A;
+			continue X;
+		}
+		or
+		{
+			2() from A to B;
+			2() from B to C;
+			2() from C to A;
+		}
+	}
+}
