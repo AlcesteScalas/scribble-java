@@ -24,7 +24,7 @@ public class NameDisambiguator extends ModuleContextVisitor
 	private Set<Role> roles = new HashSet<>();
 	private Map<String, NonRoleParamKind> params = new HashMap<>();
 	private Set<RecVar> recvars = new HashSet<RecVar>();
-
+	
 	public NameDisambiguator(Job job)
 	{
 		super(job);
@@ -78,6 +78,8 @@ public class NameDisambiguator extends ModuleContextVisitor
 		this.roles.clear();
 		this.params.clear();
 		this.recvars.clear();  // Should be unnecessary
+		
+		//this.pds.clear();  // No: called by ProtocolDecl leaveDisambiguation (i.e. before the above leave override) -- should be unnecessary anyway
 	}
 	
 	public void addRole(Role role)
