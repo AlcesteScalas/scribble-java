@@ -7,9 +7,17 @@ import org.scribble.sesstype.name.PayloadType;
 //public abstract class PayloadElem<K extends PayloadTypeKind> extends ScribNodeBase
 //public abstract class PayloadElem<T extends PayloadElemNameNode<?>> extends ScribNodeBase -- problem is GProtocolNameNode child isn't a payload kind, and anyway there's also a role node child
 //public abstract class PayloadElem extends ScribNodeBase
-public interface PayloadElem extends ScribNode
+//public interface PayloadElem extends ScribNode
+public interface PayloadElem<K extends PayloadTypeKind> extends ScribNode
 {
-	default boolean isDelegationElem()
+	PayloadElem<K> project();  // Currently outside of visitor/env pattern (cf. MessageNode)
+	
+	default boolean isGlobalDelegationElem()
+	{
+		return false;
+	}
+
+	default boolean isLocalDelegationElem()
 	{
 		return false;
 	}
@@ -50,7 +58,7 @@ public interface PayloadElem extends ScribNode
 	}*/
 	
 	//public abstract PayloadType<?> toPayloadType();
-	public PayloadType<? extends PayloadTypeKind> toPayloadType();
+	public PayloadType<? extends PayloadTypeKind> toPayloadType();  // Mainly a wrapper method for the wrapped NameNode
 	
 	/*public abstract Name<K> toName();  // Not deriving from Named/NameNode, delegation doesn't fit -- would need to make a special (Global@Role) name of Local kind
 	

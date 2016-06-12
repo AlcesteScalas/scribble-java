@@ -5,6 +5,7 @@ import java.util.List;
 import org.scribble.ast.global.GChoice;
 import org.scribble.ast.global.GConnect;
 import org.scribble.ast.global.GContinue;
+import org.scribble.ast.global.GDelegationElem;
 import org.scribble.ast.global.GDisconnect;
 import org.scribble.ast.global.GDo;
 import org.scribble.ast.global.GInteractionNode;
@@ -20,6 +21,7 @@ import org.scribble.ast.local.LAccept;
 import org.scribble.ast.local.LChoice;
 import org.scribble.ast.local.LConnect;
 import org.scribble.ast.local.LContinue;
+import org.scribble.ast.local.LDelegationElem;
 import org.scribble.ast.local.LDisconnect;
 import org.scribble.ast.local.LDo;
 import org.scribble.ast.local.LInteractionNode;
@@ -50,6 +52,7 @@ import org.scribble.ast.name.simple.RecVarNode;
 import org.scribble.ast.name.simple.RoleNode;
 import org.scribble.sesstype.kind.Kind;
 import org.scribble.sesstype.kind.NonRoleParamKind;
+import org.scribble.sesstype.kind.PayloadTypeKind;
 import org.scribble.sesstype.name.GProtocolName;
 import org.scribble.sesstype.name.Role;
 
@@ -60,11 +63,13 @@ public interface AstFactory
 	
 	MessageSigNode MessageSigNode(OpNode op, PayloadElemList payload);
 	//PayloadElemList PayloadElemList(List<PayloadElem<?>> payloadelems);
-	PayloadElemList PayloadElemList(List<PayloadElem> payloadelems);
+	PayloadElemList PayloadElemList(List<PayloadElem<?>> payloadelems);
 	//PayloadElem PayloadElem(PayloadElemNameNode name);
 	//UnaryPayloadElem DataTypeElem(PayloadElemNameNode<DataTypeKind> name);
-	UnaryPayloadElem UnaryPayloadElem(PayloadElemNameNode name);
-	DelegationElem DelegationElem(GProtocolNameNode name, RoleNode role);
+	//UnaryPayloadElem UnaryPayloadElem(PayloadElemNameNode<?> name);
+	<K extends PayloadTypeKind> UnaryPayloadElem<K> UnaryPayloadElem(PayloadElemNameNode<K> name);
+	GDelegationElem DelegationElem(GProtocolNameNode name, RoleNode role);
+	LDelegationElem LDelegationElem(LProtocolNameNode name);
 
 	ModuleDecl ModuleDecl(ModuleNameNode fullmodname);
 	ImportModule ImportModule(ModuleNameNode modname, ModuleNameNode alias);

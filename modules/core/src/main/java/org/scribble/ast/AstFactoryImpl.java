@@ -5,6 +5,7 @@ import java.util.List;
 import org.scribble.ast.global.GChoice;
 import org.scribble.ast.global.GConnect;
 import org.scribble.ast.global.GContinue;
+import org.scribble.ast.global.GDelegationElem;
 import org.scribble.ast.global.GDisconnect;
 import org.scribble.ast.global.GDo;
 import org.scribble.ast.global.GInteractionNode;
@@ -20,6 +21,7 @@ import org.scribble.ast.local.LAccept;
 import org.scribble.ast.local.LChoice;
 import org.scribble.ast.local.LConnect;
 import org.scribble.ast.local.LContinue;
+import org.scribble.ast.local.LDelegationElem;
 import org.scribble.ast.local.LDisconnect;
 import org.scribble.ast.local.LDo;
 import org.scribble.ast.local.LInteractionNode;
@@ -49,7 +51,6 @@ import org.scribble.ast.name.simple.OpNode;
 import org.scribble.ast.name.simple.RecVarNode;
 import org.scribble.ast.name.simple.RoleNode;
 import org.scribble.del.DefaultDel;
-import org.scribble.del.DelegationElemDel;
 import org.scribble.del.ImportModuleDel;
 import org.scribble.del.ModuleDel;
 import org.scribble.del.NonRoleArgListDel;
@@ -62,6 +63,7 @@ import org.scribble.del.ScribDel;
 import org.scribble.del.global.GChoiceDel;
 import org.scribble.del.global.GConnectDel;
 import org.scribble.del.global.GContinueDel;
+import org.scribble.del.global.GDelegationElemDel;
 import org.scribble.del.global.GDisconnectDel;
 import org.scribble.del.global.GDoDel;
 import org.scribble.del.global.GInteractionSeqDel;
@@ -100,6 +102,7 @@ import org.scribble.sesstype.kind.Local;
 import org.scribble.sesstype.kind.ModuleKind;
 import org.scribble.sesstype.kind.NonRoleParamKind;
 import org.scribble.sesstype.kind.OpKind;
+import org.scribble.sesstype.kind.PayloadTypeKind;
 import org.scribble.sesstype.kind.RecVarKind;
 import org.scribble.sesstype.kind.RoleKind;
 import org.scribble.sesstype.kind.SigKind;
@@ -120,8 +123,8 @@ public class AstFactoryImpl implements AstFactory
 	}
 
 	@Override
-	//public PayloadElemList PayloadElemList(List<PayloadElem<?>> payloadelems)
-	public PayloadElemList PayloadElemList(List<PayloadElem> payloadelems)
+	//public PayloadElemList PayloadElemList(List<PayloadElem> payloadelems)
+	public PayloadElemList PayloadElemList(List<PayloadElem<?>> payloadelems)
 	{
 		PayloadElemList p = new PayloadElemList(payloadelems);
 		p = del(p, createDefaultDelegate());
@@ -138,19 +141,28 @@ public class AstFactoryImpl implements AstFactory
 
 	@Override
 	//public UnaryPayloadElem DataTypeElem(PayloadElemNameNode<DataTypeKind> name)
-	public UnaryPayloadElem UnaryPayloadElem(PayloadElemNameNode name)
+	//public UnaryPayloadElem UnaryPayloadElem(PayloadElemNameNode<?> name)
+	public <K extends PayloadTypeKind> UnaryPayloadElem<K> UnaryPayloadElem(PayloadElemNameNode<K> name)
 	{
-		UnaryPayloadElem de= new UnaryPayloadElem(name);
+		UnaryPayloadElem<K> de= new UnaryPayloadElem<>(name);
 		de = del(de, createDefaultDelegate());
 		return de;
 	}
 
 	@Override
-	public DelegationElem DelegationElem(GProtocolNameNode proto, RoleNode role)
+	public GDelegationElem DelegationElem(GProtocolNameNode proto, RoleNode role)
 	{
-		DelegationElem de = new DelegationElem(proto, role);
+		GDelegationElem de = new GDelegationElem(proto, role);
 		//de = del(de, createDefaultDelegate());
-		de = del(de, new DelegationElemDel());
+		de = del(de, new GDelegationElemDel());  // FIXME: GDelegationElemDel
+		return de;
+	}
+
+	@Override
+	public LDelegationElem LDelegationElem(LProtocolNameNode proto)
+	{
+		LDelegationElem de = new LDelegationElem(proto);
+		de = del(de, createDefaultDelegate());
 		return de;
 	}
 	
