@@ -133,12 +133,12 @@ public class ScalaProtocolExtractor extends Visitor<String>
 				}
 				else if (option instanceof Option.MPInputMessages)
 				{
-					skip = !((Option.MPInputMessages)option).classNames.contains(l);
+					skip = !((Option.MPInputMessages)option).classNames.contains(l.name);
 				}
 				else if (option instanceof Option.MPOutputMessages)
 				{
 					// If the abstract class is not required, skip it
-					skip = !((Option.MPOutputMessages)option).classNames.contains(l);
+					skip = !((Option.MPOutputMessages)option).classNames.contains(l.name);
 				}
 				else
 				{
@@ -315,12 +315,14 @@ public class ScalaProtocolExtractor extends Visitor<String>
 				ast.linear.Type lcnt = c.cont;
 				if (lcnt instanceof In)
 				{
-					cont = nameEnv.get(((In)lcnt).carried());
+					// FIXME: what about custom name environments?
+					cont = ast.local.ops.DefaultNameEnvBuilder.MULTIPARTY_CLASSES_PREFIX + nameEnv.get(((In)lcnt).carried());
 					assert(cont != null);
 				}
 				else if (lcnt instanceof Out)
 				{
-					cont = nameEnv.get(((Out)lcnt).carried());
+					// FIXME: what about custom name environments?
+					cont = ast.local.ops.DefaultNameEnvBuilder.MULTIPARTY_CLASSES_PREFIX + nameEnv.get(((Out)lcnt).carried());
 					assert(cont != null);
 				}
 				else if (lcnt instanceof End)

@@ -12,6 +12,11 @@ import ast.name.RecVar;
 public interface AbstractVariant
 {
 	/**
+	 * @return the labels of the variant
+	 */
+	Set<Label> labels();
+	
+	/**
 	 * @return the payload type carried by the variant for the given label.
 	 */
 	Payload payload(Label l);

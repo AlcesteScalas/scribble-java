@@ -17,6 +17,12 @@ public class Variant implements AbstractVariant
 	}
 	
 	@Override
+	public Set<Label> labels()
+	{
+		return cases.keySet();
+	}
+	
+	@Override
 	public Payload payload(Label l)
 	{
 		return cases.get(l).payload;

@@ -48,7 +48,8 @@ public class Main
 		for (Entry<Role, LocalType> rl: projs.entrySet())
 		{
 			LocalType l = rl.getValue();
-			System.out.println("\nLocal projection for " + rl.getKey() + ":\n    " + l);
+			Role r = rl.getKey();
+			System.out.println("\nLocal projection for " + r + ":\n    " + l);
 //			Map<Role, Type> p = ast.local.ops.Projector.apply(l, ast.binary.ops.Merge::full);
 //			for (Role r: l.roles())
 //			{
@@ -59,8 +60,11 @@ public class Main
 //				String scalaProt = ast.linear.ops.ScalaProtocolExtractor.apply(bl);
 //				System.out.println("    Scala protocol classes:\n" + scalaProt);
 //			}
-			String scalaMPProt = ast.local.ops.ScalaProtocolExtractor.apply(l);
-			System.out.println("    Scala protocol classes for local type:\n" + scalaMPProt);
+			String scalaMPProt = ast.local.ops.ScalaProtocolExtractor.apply(l, "test.proto." + r);
+			System.out.println("    Scala protocol classes for local type:\n" +
+					"-----------------------------------------------------\n" +
+					scalaMPProt +
+					"-----------------------------------------------------\n");
 		}
 	}
 

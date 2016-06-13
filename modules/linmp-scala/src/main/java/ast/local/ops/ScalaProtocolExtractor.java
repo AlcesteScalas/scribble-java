@@ -9,6 +9,7 @@ import org.scribble.main.ScribbleException;
 
 import ast.linear.AbstractVariant;
 import ast.linear.In;
+import ast.linear.End;
 import ast.linear.Out;
 import ast.local.ops.DefaultNameEnvBuilder;
 import ast.local.LocalBranch;
@@ -19,6 +20,7 @@ import ast.local.LocalRec;
 import ast.local.LocalSelect;
 import ast.local.LocalType;
 import ast.local.LocalTypeVisitor;
+import ast.name.BaseType;
 import ast.name.Label;
 import ast.name.RecVar;
 import ast.name.Role;
@@ -65,8 +67,8 @@ public class ScalaProtocolExtractor extends LocalTypeVisitor<String>
 	private final LocalType visiting;
 	private LocalNameEnv nameEnv;
 	private final ChannelTracker ctracker;
-	// Sorted the roles
-	private final List<Role> roles;
+	private final List<Role> roles; // Sorted list of roles in "visiting"
+	private final String root; // Root of the class hierarchy
 	
 	// Classes used for input
 	private Set<String> inputClassNames = new java.util.HashSet<>();
@@ -74,24 +76,41 @@ public class ScalaProtocolExtractor extends LocalTypeVisitor<String>
 	// Classes used for inputting
 	private Set<String> outputClassNames = new java.util.HashSet<>();
 	
-	public static String apply(LocalType t) throws ScribbleException
+	/** Generate the Scala protocol classes representing a local type.
+	 * 
+	 * @param t Local type to extract classes for
+	 * @param root The root of the class hierarchy to be generated
+	 * @return The Scala class definitions representing {@code t}
+	 * @throws ScribbleException in case of error
+	 */
+	public static String apply(LocalType t, String root) throws ScribbleException
 	{
-		return apply(t, DefaultNameEnvBuilder.apply(t));
+		return apply(t, root, DefaultNameEnvBuilder.apply(t));
 	}
 	
-	public static String apply(LocalType t, LocalNameEnv nameEnv) throws ScribbleException
+	/** Generate the Scala protocol classes representing a local type, using
+	 * a given naming environment.
+	 *  
+	 * @param t Local type to extract classes for
+	 * @param root The root of the class hierarchy to be generated
+	 * @param nameEnv Naming environment (supposed to be suitable for {@code t})
+	 * @return The Scala class definitions representing {@code t}
+	 * @throws ScribbleException in case of error
+	 */
+	public static String apply(LocalType t, String root, LocalNameEnv nameEnv) throws ScribbleException
 	{
-		ScalaProtocolExtractor te = new ScalaProtocolExtractor(t, nameEnv);
+		ScalaProtocolExtractor te = new ScalaProtocolExtractor(t, root, nameEnv);
 		
 		return te.process();
 	}
 	
-	private ScalaProtocolExtractor(LocalType t, LocalNameEnv nameEnv) throws ScribbleException
+	private ScalaProtocolExtractor(LocalType t, String root, LocalNameEnv nameEnv) throws ScribbleException
 	{
 		this.visiting = t;
 		this.nameEnv = nameEnv;
 		this.ctracker = new ChannelTracker(t);
 		this.roles = new java.util.ArrayList<>(new java.util.TreeSet<>(ctracker.keySet()));
+		this.root = root;
 	}
 	
 	@Override
@@ -105,36 +124,55 @@ public class ScalaProtocolExtractor extends LocalTypeVisitor<String>
 		for (Role r: new java.util.ArrayList<>(new java.util.TreeSet<>(ctracker.keySet())))
 		{
 			ast.linear.Type t = ctracker.get(r).t;
-			linProtoClasses.add(ast.linear.ops.ScalaProtocolExtractor.apply(t));
+			String linp = ast.linear.ops.ScalaProtocolExtractor.apply(t).trim();
+			if (!linp.isEmpty())
+			{
+				linProtoClasses.add(linp);
+			}
 		}
 
-		String mpProtoClasses = visit(visiting);
+		String mpProtoClasses = visit(visiting).trim();
 		if (!errors.isEmpty())
 		{
 			throw new ScribbleException("Error(s) extracting protocol of " + visiting + ": " + String.join(";", errors));
 		}
 		
+		assert(!inputClassNames.isEmpty() || !outputClassNames.isEmpty());
+		
 		// Pick roles in alphabetical order from channel tracker
 		for (Role r: new java.util.ArrayList<>(new java.util.TreeSet<>(ctracker.keySet())))
 		{
 			ast.linear.Type t = ctracker.get(r).t;
-			msgInProtoClasses.add(ast.linear.ops.ScalaMessageExtractor.inputs(
-					t, inputClassNames));
-			msgOutProtoClasses.add(ast.linear.ops.ScalaMessageExtractor.outputs(
-					t, outputClassNames));
+			String inmsgs = ast.linear.ops.ScalaMessageExtractor.inputs(
+					t, inputClassNames).trim();
+			if (!inmsgs.isEmpty())
+			{
+				msgInProtoClasses.add(inmsgs);
+			}
+			
+			String outmsgs = ast.linear.ops.ScalaMessageExtractor.outputs(
+					t, outputClassNames).trim();
+			if (!outmsgs.isEmpty())
+			{
+				msgOutProtoClasses.add(outmsgs);
+			}
 		}
 		
-		return (
-				"// Input message types for multiparty sessions\n" +
+		assert(msgInProtoClasses.size() == inputClassNames.size());
+		assert(msgOutProtoClasses.size() == outputClassNames.size());
+		
+		return ("package " + root + "\n\n" +
+				"import lchannels._\n\n" +
+				"// Input message types for multiparty sessions (" + String.join(", ", inputClassNames) + ")\n" +
 				String.join("\n", msgInProtoClasses) +
-				"\n// Output message types for multiparty sessions\n" +
+				"\n\n// Output message types for multiparty sessions (" + String.join(", ", outputClassNames) + ")\n" +
 				String.join("\n", msgOutProtoClasses) +
-				"\n// Multiparty session classes\n" +
+				"\n\n// Multiparty session classes\n" +
 				mpProtoClasses +
-				"// Classes representing messages in binary sessions\n" +
-				"\npackage object " + BINARY_CLASSES_NS + " {\n" +
+				"\n\n// Classes representing messages (with continuations) in binary sessions\n" +
+				"package object " + BINARY_CLASSES_NS + " {\n" +
 				String.join("\n", linProtoClasses) +
-				"}\n"
+				"\n}\n"
 				);
 	}
 
@@ -156,14 +194,67 @@ public class ScalaProtocolExtractor extends LocalTypeVisitor<String>
 		LinearTypeNameEnv lte = ctracker.get(node.src);
 		// Note: we use the fact that we know lte.t is In or Out (not End)
 		AbstractVariant v = getCarried(lte.t);
+		String vname = lte.env.get(v);
+		assert(vname != null);
 		
-		// Remember that the underlying variant is used for input
-		assert(lte.env.get(v) != null);
-		inputClassNames.add(lte.env.get(v));
+		// Remember that the underlying variant is used for output
+		inputClassNames.add(vname);
+		
 		
 		String res = "case class " + className + "(" + String.join(", ", chanspecs) + ") {\n";
-		res += "  def receive() // TODO\n";
-		res += "}\n";
+		res += ("  def receive() = {\n" +
+				"    " + node.src.name + ".receive() match {\n");
+		// FIXME: here we could simplify if the variant has just one label
+		for (Label l: v.labels())
+		{
+			res += "      case m @ " + BINARY_CLASSES_NS + "." + l + "(p) => {\n";
+			
+			ast.linear.Payload payload = v.payload(l);
+			String payloadRepr;
+			if (payload instanceof BaseType)
+			{
+				payloadRepr = "p";
+			}
+			else if (payload instanceof LocalType)
+			{
+				payloadRepr = "TODO";
+			}
+			else
+			{
+				throw new RuntimeException("BUG: unsupported payload type " + payload);
+			}
+			
+			LocalType contb = node.cases.get(l).body;
+			String ret;
+			if (contb instanceof LocalEnd)
+			{
+				ret = l.name + "(" + payloadRepr + ")"; // We are done
+			}
+			else
+			{
+				String contClassName = nameEnv.get(contb);
+				List<String> contSpecs = new java.util.LinkedList<>();
+				for (Role rcont: this.roles)
+				{
+					if (!rcont.equals(node.src))
+					{
+						contSpecs.add(rcont.name); // Reuse the channel
+					}
+					else
+					{
+						contSpecs.add("m.cont"); // Use the continuation
+					}
+				}
+				ret = l.name + "(" + payload + ", " + contClassName + "(" + String.join(", ", contSpecs) + "))";
+			}
+			
+			res += ("        " + ret + "\n" +
+					"      }\n");
+			
+		}
+		res += ("    }\n" +
+				"  }\n" +
+				"}");
 		
 		// Ensure that labels are sorted
 		for (Label l: new java.util.ArrayList<>(new java.util.TreeSet<>(node.cases.keySet())))
@@ -197,14 +288,83 @@ public class ScalaProtocolExtractor extends LocalTypeVisitor<String>
 		LinearTypeNameEnv lte = ctracker.get(node.dest);
 		// Note: we use the fact that we know lte.t is In or Out (not End)
 		AbstractVariant v = getCarried(lte.t);
+		String vname = lte.env.get(v);
+		assert(vname != null);
 		
 		// Remember that the underlying variant is used for output
-		assert(lte.env.get(v) != null);
-		outputClassNames.add(lte.env.get(v));
+		outputClassNames.add(vname);
 		
 		String res = "case class " + className + "(" + String.join(", ", chanspecs) + ") {\n";
-		res += "  def send(v: " + lte.env.get(lte.t) + ") // TODO\n";
-		res += "}\n";
+		res += ("  def send(v: " + vname + ") = {\n" +
+				"    v match {\n");
+		// FIXME: here we could simplify if the variant has just one label
+		for (Label l: v.labels())
+		{
+			res += "      case " + l + "(p) => {\n";
+			
+			ast.linear.Payload payload = v.payload(l);
+			String payloadRepr;
+			if (payload instanceof BaseType)
+			{
+				payloadRepr = "p";
+			}
+			else if (payload instanceof LocalType)
+			{
+				payloadRepr = "TODO";
+			}
+			else
+			{
+				throw new RuntimeException("BUG: unsupported payload type " + payload);
+			}
+			
+			ast.linear.Type cont = v.continuation(l);
+			String sendRepr;
+			if ((cont instanceof In) || (cont instanceof Out))
+			{
+				// Let lchannels take care of the continuation
+				sendRepr = " !! " + BINARY_CLASSES_NS + "." + l + "(" + payloadRepr + ")_";
+			}
+			else if (cont instanceof End)
+			{
+				sendRepr = " ! " + BINARY_CLASSES_NS + "." + l + "(" + payloadRepr + ")";
+			}
+			else
+			{
+				throw new RuntimeException("BUG: unsupported continuation type " + cont);
+			}
+			
+			LocalType contb = node.cases.get(l).body;
+			String ret;
+			if (contb instanceof LocalEnd)
+			{
+				ret = "()"; // We are done
+			}
+			else
+			{
+				String contClassName = nameEnv.get(contb);
+				List<String> contSpecs = new java.util.LinkedList<>();
+				for (Role rcont: this.roles)
+				{
+					if (!rcont.equals(node.dest))
+					{
+						contSpecs.add(rcont.name); // Reuse the channel
+					}
+					else
+					{
+						contSpecs.add("cnt"); // Use the continuation
+					}
+				}
+				ret = contClassName + "(" + String.join(", ", contSpecs) + ")";
+			}
+			
+			res += ("        val cnt = " + node.dest.name + sendRepr + "\n" +
+					"        " + ret + "\n" +
+					"      }\n");
+			
+		}
+		res += ("    }\n" +
+				"  }\n" +
+				"}");
 		
 		// Ensure that labels are sorted
 		for (Label l: new java.util.ArrayList<>(new java.util.TreeSet<>(node.cases.keySet())))

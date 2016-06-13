@@ -15,7 +15,11 @@ public class RecVar extends NameNode implements GlobalType, LocalType, Type, Abs
 		super(name);
 	}
 	
-	
+	@Override
+	public Set<Label> labels()
+	{
+		throw new RuntimeException("BUG: trying to get the labels of " + this);
+	}
 	
 	@Override
 	public Payload payload(Label l)

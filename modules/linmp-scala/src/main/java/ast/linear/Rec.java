@@ -17,6 +17,12 @@ public class Rec implements AbstractVariant
 	}
 	
 	@Override
+	public Set<Label> labels()
+	{
+		return body.labels();
+	}
+	
+	@Override
 	public Payload payload(Label l)
 	{
 		return body.payload(l);
