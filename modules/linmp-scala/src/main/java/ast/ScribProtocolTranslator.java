@@ -27,6 +27,10 @@ public class ScribProtocolTranslator
 		job.checkLinearMPScalaWellFormedness();  // FIXME TODO
 		Module main = job.getContext().getMainModule();
 
+		if (!main.hasProtocolDecl(simplename))
+		{
+			throw new ScribbleException("Global protocol not found: " + simplename);
+		}
 		GProtocolDecl gpd = (GProtocolDecl) main.getProtocolDecl(simplename);  // FIXME: cast
 		ModuleContext mainmodc = ((ModuleDel) main.del()).getModuleContext();
 		JobContext jobc = job.getContext();
