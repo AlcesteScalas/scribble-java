@@ -23,6 +23,18 @@ public abstract class DoDel extends SimpleInteractionNodeDel
 	}
 
 	@Override
+	public void enterDisambiguation(ScribNode parent, ScribNode child, NameDisambiguator disamb) throws ScribbleException
+	{
+		ModuleContext mc = disamb.getModuleContext();
+		Do<?> doo = (Do<?>) child;
+		ProtocolName<?> simpname = doo.proto.toName();
+		if (!mc.isVisibleProtocolDeclName(simpname))  // FIXME: do on entry here, before visiting DoArgListDel
+		{
+			throw new ScribbleException("Protocol decl not visible: " + simpname);
+		}
+	}
+
+	@Override
 	public ScribNode leaveDisambiguation(ScribNode parent, ScribNode child, NameDisambiguator disamb, ScribNode visited) throws ScribbleException
 	{
 		return leaveDisambiguationAux(parent, child, disamb, visited);  // To introduce type parameter
@@ -51,7 +63,7 @@ public abstract class DoDel extends SimpleInteractionNodeDel
 		ModuleContext mcontext = builder.getModuleContext();
 		Do<?> doo = (Do<?>) visited;
 		ProtocolName<?> pn = doo.proto.toName();  // leaveDisambiguation has fully qualified the target name
-		doo.roles.getRoles().stream().forEach((r) -> addProtocolDependency(builder, r, pn, doo.getTargetRoleParameter(jcontext, mcontext, r)));
+		doo.roles.getRoles().forEach((r) -> addProtocolDependency(builder, r, pn, doo.getTargetRoleParameter(jcontext, mcontext, r)));
 		return doo;
 	}
 

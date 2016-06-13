@@ -2,12 +2,14 @@ package org.scribble.del;
 
 import org.scribble.ast.ScribNode;
 import org.scribble.main.ScribbleException;
+import org.scribble.visit.DelegationProtocolRefChecker;
 import org.scribble.visit.EndpointGraphBuilder;
-import org.scribble.visit.GlobalModelBuilder;
+import org.scribble.visit.GlobalModelChecker;
 import org.scribble.visit.InlinedProtocolUnfolder;
 import org.scribble.visit.MessageIdCollector;
 import org.scribble.visit.ModuleContextBuilder;
 import org.scribble.visit.NameDisambiguator;
+import org.scribble.visit.ProjectedChoiceDoPruner;
 import org.scribble.visit.ProjectedChoiceSubjectFixer;
 import org.scribble.visit.ProjectedRoleDeclFixer;
 import org.scribble.visit.Projector;
@@ -15,8 +17,8 @@ import org.scribble.visit.ProtocolDeclContextBuilder;
 import org.scribble.visit.ProtocolDefInliner;
 import org.scribble.visit.ReachabilityChecker;
 import org.scribble.visit.RoleCollector;
+import org.scribble.visit.UnguardedChoiceDoProjectionChecker;
 import org.scribble.visit.WFChoiceChecker;
-import org.scribble.visit.WFChoicePathChecker;
 import org.scribble.visit.env.Env;
 
 // Immutable except for pass-specific Envs (by visitors) only -- Envs considered transient, not treated immutably (i.e. non defensive setter on del)
@@ -42,6 +44,16 @@ public interface ScribDel
 	}
 
 	default ScribNode leaveDisambiguation(ScribNode parent, ScribNode child, NameDisambiguator disamb, ScribNode visited) throws ScribbleException
+	{
+		return visited;
+	}
+
+	default void enterDelegationProtocolRefCheck(ScribNode parent, ScribNode child, DelegationProtocolRefChecker checker) throws ScribbleException
+	{
+
+	}
+
+	default ScribNode leaveDelegationProtocolRefCheck(ScribNode parent, ScribNode child, DelegationProtocolRefChecker checker, ScribNode visited) throws ScribbleException
 	{
 		return visited;
 	}
@@ -137,12 +149,12 @@ public interface ScribDel
 		return visited;
 	}
 
-	default void enterGraphBuilding(ScribNode parent, ScribNode child, EndpointGraphBuilder graph)
+	default void enterEndpointGraphBuilding(ScribNode parent, ScribNode child, EndpointGraphBuilder graph)
 	{
 		
 	}
 
-	default ScribNode leaveGraphBuilding(ScribNode parent, ScribNode child, EndpointGraphBuilder graph, ScribNode visited)
+	default ScribNode leaveEndpointGraphBuilding(ScribNode parent, ScribNode child, EndpointGraphBuilder graph, ScribNode visited) throws ScribbleException
 	{
 		return visited;
 	}
@@ -157,7 +169,7 @@ public interface ScribDel
 		return visited;
 	}
 
-	default void enterModelBuilding(ScribNode parent, ScribNode child, GlobalModelBuilder builder) throws ScribbleException
+	/*default void enterModelBuilding(ScribNode parent, ScribNode child, GlobalModelBuilder builder) throws ScribbleException
 	{
 		
 	}
@@ -165,7 +177,7 @@ public interface ScribDel
 	default ScribNode leaveModelBuilding(ScribNode parent, ScribNode child, GlobalModelBuilder builder, ScribNode visited) throws ScribbleException
 	{
 		return visited;
-	}
+	}*/
 	
 	/*//default void enterPathCollection(ScribNode parent, ScribNode child, PathCollectionVisitor<? extends PathEnv> coll) throws ScribbleException
 	default void enterPathCollection(ScribNode parent, ScribNode child, PathCollectionVisitor coll) throws ScribbleException
@@ -179,7 +191,7 @@ public interface ScribDel
 		return visited;
 	}*/
 	
-	default void enterWFChoicePathCheck(ScribNode parent, ScribNode child, WFChoicePathChecker coll) throws ScribbleException
+	/*default void enterWFChoicePathCheck(ScribNode parent, ScribNode child, WFChoicePathChecker coll) throws ScribbleException
 	{
 		
 	}
@@ -187,7 +199,7 @@ public interface ScribDel
 	default ScribNode leaveWFChoicePathCheck(ScribNode parent, ScribNode child, WFChoicePathChecker coll, ScribNode visited) throws ScribbleException
 	{
 		return visited;
-	}
+	}*/
 
 	/*default void enterEnablingMessageCollection(ScribNode parent, ScribNode child, EnablingMessageCollector coll)
 	{
@@ -198,4 +210,34 @@ public interface ScribDel
 	{
 		return visited;
 	}*/
+	
+	default void enterCompatCheck(ScribNode parent, ScribNode child, GlobalModelChecker coll) throws ScribbleException
+	{
+		
+	}
+
+	default ScribNode leaveCompatCheck(ScribNode parent, ScribNode child, GlobalModelChecker coll, ScribNode visited) throws ScribbleException
+	{
+		return visited;
+	}
+	
+	default void enterProjectedChoiceDoPruning(ScribNode parent, ScribNode child, ProjectedChoiceDoPruner pruner) throws ScribbleException
+	{
+		
+	}
+
+	default ScribNode leaveProjectedChoiceDoPruning(ScribNode parent, ScribNode child, ProjectedChoiceDoPruner proj, ScribNode visited) throws ScribbleException
+	{
+		return visited;
+	}
+	
+	default void enterUnguardedChoiceDoProjectionCheck(ScribNode parent, ScribNode child, UnguardedChoiceDoProjectionChecker checker) throws ScribbleException
+	{
+		
+	}
+
+	default ScribNode leaveUnguardedChoiceDoProjectionCheck(ScribNode parent, ScribNode child, UnguardedChoiceDoProjectionChecker checker, ScribNode visited) throws ScribbleException
+	{
+		return visited;
+	}
 }

@@ -1,7 +1,21 @@
 module Test;
 
-type <java> "java.lang.Integer" from "rt.jar" as Int;
+//type <java> "java.lang.Integer" from "rt.jar" as Int;
 
+
+global protocol Proto(role A, role B)
+{
+	(Proto2@C) from A to B;
+}
+
+global protocol Proto2(role C, role D)
+{
+	2() from C to D;
+}
+//*/
+
+
+/*
 global protocol Proto(role A, role B)
 {
 	choice at A
@@ -32,6 +46,8 @@ global protocol Proto(role A, role B)
 	//1("A!{l1():A?{l3(int):end},l2():end}") from A to B;
 	//1(Int) from A to B;
 }
+//*/
+
 
 /*local protocol MyLocalProtocol(self A, role B)
 {

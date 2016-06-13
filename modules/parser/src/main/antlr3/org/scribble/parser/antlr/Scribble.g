@@ -12,9 +12,10 @@ options
 	language = Java;
 	output = AST;
 	ASTLabelType = CommonTree;
-	backtrack = true;  // backtracking disabled by default? Is it bad to require this option?
+	//backtrack = true;  // backtracking disabled by default? Is it bad to require this option?
 	//memoize = true;
 }
+
 
 
 tokens
@@ -28,12 +29,18 @@ tokens
 	PROTOCOLKW = 'protocol';
 	GLOBALKW = 'global';
 	LOCALKW = 'local';
+	EXPLICITKW = 'explicit';
+	AUXKW = 'aux';
 	ROLEKW = 'role';
+	ACCEPTKW = 'accept';
 	SELFKW = 'self';
 	SIGKW = 'sig';
 	INSTANTIATESKW = 'instantiates';
 	ASKW = 'as';
 
+	CONNECTKW = 'connect';
+	DISCONNECTKW = 'disconnect';
+	WRAPKW = 'wrap';
 	FROMKW = 'from';
 	TOKW = 'to';
 	CHOICEKW = 'choice';
@@ -100,19 +107,25 @@ tokens
 	MESSAGESIGNATURE = 'message-signature';
 	ROLEDECLLIST = 'role-decl-list';
 	ROLEDECL = 'role-decl';
+	//CONNECTDECL = 'connect-decl';
 	ARGUMENTINSTANTIATIONLIST = 'argument-instantiation-list';
 	//ARGUMENTINSTANTIATION = 'argument-instantiation';
 	PAYLOAD = 'payload';
 	//PAYLOADELEMENT = 'payloadelement';
+	DELEGATION = 'delegation';
 	ROLEINSTANTIATIONLIST = 'role-instantiation-list';
 	ROLEINSTANTIATION = 'role-instantiation';  // FIXME: not consistent with arginstas/payloadeles
 
 	GLOBALPROTOCOLDECL = 'global-protocol-decl';
+	GLOBALPROTOCOLDECLMODS = 'global-protocol-decl-mods';
 	GLOBALPROTOCOLHEADER = 'global-protocol-header';
 	GLOBALPROTOCOLDEF = 'global-protocol-def';
 	GLOBALPROTOCOLBLOCK = 'global-protocol-block';
 	GLOBALINTERACTIONSEQUENCE = 'global-interaction-sequence';
 	GLOBALMESSAGETRANSFER = 'global-message-transfer';
+	GLOBALCONNECT = 'global-connect';
+	GLOBALDISCONNECT = 'global-disconnect';
+	GLOBALWRAP = 'global-wrap';
 	GLOBALCHOICE = 'global-choice';
 	GLOBALRECURSION = 'global-recursion';
 	GLOBALCONTINUE = 'global-continue';
@@ -142,7 +155,7 @@ tokens
 	LOCALSEND = 'local-send';
 	LOCALRECEIVE = 'local-receive';*/
 	
-	PAYLOADHACK = 'payload-hack';  // FIXME
+	//PAYLOADHACK = 'payload-hack';  // FIXME
 }
 
 
@@ -418,10 +431,14 @@ payloadelement:
 /*	ambiguousname  // Parser doesn't distinguish simple from qualified properly, even with backtrack
 |*/
 	qualifiedname  // This case subsumes simple names  // FIXME: ambiguousqualifiedname (or ambiguousname should just be qualified)
-|
+/*|
 	EXTIDENTIFIER
 	->
-	^(PAYLOADHACK EXTIDENTIFIER)
+	^(PAYLOADHACK EXTIDENTIFIER)*/
+|
+	protocolname '@' rolename
+->
+	^(DELEGATION rolename protocolname)
 ;
 
 
@@ -439,9 +456,27 @@ protocoldecl:
  * Section 3.7 Global Protocol Declarations
  */
 globalprotocoldecl:
-	 globalprotocolheader globalprotocoldefinition
+	  globalprotocolheader globalprotocoldefinition
 	->
-	^(GLOBALPROTOCOLDECL globalprotocolheader globalprotocoldefinition)
+	^(GLOBALPROTOCOLDECL globalprotocolheader globalprotocoldefinition )
+|
+	 globalprotocoldeclmodifiers globalprotocolheader globalprotocoldefinition  // HACK (implicit MP connection backwards compat)
+	 ->
+	^(GLOBALPROTOCOLDECL globalprotocolheader globalprotocoldefinition globalprotocoldeclmodifiers )
+;
+	
+globalprotocoldeclmodifiers:
+	AUXKW EXPLICITKW 
+	->
+	^( GLOBALPROTOCOLDECLMODS AUXKW EXPLICITKW )
+|
+	EXPLICITKW
+	->
+	^( GLOBALPROTOCOLDECLMODS EXPLICITKW )
+|
+	AUXKW
+	->
+	^( GLOBALPROTOCOLDECLMODS AUXKW )
 ;
 
 globalprotocolheader:
@@ -500,6 +535,10 @@ globalprotocolblock:
 	'{' globalinteractionsequence '}'
 	->
 	^(GLOBALPROTOCOLBLOCK globalinteractionsequence)
+/*|
+	'(' connectdecl ')' '{' globalinteractionsequence '}'
+	->
+	^(GLOBALPROTOCOLBLOCK globalinteractionsequence connectdecl)*/
 ;
 
 globalinteractionsequence:
@@ -522,6 +561,12 @@ globalinteraction:
 	globalinterruptible
 |
 	globaldo
+|
+	globalconnect
+|
+	globaldisconnect
+|
+	globalwrap
 ;
 
 
@@ -542,6 +587,42 @@ message:
 	messagesignaturename  // qualified messagesignaturename subsumes parametername case
 |
 	parametername*/
+;	
+
+globalconnect:
+	//message CONNECTKW rolename TOKW rolename
+	CONNECTKW rolename TOKW rolename ';'
+	->
+	^(GLOBALCONNECT rolename rolename ^(MESSAGESIGNATURE EMPTY_OPERATOR ^(PAYLOAD)))  // Empty message sig duplicated from messagesignature
+|
+	message CONNECTKW rolename TOKW rolename ';'
+	->
+	^(GLOBALCONNECT rolename rolename message)
+;
+/*	'(' connectdecl (',' connectdecl)* ')'
+	->
+	^(CONNECTDECLLIST connectdecl+)
+;* /
+	'(' connectdecl ')' 
+*/	
+
+/*connectdecl:
+	CONNECTKW rolename '->>' rolename
+	->
+	^(CONNECTDECL rolename rolename)
+;*/
+
+globaldisconnect:
+	DISCONNECTKW rolename ANDKW rolename ';'
+	->
+	^(GLOBALDISCONNECT rolename rolename )
+;
+
+globalwrap:
+	//message CONNECTKW rolename TOKW rolename
+	WRAPKW rolename TOKW rolename ';'
+	->
+	^(GLOBALWRAP rolename rolename)
 ;
 
 

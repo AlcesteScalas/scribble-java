@@ -1,21 +1,18 @@
 package org.scribble.codegen.java.endpointapi;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 import org.scribble.ast.Module;
 import org.scribble.codegen.java.util.ClassBuilder;
 import org.scribble.codegen.java.util.TypeBuilder;
+import org.scribble.main.ScribbleException;
 import org.scribble.model.local.EndpointState;
-import org.scribble.model.local.IOAction;
-import org.scribble.model.local.Receive;
-import org.scribble.model.local.Send;
 import org.scribble.sesstype.name.GProtocolName;
 import org.scribble.sesstype.name.LProtocolName;
 import org.scribble.sesstype.name.Role;
 import org.scribble.visit.Job;
+import org.scribble.visit.JobContext;
 import org.scribble.visit.Projector;
 
 // TODO: "wildcard" unary async: op doesn't matter -- for branch-receive op "still needed" to cast to correct branch state
@@ -40,17 +37,21 @@ public class StateChannelApiGenerator extends ApiGenerator
 
 	private Map<String, TypeBuilder> types = new HashMap<>();  // class/iface name key
 
-	public StateChannelApiGenerator(Job job, GProtocolName fullname, Role self)
+	public StateChannelApiGenerator(Job job, GProtocolName fullname, Role self) throws ScribbleException  // FIXME: APIGenerationException?
 	{
 		super(job, fullname);
 		this.self = self;
 		this.lpn = Projector.projectFullProtocolName(fullname, self);
-		this.init = job.getContext().getEndpointGraph(fullname, self).init;
+		//this.init = job.getContext().getEndpointGraph(fullname, self).init;
+		JobContext jc = job.getContext();
+		this.init = job.minEfsm ? jc.getMinimisedEndpointGraph(fullname, self).init : jc.getEndpointGraph(fullname, self).init;
+			
 		generateClassNames(this.init);
 		//this.root = this.classNames.get(this.init);
 		constructClasses(this.init);
 
-		EndpointState term = EndpointState.findTerminalState(new HashSet<>(), this.init);
+		//EndpointState term = EndpointState.findTerminalState(new HashSet<>(), this.init);
+		EndpointState term = EndpointState.getTerminal(this.init);
 		if (term != null)
 		{
 			ClassBuilder cb = new EndSocketGenerator(this, term).generateType();
@@ -96,7 +97,7 @@ public class StateChannelApiGenerator extends ApiGenerator
 		return this.lpn.getSimpleName().toString() +  "_" + this.counter++;
 	}
 
-	private void constructClasses(EndpointState curr)
+	private void constructClasses(EndpointState curr) throws ScribbleException
 	{
 		if (curr.isTerminal())
 		{
@@ -119,23 +120,36 @@ public class StateChannelApiGenerator extends ApiGenerator
 	}
 	
 	// Pre: curr is not terminal state
-	private ClassBuilder constructClass(EndpointState curr)
+	private ClassBuilder constructClass(EndpointState curr) throws ScribbleException  // FIXME: APIGenerationException?
 	{
-		Set<IOAction> as = curr.getAcceptable();
-		IOAction a = as.iterator().next();
-		if (a instanceof Send)
+		switch (curr.getStateKind())
 		{
-			return new SendSocketGenerator(this, curr).generateType();
-		}
-		else if (a instanceof Receive)
-		{
-			return (as.size() > 1)
-					? new BranchSocketGenerator(this, curr).generateType()
-					: new ReceiveSocketGenerator(this, curr).generateType();
-		}
-		else
-		{
-			throw new RuntimeException("TODO: " + curr);
+			case OUTPUT:
+			{
+				/*Set<IOAction> as = curr.getTakeable();
+				if (as.stream().allMatch((a) -> a.isSend()))*/
+				{
+					return new OutputSocketGenerator(this, curr).generateType();
+				}
+				//throw new RuntimeException("TODO: " + curr.toLongString());
+			}
+			case ACCEPT:
+			{
+				return new AcceptSocketGenerator(this, curr).generateType();
+			}
+			case UNARY_INPUT:
+			{
+				return new ReceiveSocketGenerator(this, curr).generateType();
+			}
+			case POLY_INPUT:
+			{
+				// Receive only
+				return new BranchSocketGenerator(this, curr).generateType();
+			}
+			default:
+			{
+				throw new RuntimeException("[TODO] State Channel API generation not supported for: " + curr.getStateKind() + ", " + curr.toLongString());
+			}
 		}
 	}
 	

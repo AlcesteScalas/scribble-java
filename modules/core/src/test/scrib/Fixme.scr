@@ -1,0 +1,105 @@
+//$ bin/scribblec.sh modules/core/src/test/scrib/Fixme.scr -ip modules/core/src/test/scrib/ -d modules/core/src/test/scrib/
+
+//http://sandbox.kidstrythisathome.com/erdos/
+
+
+module Fixme;
+
+
+/*
+explicit global protocol Proto1(role A, role B)
+{
+	connect A to B;
+	choice at A  // FIXME: disabling I/O i/f gen breaks branch API
+	{
+		1() from A to B;
+	}
+	or
+	{
+		2() from A to B;
+	}
+}
+//*/
+
+
+/*
+global protocol Proto1(role A, role B)
+{
+	(Proto2@C) from A to B;   // FIXME: should not be aux? (or if aux should check WF as root?)
+}
+
+aux global protocol Proto2(role C, role D)
+{
+	1() from C to D;
+}
+//*/
+
+
+/*
+explicit global protocol Proto(role A, role B, role C)
+{
+	connect A to B;
+	connect A to C;
+	rec X
+	{
+		choice at A  // FIXME: weak vs. strong liveness (global liveness vs local subtyping) -- generate subtyped global model (artificially unfair choice paths -- or simply terminal set role check?)
+		{
+			1() from A to B;
+			continue X;
+		}
+		or
+		{
+			2() from A to B;
+		}
+	}
+	3() from A to C;
+}
+//*/
+
+
+/*
+explicit global protocol Proto(role A, role B, role C, role D)
+{
+	connect A to B;
+	connect C to D;
+	//... A, B  // FIXME: investigate
+	//... C, D
+}
+//*/
+
+
+/*
+explicit global protocol Proto(role A, role B, role C, role D)
+{
+	connect A to B;
+	connect A to C;
+	connect A to D;
+	connect C to D;
+	disconnect A and C;  // FIXME: investigate
+	disconnect A and D;
+}
+//*/
+
+
+/*
+global protocol Proto1(role A, role B, role C, role D)
+{
+	rec X
+	{
+		choice at A
+		{
+			m1(Int) from A to B;
+			continue X;
+			//m4(int) from A to B;
+		}
+		or
+		{
+			m2(Int) from A to B;
+			//m3(int) from A to B;
+		}
+		1() from C to D;  // FIXME: wrong enabled check result -- maybe not? under unfolding it is captured inside the choice
+	}
+	//* /
+}
+//*/
+

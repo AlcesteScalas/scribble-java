@@ -1,204 +1,215 @@
 package org.scribble.model.local;
 
-import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.Map.Entry;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
+import org.scribble.main.ScribbleException;
+import org.scribble.model.ModelState;
+import org.scribble.sesstype.kind.Local;
 import org.scribble.sesstype.name.RecVar;
 
 // http://sandbox.kidstrythisathome.com/erdos/
-public class EndpointState
+public class EndpointState extends ModelState<IOAction, EndpointState, Local>
 {
-	public static enum Kind { OUTPUT, UNARY_INPUT, POLY_INPUT, TERMINAL }
+	public static enum Kind { OUTPUT, UNARY_INPUT, POLY_INPUT, TERMINAL, ACCEPT, WRAP_SERVER, //CONNECT
+		}  // CONNECTION should just be sync?
+			// FIXME: distinguish connection and message transfer
 	
-	private static int count = 0;
+	/*private static int count = 0;
 	
 	public final int id;
 
 	private final Set<RecVar> labs;  // Was RecVar and SubprotocolSigs, now using inlined protocol for FSM building so just RecVar
-	private final LinkedHashMap<IOAction, EndpointState> edges;  // Want predictable ordering of entries for e.g. API generation (state enumeration)
+	private final LinkedHashMap<IOAction, EndpointState> edges;  // Want predictable ordering of entries for e.g. API generation (state enumeration)*/
 	
 	protected EndpointState(Set<RecVar> labs)
 	{
-		this.id = EndpointState.count++;
+		/*this.id = EndpointState.count++;
 		this.labs = new HashSet<>(labs);
-		this.edges = new LinkedHashMap<>();
-	}
-	
-	protected void addLabel(RecVar lab)
-	{
-		this.labs.add(lab);
-	}
-	
-	// Mutable (can also overwrite edges)
-	protected void addEdge(IOAction a, EndpointState s)
-	{
-		this.edges.put(a, s);
-	}
-	
-	public Set<RecVar> getLabels()
-	{
-		return Collections.unmodifiableSet(this.labs);
-	}
-	
-	public Set<IOAction> getAcceptable()
-	{
-		return Collections.unmodifiableSet(this.edges.keySet());
-	}
-	
-	public boolean isAcceptable(IOAction a)
-	{
-		return this.edges.containsKey(a);
+		this.edges = new LinkedHashMap<>();*/
+		super(labs);
 	}
 
-	public EndpointState accept(IOAction a)
+	public EndpointGraph toGraph()
 	{
-		return this.edges.get(a);
-	}
-	
-	public Collection<EndpointState> getSuccessors()
-	{
-		return Collections.unmodifiableCollection(this.edges.values());
-	}
-	
-	public boolean isTerminal()
-	{
-		return this.edges.isEmpty();
+		return new EndpointGraph(this, getTerminal(this));  // Throws exception if >1 terminal; null if no terminal
 	}
 
-	@Override
-	public int hashCode()
+	/*.. move back to endpointstate
+	.. use getallreachable to get subgraph, make a graph clone method
+	.. for each poly output, clone a (non-det) edge to clone of the reachable subgraph with the clone of the current node pruned to this single choice
+	..     be careful of original non-det edges, need to do each separately
+	.. do recursively on the subgraphs, will end up with a normal form with subgraphs without output choices
+	.. is it equiv to requiring all roles to see every choice path?  except initial accepting roles -- yes
+	.. easier to implement as a direct check on the standard global model, rather than model hacking -- i.e. liveness is not just about terminal sets, but about "branching condition", c.f. julien?
+	.. the issue is connect/accept -- makes direct check a bit more complicated, maybe value in doing it by model hacking to rely on standard liveness checking?
+	..     should be fine, check set of roles on each path is equal, except for accept-guarded initial roles*/
+	public EndpointState unfairClone()
 	{
-		int hash = 73;
-		hash = 31 * hash + this.id;
-		return hash;
-	}
+		EndpointState init = this.clone();
+		
+		EndpointState term = ModelState.getTerminal(init);
+		Set<EndpointState> seen = new HashSet<>();
+		Set<EndpointState> todo = new LinkedHashSet<>();
+		todo.add(init);
+		while (!todo.isEmpty())
+		{
+			Iterator<EndpointState> i = todo.iterator();
+			EndpointState curr = i.next();
+			i.remove();
 
-	@Override
-	public boolean equals(Object o)
-	{
-		if (this == o)
-		{
-			return true;
-		}
-		if (!(o instanceof EndpointState))
-		{
-			return false;
-		}
-		return this.id == ((EndpointState) o).id;
-	}
-	
-	@Override
-	public String toString()
-	{
-		String s = "\"" + this.id + "\":[";
-		if (!this.edges.isEmpty())
-		{
-			Iterator<Entry<IOAction, EndpointState>> es = this.edges.entrySet().iterator();
-			Entry<IOAction, EndpointState> first = es.next();
-			s += first.getKey() + "=\"" + first.getValue().id + "\"";
-			while (es.hasNext())
+			if (seen.contains(curr))
 			{
-				Entry<IOAction, EndpointState> e = es.next();
-				s += ", " + e.getKey() + "=\"" + e.getValue().id + "\"";
+				continue;
 			}
-		}
-		return s + "]";
-	}
-	
-	public final String toDot()
-	{
-		String s = "digraph G {\n" // rankdir=LR;\n
-				+ "compound = true;\n";
-		s += toDot(new HashSet<>());
-		return s + "\n}";
-	}
-
-	protected final String toDot(Set<EndpointState> seen)
-	{
-		seen.add(this);
-		String s = toNodeDot();
-		for (Entry<IOAction, EndpointState> e : this.edges.entrySet())
-		{
-			IOAction msg = e.getKey();
-			EndpointState p = e.getValue();
-			s += "\n" + toEdgeDot(msg, p);
-			if (!seen.contains(p))
+			seen.add(curr);
+			
+			if (curr.getStateKind() == Kind.OUTPUT && curr.getAllTakeable().size() > 1)
 			{
-				s += "\n" + p.toDot(seen);
-			}
-		}
-		return s;
-	}
-
-	protected final String toEdgeDot(String src, String dest, String lab)
-	{
-		return src + " -> " + dest + " [ " + lab + " ];";
-	}
-
-	// dot node declaration
-	// Override to change drawing declaration of "this" node
-	protected String toNodeDot()
-	{
-		return getDotNodeId() + " [ " + getNodeLabel() + " ];";
-	}
-	
-	protected String getNodeLabel()
-	{
-		String labs = this.labs.toString();
-		return "label=\"" + labs.substring(1, labs.length() - 1) + "\"";
-	}
-	
-	protected String getDotNodeId()
-	{
-		return "\"" + this.id + "\"";
-	}
-
-	// Override to change edge drawing from "this" as src
-	protected String toEdgeDot(IOAction msg, EndpointState next)
-	{
-		return toEdgeDot(getDotNodeId(), next.getDotNodeId(), next.getEdgeLabel(msg));
-	}
-	
-	// "this" is the dest node of the edge
-	// Override to change edge drawing to "this" as dest
-	protected String getEdgeLabel(IOAction msg)
-	{
-		return "label=\"" + msg + "\"";
-	}
-
-	public static EndpointState findTerminalState(Set<EndpointState> visited, EndpointState curr)
-	{
-		if (!visited.contains(curr))
-		{
-			if (curr.isTerminal())
-			{
-				return curr;
-			}
-			visited.add(curr);
-			for (EndpointState succ : curr.getSuccessors())
-			{
-				EndpointState res = findTerminalState(visited, succ);
-				if (res != null)
+				//if (curr.getAllTakeable().size() > 1)
 				{
-					return res;
+					Iterator<IOAction> as = curr.getAllTakeable().iterator();
+					Iterator<EndpointState> ss = curr.getSuccessors().iterator();
+					//Map<IOAction, EndpointState> clones = new HashMap<>();
+					List<IOAction> cloneas = new LinkedList<>();
+					List<EndpointState> cloness = new LinkedList<>();
+					while (as.hasNext())
+					{
+						IOAction a = as.next();
+						EndpointState s = ss.next();
+						if (!s.canReach(curr))
+						{
+							todo.add(s);
+						}
+						else
+						{
+							EndpointState clone = curr.unfairClone(term, a, s);
+							//try { s.removeEdge(a, tmps); } catch (ScribbleException e) { throw new RuntimeException(e); }
+							//clones.put(a, clone);
+							cloneas.add(a);
+							cloness.add(clone);
+						}
+					}
+					//if (!clones.isEmpty())  // Redundant, but more clear
+					if (!cloneas.isEmpty())  // Redundant, but more clear
+					{
+						as = new LinkedList<>(curr.getAllTakeable()).iterator();
+						//Iterator<EndpointState>
+						ss = new LinkedList<>(curr.getSuccessors()).iterator();
+						while (as.hasNext())
+						{
+							IOAction a = as.next();
+							EndpointState s = ss.next();
+							//if (clones.containsKey(a))  // Still OK for non-det edges?
+							if (cloneas.contains(a))  // Still OK for non-det edges?
+							{
+								try { curr.removeEdge(a, s); } catch (ScribbleException e) { throw new RuntimeException(e); }
+							}
+						}
+						//for (Entry<IOAction, EndpointState> e : clones.entrySet())
+						Iterator<IOAction> icloneas = cloneas.iterator();
+						Iterator<EndpointState> icloness = cloness.iterator();
+						while (icloneas.hasNext())
+						{
+							IOAction a = icloneas.next();
+							EndpointState s = icloness.next();
+							/*curr.addEdge(e.getKey(), e.getValue());
+							todo.add(e.getValue());
+							seen.add(e.getValue());*/
+							curr.addEdge(a, s);
+							todo.add(s);  // Doesn't work if non-det preserved by unfairClone aux (recursively edges>1)
+							/*seen.add(s);  // Idea is to bypass succ clone (for non-det, edges>1) but in general this will be cloned again before returning to it, so bypass doesn't work -- to solve this more generally probably need to keep a record of all clones to bypass future clones
+							todo.addAll(s.getSuccessors());*/
+						}
+						//continue;
+					}
+				}
+			}
+			else
+			{
+				todo.addAll(curr.getSuccessors());
+			}
+		}
+
+		return init;
+	}
+	
+	// Returns the clone of the subgraph rooted at succ, with all non-a pruned from the clone of this
+	// Pre: this -a-> succ (maybe non-det)
+	protected EndpointState unfairClone(EndpointState term, IOAction a, EndpointState succ) // Need succ param for non-det
+	{
+		//EndpointState succ = take(a);
+		Set<EndpointState> all = new HashSet<>();
+		all.add(succ);
+		all.addAll(ModelState.getAllReachable(succ));
+		Map<Integer, EndpointState> map = new HashMap<>();  // original s.id -> clones
+		for (EndpointState s : all)
+		{
+			if (term != null && s.id == term.id)
+			{
+				map.put(term.id, term);
+			}
+			else
+			{
+				//map.put(s.id, newState(s.labs));
+				map.put(s.id, newState(Collections.emptySet()));
+			}
+		}
+		for (EndpointState s : all)
+		{
+			Iterator<IOAction> as = s.getAllTakeable().iterator();
+			Iterator<EndpointState> ss = s.getSuccessors().iterator();
+			EndpointState clone = map.get(s.id);
+			while (as.hasNext())
+			{
+				IOAction tmpa = as.next();
+				EndpointState tmps = ss.next();
+				if (s.id != this.id
+						|| (tmpa.equals(a) && tmps.equals(succ)))  // Non-det also pruned from clone of this -- but OK? non-det still preserved on original state, so any safety violations due to non-det will still come out?
+					                                             // ^ Currently this like non-fairness is extended to even defeat non-determinism
+				{
+					clone.addEdge(tmpa, map.get(tmps.id));
 				}
 			}
 		}
-		return null;
+		return map.get(succ.id);
+	}
+	
+	@Override
+	protected EndpointState newState(Set<RecVar> labs)
+	{
+		return new EndpointState(labs);
+	}
+	
+	// FIXME: refactor as "isSyncOnly" -- and make an isSync in IOAction
+	public boolean isConnectOrWrapClientOnly()
+	{
+		return getStateKind() == Kind.OUTPUT && getAllTakeable().stream().allMatch((a) -> a.isConnect() || a.isWrapClient());
 	}
 	
 	public Kind getStateKind()
 	{
-		Set<IOAction> as = this.getAcceptable();
-		return (as.size() == 0)
-				? Kind.TERMINAL
-				: (as.iterator().next() instanceof Send)
-						? Kind.OUTPUT
+		List<IOAction> as = this.getAllTakeable();
+		if (as.size() == 0)
+		{
+			return Kind.TERMINAL;
+		}
+		else
+		{
+			IOAction a = as.iterator().next();
+			return (a.isSend() || a.isConnect() || a.isDisconnect() || a.isWrapClient() ) ? Kind.OUTPUT
+						//: (a.isConnect() || a.isAccept()) ? Kind.CONNECTION  // FIXME: states can have mixed connects and sends
+						//: (a.isConnect()) ? Kind.CONNECT
+						: (a.isAccept()) ? Kind.ACCEPT  // Accept is always unary, guaranteed by treating as a unit message id (wrt. branching)  // No: not any more
+						: (a.isWrapServer()) ? Kind.WRAP_SERVER   // WrapServer is always unary, guaranteed by treating as a unit message id (wrt. branching)
 						: (as.size() > 1) ? Kind.POLY_INPUT : Kind.UNARY_INPUT;
+		}
 	}
 }

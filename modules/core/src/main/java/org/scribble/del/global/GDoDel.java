@@ -1,8 +1,6 @@
 package org.scribble.del.global;
 
 import org.scribble.ast.AstFactoryImpl;
-import org.scribble.ast.NonRoleArgList;
-import org.scribble.ast.RoleArgList;
 import org.scribble.ast.ScribNode;
 import org.scribble.ast.context.ModuleContext;
 import org.scribble.ast.global.GContinue;
@@ -90,12 +88,10 @@ public class GDoDel extends DoDel implements GSimpleInteractionNodeDel
 		if (gd.roles.getRoles().contains(self))
 		{
 			ModuleContext mc = proj.getModuleContext();
-			RoleArgList roleinstans = gd.roles.project(self);
-			NonRoleArgList arginstans = gd.args.project(self);
 			LProtocolNameNode target = Projector.makeProjectedFullNameNode(gd.getTargetProtocolDeclFullName(mc), popped);
-			projection = AstFactoryImpl.FACTORY.LDo(roleinstans, arginstans, target);
+			projection = gd.project(self, target);
 			
-			// FIXME: do guarded recursive subprotocol checking (i.e. role is used during chain) in reachability checking?
+			// FIXME: do guarded recursive subprotocol checking (i.e. role is used during chain) in reachability checking? -- required role-usage makes local choice subject inference easier, but is restrictive (e.g. proto(A, B, C) { choice at A {A->B.do Proto(A,B,C)} or {A->B.B->C} }))
 		}
 		proj.pushEnv(proj.popEnv().setProjection(projection));
 		return (GDo) GSimpleInteractionNodeDel.super.leaveProjection(parent, child, proj, gd);

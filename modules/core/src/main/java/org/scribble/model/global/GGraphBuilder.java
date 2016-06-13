@@ -1,18 +1,16 @@
-package org.scribble.model.local;
+package org.scribble.model.global;
 
-import java.util.Collections;
-import java.util.Deque;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.Map;
 import java.util.Set;
 
+import org.scribble.model.GraphBuilder;
+import org.scribble.sesstype.kind.Global;
 import org.scribble.sesstype.name.RecVar;
 
 // Helper class for EndpointGraphBuilder -- can access the protected setters of EndpointState
-public class GraphBuilder
+@Deprecated
+public class GGraphBuilder extends GraphBuilder<GModelAction, GModelState, Global>
 {
-	private EndpointState root;
+	/*private EndpointState root;
 	
 	private final Map<RecVar, Deque<EndpointState>> recvars = new HashMap<>();  // Should be a stack of EndpointState?
 	//private final Map<SubprotocolSig, EndpointState> subprotos = new HashMap<>();  // Not scoped sigs
@@ -22,35 +20,36 @@ public class GraphBuilder
 	private Deque<IOAction> prev = new LinkedList<>();
 	
 	private EndpointState entry;
-	private EndpointState exit;  // Good for merges (otherwise have to generate dummy merge nodes)
+	private EndpointState exit;  // Good for merges (otherwise have to generate dummy merge nodes)*/
 	
-	public GraphBuilder()
+	public GGraphBuilder()
 	{
 
 	}
 	
-	public void reset()
+	/*public void reset()
 	{
 		this.recvars.clear();
 		this.entry = newState(Collections.emptySet());
 		this.root = this.entry;
 		this.exit = newState(Collections.emptySet());
+	}*/
+	
+	public GModelState newState(Set<RecVar> labs)
+	{
+		return new GModelState(labs);
 	}
 	
-	public EndpointState newState(Set<RecVar> labs)
+	/*public void addEntryLabel(RecVar lab)
 	{
-		return new EndpointState(labs);
-	}
-	
-	public void addEntryLabel(RecVar lab)
-	{
-		this.entry.addLabel(lab);
+		//this.entry.addLabel(lab);
+		throw new RuntimeException("Deprecated: " + this);
 	}
 
 	// Records 's' as predecessor state, and 'a' as previous action and the "enacting action" for "fresh" recursion scopes
 	public void addEdge(EndpointState s, IOAction a, EndpointState succ)
 	{
-		s.addEdge(a, succ);
+		/*s.addEdge(a, succ);
 		if (!this.pred.isEmpty())
 		{
 			this.pred.pop();
@@ -69,7 +68,8 @@ public class GraphBuilder
 					ens.push(a);
 				}
 			}
-		}
+		}* /
+		throw new RuntimeException("Deprecated: " + this);
 	}
 	
 	public void pushChoiceBlock()
@@ -97,7 +97,7 @@ public class GraphBuilder
 		/*if (!isUnguardedInChoice())  // Don't record rec entry if it is an unguarded choice-rec
 		{
 			this.entry.addLabel(recvar);
-		}*/
+		}* /
 		//this.recvars.put(recvar, this.entry);
 		Deque<EndpointState> tmp = this.recvars.get(recvar);
 		if (tmp == null)
@@ -112,7 +112,7 @@ public class GraphBuilder
 		else
 		{
 			tmp.push(this.entry);
-		}*/
+		}* /
 		tmp.push(entry);
 		
 		Deque<IOAction> tmp2 = this.enacting.get(recvar);
@@ -163,7 +163,7 @@ public class GraphBuilder
 	public void removeSubprotocolEntry(SubprotocolSig subsig)
 	{
 		this.subprotos.remove(subsig);
-	}*/
+	}* /
 	
 	public EndpointState getEntry()
 	{
@@ -183,5 +183,5 @@ public class GraphBuilder
 	public void setExit(EndpointState exit)
 	{
 		this.exit = exit;
-	}
+	}*/
 }

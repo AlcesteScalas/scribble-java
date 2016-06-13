@@ -2,10 +2,17 @@ package main;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.scribble.main.MainContext;
 import org.scribble.main.ScribbleException;
+import org.scribble.main.resource.DirectoryResourceLocator;
+import org.scribble.main.resource.ResourceLocator;
+import org.scribble.sesstype.name.GProtocolName;
+import org.scribble.util.ScribParserException;
 
 import ast.ScribProtocolTranslator;
 import ast.global.GlobalType;
@@ -15,15 +22,24 @@ import ast.name.Role;
 
 public class Main
 {
-	public static void main(String[] args) throws ScribbleException
+	public static void main(String[] args) throws ScribbleException, ScribParserException
 	{
 		Path mainmod = Paths.get(args[0]);
-		String proto = "Proto";  // Hardcoded to look for protocol named "Proto"
+		String simpname = (args.length < 2) ? "Proto" : args[1];  // Looks for protocol named "Proto" as default if unspecified
 		
 		ScribProtocolTranslator sbp = new ScribProtocolTranslator();
-		
-		GlobalType g = sbp.parse(mainmod, proto);
-		System.out.println("Translated:\n" + "    " + g);
+		GlobalType g = null;
+		try
+		{
+			//g = sbp.parseAndCheck(mainmod, proto);
+			g = sbp.parseAndCheck(newMainContext(mainmod), new GProtocolName(simpname));
+			System.out.println("Translated:\n" + "    " + g);
+		}
+		catch (ScribParserException | ScribbleException e)
+		{
+			System.err.println(e.getMessage());
+			System.exit(1);
+		}
 		
 		GlobalType gs = ast.global.ops.Sanitizer.apply(g);
 		System.out.println("\nSanitized:\n" + "    " + gs);
@@ -46,6 +62,23 @@ public class Main
 			String scalaMPProt = ast.local.ops.ScalaProtocolExtractor.apply(l);
 			System.out.println("    Scala protocol classes for local type:\n" + scalaMPProt);
 		}
-		
+	}
+
+	// Duplicated from CommandLine for convenience
+	private static MainContext newMainContext(Path mainmod) throws ScribParserException
+	{
+		boolean debug = false;
+		boolean useOldWF = false;
+		boolean noLiveness = false;
+		boolean minEfsm = false;
+		boolean fair = false;
+
+		Path mainpath = mainmod;
+		/*List<Path> impaths = this.args.containsKey(ArgFlag.PATH)
+				? CommandLine.parseImportPaths(this.args.get(ArgFlag.PATH)[0])
+				: Collections.emptyList();*/
+		List<Path> impaths = Collections.emptyList();  // FIXME: get from Main args
+		ResourceLocator locator = new DirectoryResourceLocator(impaths);
+		return new MainContext(debug, locator, mainpath, useOldWF, noLiveness, minEfsm, fair);
 	}
 }

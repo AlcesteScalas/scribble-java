@@ -3,11 +3,11 @@ package org.scribble.del;
 import org.scribble.ast.CompoundInteractionNode;
 import org.scribble.ast.ScribNode;
 import org.scribble.main.ScribbleException;
+import org.scribble.visit.UnguardedChoiceDoProjectionChecker;
 import org.scribble.visit.InlinedProtocolUnfolder;
 import org.scribble.visit.ProtocolDefInliner;
 import org.scribble.visit.WFChoiceChecker;
-import org.scribble.visit.WFChoicePathChecker;
-import org.scribble.visit.env.WFChoicePathEnv;
+import org.scribble.visit.env.UnguardedChoiceDoEnv;
 import org.scribble.visit.env.UnfoldingEnv;
 import org.scribble.visit.env.WFChoiceEnv;
 
@@ -28,6 +28,19 @@ public abstract class CompoundInteractionNodeDel extends CompoundInteractionDel 
 	public ScribNode leaveProtocolInlining(ScribNode parent, ScribNode child, ProtocolDefInliner inl, ScribNode visited) throws ScribbleException
 	{
 		return ScribDelBase.popAndSetVisitorEnv(this, inl, visited);
+	}
+
+	// Should only do for projections, but OK here (visitor only run on projections)
+	@Override
+	public ScribNode leaveUnguardedChoiceDoProjectionCheck(ScribNode parent, ScribNode child, UnguardedChoiceDoProjectionChecker checker, ScribNode visited) throws ScribbleException
+	{
+		// Override super routine (in CompoundInteractionDel, which just does base popAndSet) to do merging of child context into parent context
+		UnguardedChoiceDoEnv visited_env = checker.popEnv();  // popAndSet current
+		setEnv(visited_env);
+		UnguardedChoiceDoEnv parent_env = checker.popEnv();  // pop-merge-push parent
+		parent_env = parent_env.mergeContext(visited_env);
+		checker.pushEnv(parent_env);
+		return (CompoundInteractionNode<?>) visited;
 	}
 
 	@Override
@@ -61,7 +74,7 @@ public abstract class CompoundInteractionNodeDel extends CompoundInteractionDel 
 		coll.pushEnv(env);
 	}*/
 
-	@Override
+	/*@Override
 	public CompoundInteractionNode<?> leaveWFChoicePathCheck(ScribNode parent, ScribNode child, WFChoicePathChecker coll, ScribNode visited) throws ScribbleException
 	//public CompoundInteractionNode<?> leavePathCollection(ScribNode parent, ScribNode child, PathCollectionVisitor coll, ScribNode visited) throws ScribbleException
 	{
@@ -73,8 +86,8 @@ public abstract class CompoundInteractionNodeDel extends CompoundInteractionDel 
 		
 		/*System.out.println("3: " + parent_env.getPaths().size());
 		System.out.println("4: " + parent_env.getPaths() + "");
-		System.out.println("4: " + visited + "\n");*/
+		System.out.println("4: " + visited + "\n");* /
 		
 		return (CompoundInteractionNode<?>) visited;
-	}
+	}*/
 }

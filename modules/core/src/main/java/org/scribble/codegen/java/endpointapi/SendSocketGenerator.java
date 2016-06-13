@@ -1,29 +1,31 @@
 package org.scribble.codegen.java.endpointapi;
 
-import java.util.Iterator;
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-
-import org.scribble.ast.DataTypeDecl;
-import org.scribble.ast.MessageSigNameDecl;
-import org.scribble.ast.Module;
-import org.scribble.codegen.java.util.JavaBuilder;
-import org.scribble.codegen.java.util.MethodBuilder;
+import org.scribble.main.ScribbleException;
 import org.scribble.model.local.EndpointState;
-import org.scribble.model.local.IOAction;
-import org.scribble.sesstype.name.DataType;
-import org.scribble.sesstype.name.MessageSigName;
-import org.scribble.sesstype.name.PayloadType;
 
 public class SendSocketGenerator extends ScribSocketGenerator
 {
+
+	@Override
+	protected String getSuperClassType()
+	{
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	protected void addMethods() throws ScribbleException
+	{
+		// TODO Auto-generated method stub
+		
+	}
+	
 	public SendSocketGenerator(StateChannelApiGenerator apigen, EndpointState curr)
 	{
 		super(apigen, curr);
 	}
 
-	@Override
+	/*@Override
 	protected String getSuperClassType()
 	{
 		return SENDSOCKET_CLASS + "<" + getSessionClassName() + ", " + getSelfClassName() + ">";
@@ -124,5 +126,5 @@ public class SendSocketGenerator extends ScribSocketGenerator
 		final String MESSAGE_PARAM = "m";
 
 		mb.addParameters(msd.extName + " " + MESSAGE_PARAM);
-	}
+	}*/
 }

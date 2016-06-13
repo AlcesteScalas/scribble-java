@@ -1,6 +1,7 @@
 package org.scribble.del.local;
 
 import org.scribble.ast.AstFactoryImpl;
+import org.scribble.ast.Recursion;
 import org.scribble.ast.ScribNode;
 import org.scribble.ast.local.LProtocolBlock;
 import org.scribble.ast.local.LRecursion;
@@ -12,11 +13,22 @@ import org.scribble.visit.EndpointGraphBuilder;
 import org.scribble.visit.ProjectedChoiceSubjectFixer;
 import org.scribble.visit.ProtocolDefInliner;
 import org.scribble.visit.ReachabilityChecker;
+import org.scribble.visit.UnguardedChoiceDoProjectionChecker;
 import org.scribble.visit.env.InlineProtocolEnv;
 import org.scribble.visit.env.ReachabilityEnv;
+import org.scribble.visit.env.UnguardedChoiceDoEnv;
 
 public class LRecursionDel extends RecursionDel implements LCompoundInteractionNodeDel
 {
+	@Override
+	public ScribNode leaveUnguardedChoiceDoProjectionCheck(ScribNode parent, ScribNode child, UnguardedChoiceDoProjectionChecker checker, ScribNode visited) throws ScribbleException
+	{
+		Recursion<?> rec = (Recursion<?>) visited;
+		UnguardedChoiceDoEnv merged = checker.popEnv().mergeContext((UnguardedChoiceDoEnv) rec.block.del().env());
+		checker.pushEnv(merged);
+		return (Recursion<?>) super.leaveUnguardedChoiceDoProjectionCheck(parent, child, checker, rec);
+	}
+
 	@Override
 	public ScribNode leaveProtocolInlining(ScribNode parent, ScribNode child, ProtocolDefInliner inl, ScribNode visited) throws ScribbleException
 	{
@@ -39,9 +51,9 @@ public class LRecursionDel extends RecursionDel implements LCompoundInteractionN
 	}
 	
 	@Override
-	public void enterGraphBuilding(ScribNode parent, ScribNode child, EndpointGraphBuilder graph)
+	public void enterEndpointGraphBuilding(ScribNode parent, ScribNode child, EndpointGraphBuilder graph)
 	{
-		super.enterGraphBuilding(parent, child, graph);
+		super.enterEndpointGraphBuilding(parent, child, graph);
 		LRecursion lr = (LRecursion) child;
 		RecVar rv = lr.recvar.toName();
 		// Update existing state, not replace it -- cf. LDoDel
@@ -61,12 +73,12 @@ public class LRecursionDel extends RecursionDel implements LCompoundInteractionN
 	}
 
 	@Override
-	public LRecursion leaveGraphBuilding(ScribNode parent, ScribNode child, EndpointGraphBuilder graph, ScribNode visited)
+	public LRecursion leaveEndpointGraphBuilding(ScribNode parent, ScribNode child, EndpointGraphBuilder graph, ScribNode visited) throws ScribbleException
 	{
 		LRecursion lr = (LRecursion) visited;
 		RecVar rv = lr.recvar.toName();
 		graph.builder.popRecursionEntry(rv);
-		return (LRecursion) super.leaveGraphBuilding(parent, child, graph, lr);
+		return (LRecursion) super.leaveEndpointGraphBuilding(parent, child, graph, lr);
 	}
 
 	@Override

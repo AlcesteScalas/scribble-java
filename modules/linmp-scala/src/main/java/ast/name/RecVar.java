@@ -50,8 +50,30 @@ public class RecVar extends NameNode implements GlobalType, LocalType, Type, Abs
 	}
 	
 	@Override
+	public boolean equals(Object o)
+	{
+		if (this == o)
+		{
+			return true;
+		}
+		if (!(o instanceof RecVar))
+		{
+			return false;
+		}
+		return super.equals(o);
+	}
+	
+	@Override
 	public boolean canEqual(Object o)
 	{
 		return (o instanceof RecVar);
+	}
+	
+	@Override
+	public int hashCode()
+	{
+		int hash = 883;
+		hash = 31 * hash + super.hashCode();
+		return hash;
 	}
 }

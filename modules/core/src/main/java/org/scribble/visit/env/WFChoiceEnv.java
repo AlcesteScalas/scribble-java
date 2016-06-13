@@ -3,6 +3,7 @@ package org.scribble.visit.env;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.scribble.sesstype.Message;
 import org.scribble.sesstype.MessageSig;
@@ -10,6 +11,7 @@ import org.scribble.sesstype.Payload;
 import org.scribble.sesstype.name.MessageId;
 import org.scribble.sesstype.name.Op;
 import org.scribble.sesstype.name.Role;
+import org.scribble.util.ConnectedMap;
 import org.scribble.util.MessageIdMap;
 
 public class WFChoiceEnv extends Env<WFChoiceEnv>
@@ -25,24 +27,28 @@ public class WFChoiceEnv extends Env<WFChoiceEnv>
 	private MessageIdMap initial;  // message transfers recorded here in block envs
 	//private MessageIdMap initialInterrupts;  //  interrupts recorded here in interruptible env
 	
-	public WFChoiceEnv()
+	private ConnectedMap connected;
+	
+	// FIXME: use roles to initialise MessageIdMap properly, cf. WFBuffers
+	public WFChoiceEnv(Set<Role> roles, boolean implicit)
 	{
 		//this(new MessageIdMap(), new MessageIdMap());
-		this(new MessageIdMap());
+		this(new MessageIdMap(), new ConnectedMap(roles, implicit));
 	}
 	
 	//protected InlinedWFChoiceEnv(MessageIdMap initial, MessageIdMap initialInterrupts)
-	protected WFChoiceEnv(MessageIdMap initial)
+	protected WFChoiceEnv(MessageIdMap initial, ConnectedMap connected)
 	{
 		this.initial = new MessageIdMap(initial);
 		//this.initialInterrupts = new MessageIdMap(initialInterrupts);
+		this.connected = new ConnectedMap(connected);
 	}
 
 	@Override
 	protected WFChoiceEnv copy()
 	{
 		//return new InlinedWFChoiceEnv(this.initial, this.initialInterrupts);
-		return new WFChoiceEnv(this.initial);
+		return new WFChoiceEnv(this.initial, this.connected);
 	}
 	
 	public WFChoiceEnv clear()
@@ -57,7 +63,7 @@ public class WFChoiceEnv extends Env<WFChoiceEnv>
 	public WFChoiceEnv enterContext()
 	{
 		//return new InlinedWFChoiceEnv(this.initial, this.initialInterrupts);
-		return new WFChoiceEnv(this.initial);
+		return new WFChoiceEnv(this.initial, this.connected);
 	}
 	
 	@Override
@@ -73,11 +79,21 @@ public class WFChoiceEnv extends Env<WFChoiceEnv>
 		for (WFChoiceEnv child : children)
 		{
 			merge(this, copy.initial, child.initial);
-			//merge(this, copy.initialInterrupts, child.initialInterrupts);
+			////merge(this, copy.initialInterrupts, child.initialInterrupts);
+			//merge(this, copy.connected, child.connected);
 		}
+		// FIXME: refactor
+		ConnectedMap cm = children.get(0).getConnected();
+		for (WFChoiceEnv e : children.subList(1, children.size()))
+		{
+			cm = cm.merge(e.getConnected());
+		}
+		copy.connected = cm;
 		return copy;
 	}
 
+	// Pre: foo is parent.copy().initial
+	// updates foo according to state of parent and child
 	private static void merge(WFChoiceEnv parent, MessageIdMap foo, MessageIdMap child)
 	{
 		for (Role dest : child.getDestinations())
@@ -91,6 +107,22 @@ public class WFChoiceEnv extends Env<WFChoiceEnv>
 			}
 		}
 	}
+
+	/*// FIXME: factor out with MessageIdMap
+	private static void merge(WFChoiceEnv parent, ConnectedMap foo, ConnectedMap child)
+	{
+		for (Role dest : child.getDestinations())
+		{
+			for (Role src : child.getSources(dest))
+			{
+				//if (!parent.isConnected(src, dest))
+				{
+					// If not previously connected, update connected according to latest state -- No: also need to write disconnected (if parent is connected)
+					foo.setConnected(dest, src, child.isConnected(dest, src));
+				}
+			}
+		}
+	}*/
 	
 	public WFChoiceEnv enableRoleForRootProtocolDecl(Role role)
 	{
@@ -101,6 +133,20 @@ public class WFChoiceEnv extends Env<WFChoiceEnv>
 	{
 		return addMessage(WFChoiceEnv.DUMMY_ROLE, role, WFChoiceEnv.SUBJECT_MESSAGESIGNATURE);
 	}
+	
+	public WFChoiceEnv connect(Role src, Role dest)
+	{
+		WFChoiceEnv copy = copy();
+		copy.connected.connect(src, dest);
+		return copy;
+	}
+	
+	public WFChoiceEnv disconnect(Role src, Role dest)
+	{
+		WFChoiceEnv copy = copy();
+		copy.connected.disconnect(src, dest);
+		return copy;
+	}
 
 	// The "main" public routine
 	// Rename: more like enable-if-not-already
@@ -110,6 +156,23 @@ public class WFChoiceEnv extends Env<WFChoiceEnv>
 		addMessages(copy.initial, src, dest, Arrays.asList(msg.getId()));
 		return copy;
 	}
+
+	/*public WFChoiceEnv removeMessage(Role src, Role dest, Message msg)
+	{
+		WFChoiceEnv copy = copy();
+		copy.initial.removeMessage(dest, src, msg.getId());
+		return copy;
+	}
+
+	public WFChoiceEnv disableRole(Role r)
+	{
+		WFChoiceEnv copy = copy();
+		for (...)
+		{
+			copy.initial.removeMessage(dest, src, ...);
+		}
+		return copy;
+	}*/
 
 	// FIXME: List/Set argument
 	// Means: record message as initial enabling message if dest not already enabled
@@ -141,6 +204,24 @@ public class WFChoiceEnv extends Env<WFChoiceEnv>
 		MessageIdMap tmp = new MessageIdMap(this.initial);
 		//tmp.merge(this.initialInterrupts);
 		return tmp;
+	}
+
+	public ConnectedMap getConnected()
+	{
+		ConnectedMap tmp = new ConnectedMap(this.connected);
+		return tmp;
+	}
+
+	/*public WFChoiceEnv setConnected(ConnectedMap cm)
+	{
+		WFChoiceEnv copy = copy();
+		copy.connected = cm;
+		return copy;
+	}*/
+	
+	public boolean isConnected(Role r1, Role r2)
+	{
+		return this.connected.isConnected(r1, r2);
 	}
 
 	@Override
