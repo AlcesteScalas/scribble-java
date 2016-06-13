@@ -103,8 +103,6 @@ public class GlobalTypeTranslator
 
 						GProtocolName fullname = (GProtocolName) this.mainc.getVisibleProtocolDeclFullName(proto);
 						GProtocolDecl gpd = (GProtocolDecl) this.jobc.getModule(fullname.getPrefix()).getProtocolDecl(fullname.getSimpleName());  // FIXME: cast
-						
-						// FIXME: recursive protocoldecl references via delegation (or otherwise?)
 						GlobalType gt = new GlobalTypeTranslator(this.jobc, this.mainc).translate(gpd);
 						pay = Sanitizer.apply(ast.global.ops.Projector.apply(gt, role, ast.local.ops.Merge::full));
 					}
