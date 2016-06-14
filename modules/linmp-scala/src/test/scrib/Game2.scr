@@ -1,0 +1,49 @@
+module Game2;
+
+type <java> "java.lang.String" from "rt.jar" as String;
+
+global protocol Proto(role Client, role Server)
+{
+	choice at Client
+	{
+		PlayAsA() from Client to Server;
+		BeA(Game@A) from Server to Client;
+	}
+	or
+	{
+		PlayAsB() from Client to Server;
+		BeB(Game@B) from Server to Client;
+	}
+	or
+	{
+		PlayAsC() from Client to Server;
+		BeC(Game@C) from Server to Client;
+	}
+}
+
+
+global protocol Game(role A, role B, role C)
+{
+	NameAB(String) from A to B;
+	NameBC(String) from B to C;
+	NameCA(String) from C to A;
+	rec X
+	{
+		choice at A
+		{
+			MoveAB(String) from A to B;
+			MoveAC(String) from A to C;
+			MoveBA(String) from B to A;
+			MoveBC(String) from B to C;
+			MoveCA(String) from C to A;
+			MoveCB(String) from C to B;
+			continue X;
+		}
+		or
+		{
+			QuitAB() from A to B;
+			QuitAC() from A to C;
+			QuitBC() from B to C;
+		}
+	}
+}
