@@ -24,6 +24,14 @@ public class LocalBranch implements LocalType
 		this.cases = Collections.unmodifiableMap(cases);
 	}
 	
+	/**
+	 * @return the labels of the choice
+	 */
+	public Set<Label> labels()
+	{
+		return cases.keySet();
+	}
+	
 	@Override
 	public Set<RecVar> freeVariables()
 	{
