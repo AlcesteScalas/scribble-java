@@ -23,6 +23,7 @@ import org.scribble.visit.JobContext;
 
 import ast.AstFactory;
 import ast.PayloadType;
+import ast.local.ops.Merge;
 import ast.local.ops.Sanitizer;
 import ast.name.Label;
 import ast.name.RecVar;
@@ -30,30 +31,27 @@ import ast.name.Role;
 
 public class GlobalTypeTranslator
 {
-	private final JobContext jobc;
-	private final ModuleContext mainc;
-	
 	private final AstFactory factory = new AstFactory();
 	//private final LocalTypeParser ltp = new LocalTypeParser();
-	
-	public GlobalTypeTranslator(JobContext jobc, ModuleContext mainc)
+
+	public GlobalTypeTranslator()
 	{
-		this.jobc = jobc;
-		this.mainc = mainc;
+
 	}
 
-	public GlobalType translate(GProtocolDecl gpd) throws ScribbleException
+	// merge is for projection of "delegation payload types"
+	public GlobalType translate(JobContext jobc, ModuleContext mainc, Merge.Operator merge, GProtocolDecl gpd) throws ScribbleException
 	{
 		GProtocolDef inlined = ((GProtocolDefDel) gpd.def.del()).getInlinedProtocolDef();
-		return translate(inlined);
+		return translate(jobc, mainc, merge, inlined);
 	}
 	
-	public GlobalType translate(GProtocolDef gpd) throws ScribbleException
+	public GlobalType translate(JobContext jobc, ModuleContext mainc, Merge.Operator merge, GProtocolDef gpd) throws ScribbleException
 	{
-		return parseSeq(gpd.getBlock().getInteractionSeq().getInteractions());
+		return parseSeq(jobc, mainc, merge, gpd.getBlock().getInteractionSeq().getInteractions());
 	}
 	
-	private GlobalType parseSeq(List<GInteractionNode> is) throws ScribbleException
+	private GlobalType parseSeq(JobContext jobc, ModuleContext mainc, Merge.Operator merge, List<GInteractionNode> is) throws ScribbleException
 	{
 		//List<GInteractionNode> is = block.getInteractionSeq().getInteractions();
 		if (is.isEmpty())
@@ -101,17 +99,18 @@ public class GlobalTypeTranslator
 						GProtocolName proto = SessionTypeFactory.parseGlobalProtocolName(tmp.substring(0, i));  // Should already be full name (DelegationElem disamb)
 						Role role = new Role(tmp.substring(i+1, tmp.length()));
 
-						GProtocolName fullname = (GProtocolName) this.mainc.getVisibleProtocolDeclFullName(proto);
-						GProtocolDecl gpd = (GProtocolDecl) this.jobc.getModule(fullname.getPrefix()).getProtocolDecl(fullname.getSimpleName());  // FIXME: cast
-						GlobalType gt = new GlobalTypeTranslator(this.jobc, this.mainc).translate(gpd);
-						pay = Sanitizer.apply(ast.global.ops.Projector.apply(gt, role, ast.local.ops.Merge::full));
+						GProtocolName fullname = (GProtocolName) mainc.getVisibleProtocolDeclFullName(proto);
+						GProtocolDecl gpd = (GProtocolDecl) jobc.getModule(fullname.getPrefix()).getProtocolDecl(fullname.getSimpleName());  // FIXME: cast
+						//GlobalType gt = new GlobalTypeTranslator().translate(jobc, mainc, merge, gpd);
+						GlobalType gt = translate(jobc, mainc, merge, gpd);
+						pay = Sanitizer.apply(ast.global.ops.Projector.apply(gt, role, merge));
 					}
 					else
 					{
 						pay = this.factory.BaseType(tmp);
 					}
 				}
-				GlobalType cont = parseSeq(is.subList(1, is.size()));
+				GlobalType cont = parseSeq(jobc, mainc, merge, is.subList(1, is.size()));
 				Map<Label, GlobalSendCase> cases = new HashMap<>();
 				cases.put(lab, this.factory.GlobalSendCase(pay, cont));
 				return this.factory.GlobalSend(src, dest, cases);
@@ -129,7 +128,7 @@ public class GlobalTypeTranslator
 				List<GlobalType> parsed = new LinkedList<>();
 				for (GProtocolBlock b : gc.getBlocks())
 				{
-					parsed.add(parseSeq(b.getInteractionSeq().getInteractions()));
+					parsed.add(parseSeq(jobc, mainc, merge, b.getInteractionSeq().getInteractions()));
 				}
 				Role src = null;
 				Role dest = null;
@@ -158,7 +157,7 @@ public class GlobalTypeTranslator
 				}
 				GRecursion gr = (GRecursion) first;
 				RecVar recvar = this.factory.RecVar(gr.recvar.toString());
-				GlobalType body = parseSeq(gr.getBlock().getInteractionSeq().getInteractions());
+				GlobalType body = parseSeq(jobc, mainc, merge, gr.getBlock().getInteractionSeq().getInteractions());
 				return new GlobalRec(recvar, body);
 			}
 			else if (first instanceof GContinue)
