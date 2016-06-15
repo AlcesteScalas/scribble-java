@@ -17,6 +17,7 @@ import org.scribble.util.ScribParserException;
 import ast.ScribProtocolTranslator;
 import ast.global.GlobalType;
 import ast.local.LocalType;
+import ast.local.ops.Merge;
 // import ast.binary.Type;
 import ast.name.Role;
 
@@ -26,13 +27,15 @@ public class Main
 	{
 		Path mainmod = Paths.get(args[0]);
 		String simpname = (args.length < 2) ? "Proto" : args[1];  // Looks for protocol named "Proto" as default if unspecified
-		
-		ScribProtocolTranslator sbp = new ScribProtocolTranslator();
+
+		Merge.Operator merge = ast.local.ops.Merge::full;
+
+		ScribProtocolTranslator spt = new ScribProtocolTranslator();
 		GlobalType g = null;
 		try
 		{
 			//g = sbp.parseAndCheck(mainmod, proto);
-			g = sbp.parseAndCheck(newMainContext(mainmod), new GProtocolName(simpname));
+			g = spt.parseAndCheck(newMainContext(mainmod), new GProtocolName(simpname), merge);  // merge is for projection of "delegation payload types"
 			System.out.println("Translated:\n" + "    " + g);
 		}
 		catch (ScribParserException | ScribbleException e)
@@ -44,7 +47,7 @@ public class Main
 		GlobalType gs = ast.global.ops.Sanitizer.apply(g);
 		System.out.println("\nSanitized:\n" + "    " + gs);
 		
-		Map<Role, LocalType> projs = ast.global.ops.Projector.apply(gs, ast.local.ops.Merge::full);
+		Map<Role, LocalType> projs = ast.global.ops.Projector.apply(gs, merge);
 		for (Entry<Role, LocalType> rl: projs.entrySet())
 		{
 			LocalType l = rl.getValue();
