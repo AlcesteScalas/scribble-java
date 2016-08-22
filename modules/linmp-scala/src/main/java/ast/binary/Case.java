@@ -14,7 +14,7 @@ public class Case
 	@Override
 	public String toString()
 	{
-		return "(" + ((this.pay == null) ? "" : this.pay) + "):" + this.body;
+		return "(" + ((this.pay == null) ? "" : this.pay) + ")." + this.body;
 	}
 	
 	@Override

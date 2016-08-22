@@ -38,9 +38,9 @@ public class Select implements Type
 	@Override
 	public String toString()
 	{
-		return "!{" +
+		return "⊕{" +
 				this.cases.entrySet().stream()
-					.map((e) -> e.getKey().toString() + e.getValue().toString())
+					.map((e) -> "!" + e.getKey().toString() + e.getValue().toString())
 					.collect(Collectors.joining(", ")) + "}";
 	}
 
