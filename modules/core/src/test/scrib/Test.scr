@@ -38,9 +38,6 @@ module Test;
 // - parameterise subprotos on protos?
 
 
-// TODO: test API gen for (fair) SupplierInfo
-// TODO: test connect/wrap API gen for SMTP
-
 // FIXME: .. refactor interfaces for model building/checking/minimising/etc into state classes (make subclasses of Model/EndpointState -- cf. ast/del)
 
 
@@ -58,7 +55,115 @@ module Test;
 // FIXME: Module.getGlobal/LocalProtocolDecl
 
 
-//*
+// TODO: test API gen for (fair) SupplierInfo
+// TODO: test connect/wrap API gen for SMTP
+// FIXME: decouple branch API gen from I/O i/f's -- duplicate enum in concrrete states?
+// FIXME: I/O i/f name max length
+
+
+global protocol Proto1(role A, role B, role C)
+{
+	rec X
+	{
+		choice at A  // -oldwf, default, -fair
+		{
+			1() from A to B;
+			continue X;
+		}
+		or
+		{
+			2() from A to B;
+			//2() from A to C;
+			2() from B to C;
+		}
+	}
+}
+
+
+/*
+global protocol Proto1(role A, role B, role C)
+{
+	choice at A
+	{
+		rec X
+		{
+			1() from A to B;
+			continue X;
+		}
+	}
+	or
+	{
+		2() from A to B;
+	}
+	3() from B to C;
+}
+//*/
+
+
+/*
+global protocol Proto1(role A, role B, role C)
+{
+	choice at A
+	{
+		1() from A to B;
+		() from B to C;
+		1() from B to A;
+	}
+	or
+	{
+		2() from A to B;
+		() from B to C;  // Classic mergeability (no "equiv." protocol by sequencing -- unless maybe a generous async. equiv.)
+		2() from B to A;
+	}
+}
+//*/
+
+
+/*
+global protocol Proto1(role A, role B, role C)
+{
+	choice at A
+	{
+		1() from A to B;
+		2() from B to C;
+		//3() from C to A;
+		3() from C to B;
+	}
+	or
+	{
+		1() from A to B;
+		5() from B to C;
+		//6() from C to A;
+		5() from C to B;  // Mergeable -- A not involved downstream
+	}
+}
+//*/
+
+
+/*
+global protocol Proto1(role A, role B, role C)
+{
+	choice at A
+	{
+		rec X
+		{
+			1() from A to B;
+			1() from B to C;
+			continue X;
+		}
+	}
+	or
+	{
+		2() from A to B;
+		2() from B to C;
+	}
+	3() from A to B;  // Sequencing after recursive-choice
+	3() from B to C;
+}
+//*/
+
+
+/*
 global protocol Proto1(role A, role B)
 {
 	1(Proto2@A) from A to B;  // Testing delegation payload projection
@@ -207,6 +312,28 @@ sig <java> "..." from "..." as M;
 global protocol Proto1(role A, role B)
 {
 	(M) from A to B;  // Testing disamb (and AST visitChild)
+}
+//*/
+
+
+/*
+explicit global protocol Proto1(role A, role B, role C)
+{
+	connect A to B;
+	connect A to C;
+	rec X
+	{
+		choice at A
+		{
+			1() from A to B;  // Testing "fair"/"unfair" liveness -- issue of global liveness vs. local subtyping) -- generating "unfair output subtyped" global model (can it be done simply by terminal set role check?)
+			continue X;
+		}
+		or
+		{
+			2() from A to B;
+		}
+	}
+	3() from A to C;
 }
 //*/
 

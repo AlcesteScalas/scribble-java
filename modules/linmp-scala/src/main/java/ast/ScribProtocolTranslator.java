@@ -11,11 +11,18 @@ import org.scribble.visit.Job;
 
 import ast.global.GlobalType;
 import ast.global.GlobalTypeTranslator;
+import ast.local.ops.Merge;
 
 public class ScribProtocolTranslator
 {
+	public ScribProtocolTranslator()
+	{
+
+	}
+
+	// merge is for projection of "delegation payload types"
 	//public GlobalType parseAndCheck(Path mainmod, String simplename) throws ScribbleException, ScribParserException
-	public GlobalType parseAndCheck(MainContext maincon, GProtocolName simplename) throws ScribbleException, ScribParserException
+	public GlobalType parseAndCheck(MainContext maincon, GProtocolName simplename, Merge.Operator merge) throws ScribbleException, ScribParserException
 	{
 		/*Module main = parseMainScribModule(mainmod);
 		Job job = new Job(false, parsed, main.getFullModuleName(), false, false, false, false);*/
@@ -31,7 +38,7 @@ public class ScribProtocolTranslator
 			throw new ScribbleException("Global protocol not found: " + simplename);
 		}
 		GProtocolDecl gpd = (GProtocolDecl) main.getProtocolDecl(simplename);  // FIXME: cast
-		return new GlobalTypeTranslator(job.getContext(), ((ModuleDel) main.del()).getModuleContext()).translate(gpd);
+		return new GlobalTypeTranslator().translate(job.getContext(), ((ModuleDel) main.del()).getModuleContext(), merge, gpd);
 	}
 	
 	// TODO: doesn't support Scribble module imports yet (no import path given to resource locator)
