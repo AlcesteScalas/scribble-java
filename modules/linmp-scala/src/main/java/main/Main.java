@@ -72,13 +72,14 @@ public class Main
 	}
 
 	// Duplicated from CommandLine for convenience
-	private static MainContext newMainContext(Path mainmod) throws ScribParserException
+	private static MainContext newMainContext(Path mainmod) throws ScribParserException, ScribbleException
 	{
 		boolean debug = false;
 		boolean useOldWF = false;
 		boolean noLiveness = false;
 		boolean minEfsm = false;
 		boolean fair = false;
+		boolean noLocalChoiceSubjectCheck = false;
 
 		Path mainpath = mainmod;
 		/*List<Path> impaths = this.args.containsKey(ArgFlag.PATH)
@@ -86,6 +87,6 @@ public class Main
 				: Collections.emptyList();*/
 		List<Path> impaths = Collections.emptyList();  // FIXME: get from Main args
 		ResourceLocator locator = new DirectoryResourceLocator(impaths);
-		return new MainContext(debug, locator, mainpath, useOldWF, noLiveness, minEfsm, fair);
+		return new MainContext(debug, locator, mainpath, useOldWF, noLiveness, minEfsm, fair, noLocalChoiceSubjectCheck);
 	}
 }
