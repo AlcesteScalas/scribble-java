@@ -155,9 +155,14 @@ public class JobContext
 		this.projected.put(lpn, mod);
 	}
 	
-	public Module getProjection(GProtocolName fullname, Role role)
+	public Module getProjection(GProtocolName fullname, Role role) throws ScribbleException
 	{
-		return this.projected.get(Projector.projectFullProtocolName(fullname, role));
+		Module proj = this.projected.get(Projector.projectFullProtocolName(fullname, role));
+		if (proj == null)
+		{
+			throw new ScribbleException("Projection not found: " + fullname + ", " + role);  // E.g. disamb/enabling error before projection passes (e.g. CommandLine -fsm arg)
+		}
+		return proj;
 	}
 	
 	//public void addGlobalModel(GProtocolName fullname, GModel model)
@@ -188,10 +193,6 @@ public class JobContext
 		if (graph == null)
 		{
 			Module proj = getProjection(fullname, role);  // Projected module contains a single protocol
-			if (proj == null)
-			{
-				throw new ScribbleException("Projection not found: " + fullname + ", " + role);  // E.g. disamb error before projection passes (e.g. CommandLine -fsm arg)
-			}
 			EndpointGraphBuilder builder = new EndpointGraphBuilder(this.job);
 			proj.accept(builder);
 			graph = builder.builder.finalise();  // Projected module contains a single protocol
@@ -217,7 +218,7 @@ public class JobContext
 		this.minimised.put(fullname, graph);
 	}
 	
-	public EndpointGraph getMinimisedEndpointGraph(GProtocolName fullname, Role role)
+	public EndpointGraph getMinimisedEndpointGraph(GProtocolName fullname, Role role) throws ScribbleException
 	{
 		//return getMinimisedEndpointGraphAux(Projector.projectFullProtocolName(fullname, role));
 		return getMinimisedEndpointGraphAux(fullname, role);
@@ -225,23 +226,16 @@ public class JobContext
 
   // Full projected name
 	//protected EndpointGraph getMinimisedEndpointGraphAux(LProtocolName fullname)
-	protected EndpointGraph getMinimisedEndpointGraphAux(GProtocolName fullname, Role role)
+	protected EndpointGraph getMinimisedEndpointGraphAux(GProtocolName fullname, Role role) throws ScribbleException
 	{
 		LProtocolName fulllpn = Projector.projectFullProtocolName(fullname, role);
 
 		EndpointGraph minimised = this.minimised.get(fulllpn);
 		if (minimised == null)
 		{
-			try
-			{
-				String aut = runAut(getEndpointGraph(fullname, role).init.toAut(), fulllpn + ".aut");
-				minimised = new AutParser().parse(aut);
-				addMinimisedEndpointGraph(fulllpn, minimised);
-			}
-			catch (ScribbleException e)
-			{
-				throw new RuntimeException(e);
-			}
+			String aut = runAut(getEndpointGraph(fullname, role).init.toAut(), fulllpn + ".aut");
+			minimised = new AutParser().parse(aut);
+			addMinimisedEndpointGraph(fulllpn, minimised);
 		}
 		return minimised;
 	}

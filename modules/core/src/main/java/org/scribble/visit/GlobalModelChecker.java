@@ -159,7 +159,7 @@ public class GlobalModelChecker extends ModuleContextVisitor
 			}
 			if (!errors.orphans.isEmpty())
 			{
-				errorMsg += "\n    Orphan messages: " + errors.orphans;
+				errorMsg += "\n    Orphan messages: " + errors.orphans;  // FIXME: add sender of orphan to error message 
 			}
 		}
 		job.debugPrintln("(" + fullname + ") Checked all states: " + count);
@@ -190,7 +190,7 @@ public class GlobalModelChecker extends ModuleContextVisitor
 				}
 				if (!roleLiveness.isEmpty())
 				{
-					errorMsg += "\nRole liveness violation for " + roleLiveness + " in terminal set:\n    " + termset.stream().map((i) -> all.get(i).toString()).collect(Collectors.joining(","));
+					errorMsg += "\nRole progress violation for " + roleLiveness + " in terminal set:\n    " + termset.stream().map((i) -> all.get(i).toString()).collect(Collectors.joining(","));
 				}
 				Map<Role, Set<Send>> msgLiveness = checkMessageLiveness(all, init, termset);
 				if (!msgLiveness.isEmpty())
