@@ -389,7 +389,7 @@ public class WFConfig
 		//return Collections.emptySet();
 	}
 
-	// Generalised to include "unconnected" messages -- should unconnected messages be stuck instead?
+	// Generalised to include "unconnected" messages -- should unconnected messages be treated via stuck instead?
 	public Map<Role, Set<Send>> getOrphanMessages()
 	{
 		Map<Role, Set<Send>> res = new HashMap<>();
@@ -397,7 +397,7 @@ public class WFConfig
 		{
 			//EndpointState s = this.states.get(r);
 			EndpointFSM s = this.states.get(r);
-			if (s.isTerminal())
+			if (s.isTerminal())  // Local termination of r, i.e. not necessarily "full deadlock"
 			{
 				Set<Send> orphs = this.buffs.get(r).values().stream().filter((v) -> v != null).collect(Collectors.toSet());
 				if (!orphs.isEmpty())
