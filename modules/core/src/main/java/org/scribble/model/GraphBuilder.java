@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -19,6 +20,8 @@ public abstract class GraphBuilder<A extends ModelAction<K>, S extends ModelStat
 {
 	private final Map<RecVar, Deque<S>> recvars = new HashMap<>();  // Should be a stack of S?
 	private final Map<RecVar, Deque<Set<A>>> enacting = new HashMap<>();  // first action(s) inside a rec scope ("enacting" means how to enact an unguarded choice-continue)
+
+	protected final Map<S, Map<RecVar, Set<A>>> enactingMap = new HashMap<>();  // FIXME: refactor: currently here for convenience, but used only by LGraphBuilder  // Record enacting per-recvar, since a state could have multi-recvars
 
 	//private final Map<SubprotocolSig, S> subprotos = new HashMap<>();  // Not scoped sigs
 
@@ -107,6 +110,25 @@ public abstract class GraphBuilder<A extends ModelAction<K>, S extends ModelStat
 			}
 		}
 	}
+
+	// Doesn't set predecessor, cf. addEdge (and cf. addEdgeAux)
+	protected void addRecursionEdge(S s, A a, S succ)  // Cf. LGraphBuilder.addContinueEdge, for choice-unguarded cases -- addRecursionEdge, for guarded cases, should also be in LGraphBuilder, but here for convenience (private state)
+	{
+		s.addEdge(a, succ);
+		
+		// Still needed here?
+		for (Deque<Set<A>> ens : this.enacting.values())
+		{
+			if (!ens.isEmpty())
+			{
+				Set<A> tmp = ens.peek();
+				if (tmp.isEmpty())
+				{
+					tmp.add(a);
+				}
+			}
+		}
+	}
 	
 	/*private final List<S> contStates = new LinkedList<>();
 	private final List<RecVar> contRecVars = new LinkedList<>();*/
@@ -114,10 +136,32 @@ public abstract class GraphBuilder<A extends ModelAction<K>, S extends ModelStat
 	/*public void removeLastEdge(S s)
 	{
 		s.removeLastEdge();
-	}*/
+	}* /
 	public void removeEdge(S s, A a, S succ) throws ScribbleException
 	{
 		s.removeEdge(a, succ);
+	}*/
+
+	// succ assumed to be this.getEntry()
+	protected void removeEdgeFromPredecessor(S s, A a) throws ScribbleException  // Removing prev edge, to be replaced by addRecursionEdge  // Should be in LGraphBuilder, but here for convenience
+	{
+		//s.removeEdge(a, succ);
+		s.removeEdge(a, this.getEntry());
+		//this.pred.peek().remove(s);  // Need to update both preds and prevs accordingly (consider non-det)
+		Iterator<S> preds = this.pred.peek().iterator();
+		Iterator<A> prevs = this.prev.peek().iterator();
+		while (preds.hasNext())
+		{
+			S nexts = preds.next();
+			A nexta = prevs.next();
+			if (nexts.equals(s) && nexta.equals(a))
+			{
+				preds.remove();
+				prevs.remove();
+				return;
+			}
+		}
+		throw new RuntimeException("Shouldn't get in here: " + s + ", " + a);
 	}
 	
 	public void enterChoice()  // FIXME: refactor (LChoiceDel.visitForFsmConversion)
@@ -248,29 +292,37 @@ public abstract class GraphBuilder<A extends ModelAction<K>, S extends ModelStat
 		}
 		tmp2.push(new HashSet<>());  // Push new Set element onto stack
 	}	
-
-	protected final Map<S, Set<A>> enactingMap = new HashMap<>();
 	
 	public void popRecursionEntry(RecVar recvar)
 	{
-		this.recvars.get(recvar).pop();
+		this.recvars.get(recvar).pop();  // Pop the entry of this rec
+
 		Set<A> pop = this.enacting.get(recvar).pop();
 		if (this.enacting.get(recvar).isEmpty())  // All Sets popped from the stack of this recvar
 		{
 			this.enacting.remove(recvar);
 		}
-		
-		this.enactingMap.put(getEntry(), pop);
+
+		S curr = getEntry();
+		Map<RecVar, Set<A>> tmp = this.enactingMap.get(curr);
+		if (tmp == null)
+		{
+			tmp = new HashMap<>();
+			this.enactingMap.put(curr, tmp);
+		}
+		tmp.put(recvar, pop);
 	}	
 	
 	public List<S> getPredecessors()
 	{
-		return this.pred.peek();
+		//return this.pred.peek();
+		return new LinkedList<>(this.pred.peek());  // Cf. removeEdgeFromPredecessor
 	}
 	
 	public List<A> getPreviousActions()
 	{
-		return this.prev.peek();
+		//return this.prev.peek();
+		return new LinkedList<>(this.prev.peek());
 	}
 
 	public S getRecursionEntry(RecVar recvar)

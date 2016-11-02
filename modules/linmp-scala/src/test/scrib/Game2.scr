@@ -1,49 +1,80 @@
 module Game2;
 
 type <java> "java.lang.String" from "rt.jar" as String;
+type <java> "..." from "..." as State;
 
-global protocol Proto(role Client, role Server)
+//global protocol Setup(role P, role S)
+global protocol Proto(role P, role S)
 {
-	choice at Client
+	choice at P
 	{
-		PlayAsA() from Client to Server;
-		BeA(Game@A) from Server to Client;
+		PlayA() from P to S;
+		GameA(Game@A) from S to P;
 	}
 	or
 	{
-		PlayAsB() from Client to Server;
-		BeB(Game@B) from Server to Client;
+		PlayB() from P to S;
+		GameB(Game@B) from S to P;
 	}
 	or
 	{
-		PlayAsC() from Client to Server;
-		BeC(Game@C) from Server to Client;
+		PlayC() from P to S;
+		GameC(Game@C) from S to P;
 	}
 }
 
 
 global protocol Game(role A, role B, role C)
 {
-	NameAB(String) from A to B;
-	NameBC(String) from B to C;
-	NameCA(String) from C to A;
+	NameAtoB(String) from A to B;
+	NameABtoC(String) from B to C;
+	NameBCtoA(String) from C to A;
 	rec X
 	{
 		choice at A
 		{
-			MoveAB(String) from A to B;
-			MoveAC(String) from A to C;
-			MoveBA(String) from B to A;
-			MoveBC(String) from B to C;
-			MoveCA(String) from C to A;
-			MoveCB(String) from C to B;
+			UpdateAB(State) from A to B;
+			UpdateBC(State) from B to C;
+			UpdateCA(State) from C to A;
 			continue X;
 		}
 		or
 		{
-			QuitAB() from A to B;
-			QuitAC() from A to C;
-			QuitBC() from B to C;
+			EndAB(String) from A to B;
+			EndAC(String) from B to C;
+			Ack() from C to A;
 		}
 	}
 }
+
+
+/* OK
+choice at A
+{
+	UpdateAB(String) from A to B;
+	UpdateAC(String) from A to C;
+	MoveBA(String) from B to C;
+	continue X;
+}
+or
+{
+	EndAB(String) from A to B;
+	EndAC(String) from A to C;
+	Quit() from B to C;
+}
+//*/
+
+/* Not OK
+choice at A
+{
+	UpdateAB(String) from A to B;
+	UpdateAC(String) from A to C;   // "Using "standard" syntactic projection without "multicast", the C messages get treated as continuations to be merged (so protocol not WF) instead of "directed" choice messages
+	continue X;
+}
+or
+{
+	EndAB(String) from A to B;
+	EndAC(String) from A to C;
+	//Quit() from C to A;
+}
+//*/

@@ -6,6 +6,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
+import org.scribble.main.ScribbleException;
 import org.scribble.model.GraphBuilder;
 import org.scribble.sesstype.kind.Local;
 import org.scribble.sesstype.name.RecVar;
@@ -29,13 +30,25 @@ public class LGraphBuilder extends GraphBuilder<IOAction, EndpointState, Local>
 	{
 
 	}
+
+	public void removeEdgeFromPredecessor(EndpointState s, IOAction a) throws ScribbleException
+	{
+		super.removeEdgeFromPredecessor(s, a);
+	}
 	
+	// Choice-guarded continues (can be done in one pass)
+	public void addRecursionEdge(EndpointState s, IOAction a, EndpointState succ)
+	{
+		super.addRecursionEdge(s, a, succ);
+	}
+	
+	// Choice-unguarded continues -- fixed in finalise pass
 	public void addContinueEdge(EndpointState s, RecVar rv)
 	{
 		/*this.contStates.add(s);
 		this.contRecVars.add(rv);*/
 		EndpointState entry = getRecursionEntry(rv);
-		addEdgeAux(s, new IntermediateContinueEdge(), entry);
+		addEdgeAux(s, new IntermediateContinueEdge(rv), entry);
 	}
 	
 	public EndpointGraph finalise()
@@ -59,6 +72,7 @@ public class LGraphBuilder extends GraphBuilder<IOAction, EndpointState, Local>
 		return new EndpointGraph(res, resTerm);
 	}
 	
+	// FIXME: incomplete: won't fully correctly handle situations involving, e.g., transitive continue-edge fixing?
 	private void fixContinueEdges(Set<EndpointState> seen, Map<EndpointState, EndpointState> map, EndpointState curr, EndpointState res)
 	{
 		if (seen.contains(curr))
@@ -83,7 +97,10 @@ public class LGraphBuilder extends GraphBuilder<IOAction, EndpointState, Local>
 			}
 			else
 			{
-				for (IOAction e : this.enactingMap.get(succ))
+				IntermediateContinueEdge ice = (IntermediateContinueEdge) a;
+				//for (IOAction e : this.enactingMap.get(succ))
+				RecVar rv = new RecVar(ice.mid.toString());
+				for (IOAction e : this.enactingMap.get(succ).get(rv))
 				{
 					for (EndpointState n : succ.takeAll(e))
 					{
