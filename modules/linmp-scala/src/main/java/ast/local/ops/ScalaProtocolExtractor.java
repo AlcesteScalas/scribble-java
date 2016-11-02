@@ -209,7 +209,7 @@ public class ScalaProtocolExtractor extends LocalTypeVisitor<String>
 		String vname = lte.env.get(v);
 		assert(vname != null);
 		
-		// Remember that the underlying variant is used for output
+		// Remember that the underlying variant is used for input
 		inputClassNames.add(vname);
 		
 		// Ensure that labels are sorted
@@ -221,7 +221,7 @@ public class ScalaProtocolExtractor extends LocalTypeVisitor<String>
 		{
 			res += ": " + lte.env.get(v); // Add return type annotation
 		}
-		res += " {\n" +
+		res += " = {\n" +
 				"    " + node.src.name + ".receive() match {\n";
 		
 		for (Label l: labels) // Note: node might have less labels wrt v
