@@ -81,7 +81,7 @@ class FullMerger extends Visitor<Type>
 		Branch t2b = (Branch)t2;
 		
 		Map<Label,Case> newcases = mergeCases(node.cases, t2b.cases,
-												   node, t2b);
+											  node, t2b, true);
 		return new Branch(newcases);
 	}
 	
@@ -97,12 +97,12 @@ class FullMerger extends Visitor<Type>
 		Select t2s = (Select)t2;
 		
 		Map<Label,Case> newcases = mergeCases(node.cases, t2s.cases,
-												   node, t2s);
+											  node, t2s, false);
 		return new Select(newcases);
 	}
 	
 	private Map<Label,Case> mergeCases(Map<Label,Case> vcases, Map<Label,Case> t2cases,
-									   Type v, Type t2)
+									   Type v, Type t2, Boolean forceCommonLabels)
 	{
 		Set<Label> labsv = vcases.keySet();
 		Set<Label> labst2 = t2cases.keySet();
@@ -115,7 +115,14 @@ class FullMerger extends Visitor<Type>
 
 		Set<Label> onlyt2 = new HashSet<>(labst2);
 		onlyt2.removeAll(labsv); // Labels only in the "other" branching
-
+		
+		if (forceCommonLabels && !(onlyv.isEmpty() && onlyt2.isEmpty()))
+		{
+			// Labels mismatch
+			cannotMerge(v, t2);
+			return new HashMap<>();
+		}
+		
 		Map<Label,Case> newcases = new HashMap<>();
 
 		for (Label l: common)

@@ -87,7 +87,7 @@ class FullMerger extends LocalTypeVisitor<LocalType>
 		}
 		
 		Map<Label,LocalCase> newcases = mergeCases(node.cases, t2b.cases,
-														node, t2b);
+												   node, t2b, false);
 		return new LocalBranch(node.src, newcases);
 	}
 	
@@ -108,12 +108,14 @@ class FullMerger extends LocalTypeVisitor<LocalType>
 		}
 		
 		Map<Label,LocalCase> newcases = mergeCases(node.cases, t2s.cases,
-														node, t2s);
+												   node, t2s, true);
 		return new LocalSelect(node.dest, newcases);
 	}
 	
+	// forceCommonLabels ensures that merged cases only have the same labels
 	private Map<Label,LocalCase> mergeCases(Map<Label,LocalCase> vcases, Map<Label,LocalCase> t2cases,
-												 LocalType v, LocalType t2)
+											LocalType v, LocalType t2,
+											Boolean forceCommonLabels)
 	{
 		Set<Label> labsv = vcases.keySet();
 		Set<Label> labst2 = t2cases.keySet();
@@ -126,7 +128,14 @@ class FullMerger extends LocalTypeVisitor<LocalType>
 
 		Set<Label> onlyt2 = new HashSet<>(labst2);
 		onlyt2.removeAll(labsv); // Labels only in the "other" branching
-
+		
+		if (forceCommonLabels && !(onlyv.isEmpty() && onlyt2.isEmpty()))
+		{
+			// Labels mismatch
+			cannotMerge(v, t2);
+			return new HashMap<>();
+		}
+		
 		Map<Label,LocalCase> newcases = new HashMap<>();
 
 		for (Label l: common)
