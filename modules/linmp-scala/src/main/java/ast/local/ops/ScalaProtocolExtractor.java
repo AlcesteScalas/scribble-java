@@ -3,7 +3,6 @@ package ast.local.ops;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
 
 import org.scribble.main.ScribbleException;
 
@@ -70,12 +69,6 @@ public class ScalaProtocolExtractor extends LocalTypeVisitor<String>
 	private final ChannelTracker ctracker;
 	private final List<Role> roles; // Sorted list of roles in "visiting"
 	private final String root; // Root of the class hierarchy
-	
-	// Classes used for input
-	private Set<String> inputClassNames = new java.util.HashSet<>();
-	
-	// Classes used for inputting
-	private Set<String> outputClassNames = new java.util.HashSet<>();
 	
 	/** Generate the Scala protocol classes representing a local type.
 	 * 
@@ -149,25 +142,16 @@ public class ScalaProtocolExtractor extends LocalTypeVisitor<String>
 			throw new ScribbleException("Error(s) extracting protocol of " + visiting + ": " + String.join(";", errors));
 		}
 		
-		assert(!inputClassNames.isEmpty() || !outputClassNames.isEmpty());
-		
-		// Pick roles in alphabetical order from channel tracker
-		for (Role r: new java.util.ArrayList<>(new java.util.TreeSet<>(ctracker.keySet())))
+		String inmsgs = ScalaMessageExtractor.inputs(visiting, nameEnv).trim();
+		if (!inmsgs.isEmpty())
 		{
-			ast.linear.Type t = ctracker.get(r).t;
-			String inmsgs = ast.linear.ops.ScalaMessageExtractor.inputs(
-					t, inputClassNames).trim();
-			if (!inmsgs.isEmpty())
-			{
-				msgInProtoClasses.add(inmsgs);
-			}
-			
-			String outmsgs = ast.linear.ops.ScalaMessageExtractor.outputs(
-					t, outputClassNames).trim();
-			if (!outmsgs.isEmpty())
-			{
-				msgOutProtoClasses.add(outmsgs);
-			}
+			msgInProtoClasses.add(inmsgs);
+		}
+		
+		String outmsgs = ScalaMessageExtractor.outputs(visiting, nameEnv).trim();
+		if (!outmsgs.isEmpty())
+		{
+			msgOutProtoClasses.add(outmsgs);
 		}
 		
 		// assert(msgInProtoClasses.size() == inputClassNames.size());
@@ -175,9 +159,9 @@ public class ScalaProtocolExtractor extends LocalTypeVisitor<String>
 		
 		return (root.isEmpty() ? "" : ("package " + root + "\n\n" +
 									   "import lchannels._\n\n") +
-				"// Input message types for multiparty sessions (" + String.join(", ", inputClassNames) + ")\n" +
+				"// Input message types for multiparty sessions\n" +
 				String.join("\n", msgInProtoClasses) +
-				"\n\n// Output message types for multiparty sessions (" + String.join(", ", outputClassNames) + ")\n" +
+				"\n\n// Output message types for multiparty sessions\n" +
 				String.join("\n", msgOutProtoClasses) +
 				"\n\n// Multiparty session classes\n" +
 				mpProtoClasses +
@@ -209,9 +193,6 @@ public class ScalaProtocolExtractor extends LocalTypeVisitor<String>
 		String vname = lte.env.get(v);
 		assert(vname != null);
 		
-		// Remember that the underlying variant is used for input
-		inputClassNames.add(vname);
-		
 		// Ensure that labels are sorted
 		List<Label> labels = new java.util.ArrayList<>(new java.util.TreeSet<>(node.labels()));
 		
@@ -219,7 +200,7 @@ public class ScalaProtocolExtractor extends LocalTypeVisitor<String>
 		res += "  def receive()";
 		if (labels.size() > 1)
 		{
-			res += ": " + lte.env.get(v); // Add return type annotation
+			// We could add the return type annotation, but let's Scala infer
 		}
 		res += " = {\n" +
 				"    " + node.src.name + ".receive() match {\n";
@@ -308,9 +289,6 @@ public class ScalaProtocolExtractor extends LocalTypeVisitor<String>
 		AbstractVariant v = getCarried(lte.t);
 		String vname = lte.env.get(v);
 		assert(vname != null);
-		
-		// Remember that the underlying variant is used for output
-		outputClassNames.add(vname);
 		
 		String res = "case class " + className + "(" + String.join(", ", chanspecs) + ") {\n";
 		// Ensure that labels are sorted

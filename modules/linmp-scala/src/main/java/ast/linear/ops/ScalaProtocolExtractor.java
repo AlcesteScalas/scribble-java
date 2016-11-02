@@ -27,62 +27,26 @@ import java.util.Collection;
  */
 public class ScalaProtocolExtractor extends Visitor<String>
 {
-	/** Options for class generation. */
-	public static class Option {
-		/** Default class generation for CPS linear interaction. */
-		static class Default extends Option { };
-
-		/** Class generation for output messages (without continuations). */
-		public class MPOutputMessages extends Option
-		{
-			private final Collection<String> classNames;
-
-			/**
-			 * @param classNames output message classes to be generated (descendants will be automatically included).
-			 */
-			public MPOutputMessages(Collection<String> classNames)
-			{
-				this.classNames = classNames;
-			}
-		}
-
-		/** Class generation for output messages (without continuations). */
-		public class MPInputMessages extends Option
-		{
-			private final Collection<String> classNames;
-
-			/**
-			 * @param classNames output message classes to be generated (descendants will be automatically included)
-			 */
-			public MPInputMessages(Collection<String> classNames)
-			{
-				this.classNames = classNames;
-			}
-		}
-	}
-	
 	private Collection<String> errors = new java.util.LinkedList<String>();
 	private final Type visiting;
-	private NameEnv nameEnv;
-	private Option option;
+	private final NameEnv nameEnv;
 	
 	public static String apply(Type t) throws ScribbleException
 	{
-		return apply(t, DefaultNameEnvBuilder.apply(t), new Option.Default());
+		return apply(t, DefaultNameEnvBuilder.apply(t));
 	}
 	
-	public static String apply(Type t, NameEnv nameEnv, Option opt) throws ScribbleException
+	public static String apply(Type t, NameEnv nameEnv) throws ScribbleException
 	{
-		ScalaProtocolExtractor te = new ScalaProtocolExtractor(t, nameEnv, opt);
+		ScalaProtocolExtractor te = new ScalaProtocolExtractor(t, nameEnv);
 		
 		return te.process();
 	}
 	
-	protected ScalaProtocolExtractor(Type t, NameEnv nameEnv, Option opt)
+	protected ScalaProtocolExtractor(Type t, NameEnv nameEnv)
 	{
 		this.visiting = t;
 		this.nameEnv = nameEnv;
-		this.option = opt;
 	}
 	
 	@Override
@@ -120,39 +84,13 @@ public class ScalaProtocolExtractor extends Visitor<String>
 		if (av instanceof Variant)
 		{
 			String res;
-			Boolean skip;  // Should we skip class generation?
 			Variant v = (Variant)av;
 			if (v.cases.size() == 1)
 			{
 				Label l = v.cases.keySet().iterator().next();
 				Case c = v.cases.get(l);
 				
-				if (option instanceof Option.Default)
-				{
-					skip = false;
-				}
-				else if (option instanceof Option.MPInputMessages)
-				{
-					skip = !((Option.MPInputMessages)option).classNames.contains(l.name);
-				}
-				else if (option instanceof Option.MPOutputMessages)
-				{
-					// If the abstract class is not required, skip it
-					skip = !((Option.MPOutputMessages)option).classNames.contains(l.name);
-				}
-				else
-				{
-					throw new RuntimeException("BUG: unsupported option " + option);
-				}
-				
-				if (skip)
-				{
-					res = "";
-				}
-				else
-				{
-					res = fromVariantCase(node, l, c, "");
-				}
+				res = fromVariantCase(node, l, c, "");
 				
 				if (c.payload instanceof BaseType)
 				{
@@ -177,39 +115,13 @@ public class ScalaProtocolExtractor extends Visitor<String>
 			{
 				String xtnd = nameEnv.get(v);
 				
-				if (option instanceof Option.Default)
-				{
-					skip = false;
-				}
-				else if (option instanceof Option.MPInputMessages)
-				{
-					// If the abstract class is not required, skip it
-					skip = !((Option.MPInputMessages)option).classNames.contains(xtnd);
-				}
-				else if (option instanceof Option.MPOutputMessages)
-				{
-					// If the abstract class is not required, skip it
-					skip = !((Option.MPOutputMessages)option).classNames.contains(xtnd);
-				}
-				else
-				{
-					throw new RuntimeException("BUG: unsupported option " + option);
-				}
-				
 				// Sort labels before (recursively) generating code
 				java.util.List<Label> ls = new java.util.ArrayList<>(new java.util.TreeSet<>(v.cases.keySet()));
-				if (!skip)
+				res = "sealed abstract class " + xtnd + "\n";
+				for (Label l: ls)
 				{
-					res = "sealed abstract class " + xtnd + "\n";
-					for (Label l: ls)
-					{
-						Case c = v.cases.get(l);
-						res += fromVariantCase(node, l, c, xtnd);
-					}
-				}
-				else
-				{
-					res = "";
+					Case c = v.cases.get(l);
+					res += fromVariantCase(node, l, c, xtnd);
 				}
 				
 				for (Label l: ls)
@@ -295,72 +207,26 @@ public class ScalaProtocolExtractor extends Visitor<String>
 			{
 				throw new RuntimeException("BUG: unsupported payload " + c.payload);
 			}
+
 			String cont = "ERROR";
-			if (option instanceof Option.Default)
+			if (c.cont instanceof End)
 			{
-				if (c.cont instanceof End)
-				{
-					// Do not generate vacuous continuations
-					cont = "";
-				}
-				else
-				{
-					cont = ScalaChannelTypeExtractor.apply(c.cont, nameEnv);
-				}
-			}
-			else if (option instanceof Option.MPInputMessages)
-			{
-				// If we are generating input messages, we are interested
-				// in the name of the class carried by the continuation
-				ast.linear.Type lcnt = c.cont;
-				if (lcnt instanceof In)
-				{
-					// FIXME: what about custom name environments?
-					cont = ast.local.ops.DefaultNameEnvBuilder.MULTIPARTY_CLASSES_PREFIX + nameEnv.get(((In)lcnt).carried());
-					assert(cont != null);
-				}
-				else if (lcnt instanceof Out)
-				{
-					// FIXME: what about custom name environments?
-					cont = ast.local.ops.DefaultNameEnvBuilder.MULTIPARTY_CLASSES_PREFIX + nameEnv.get(((Out)lcnt).carried());
-					assert(cont != null);
-				}
-				else if (lcnt instanceof End)
-				{
-					cont = "";
-				}
-			}
-			
-			res = "case class " + l.name + "(p: " + payload; // Provide ")" below!
-			if (option instanceof Option.Default)
-			{
-				if (cont.isEmpty())
-				{
-					res +=")";
-				}
-				else
-				{
-					res += ")(val cont: " + cont + ")";
-				}
-			}
-			else if (option instanceof Option.MPInputMessages)
-			{
-				if (cont.isEmpty())
-				{
-					res +=")";
-				}
-				else
-				{
-					res += ", cont: " + cont + ")";
-				}
-			}
-			else if (option instanceof Option.MPOutputMessages)
-			{
-				res += ")";
+				// Do not generate vacuous continuations
+				cont = "";
 			}
 			else
 			{
-				throw new RuntimeException("BUG: unsupported option " + option);
+				cont = ScalaChannelTypeExtractor.apply(c.cont, nameEnv);
+			}
+			
+			res = "case class " + l.name + "(p: " + payload; // Provide ")" below!
+			if (cont.isEmpty())
+			{
+				res +=")";
+			}
+			else
+			{
+				res += ")(val cont: " + cont + ")";
 			}
 			
 			if (!xtnds.isEmpty())

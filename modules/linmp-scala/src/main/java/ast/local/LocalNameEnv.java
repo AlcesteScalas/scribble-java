@@ -2,7 +2,7 @@ package ast.local;
 
 import java.util.HashMap;
 
-/** Naming environment for linear types.
+/** Naming environment for local types.
  * 
  * @author Alceste Scalas <alceste.scalas@imperial.ac.uk>
  */
