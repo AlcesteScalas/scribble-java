@@ -21,6 +21,8 @@ import org.scribble.main.ScribbleException;
  */
 public class Sanitizer extends GlobalTypeVisitor<GlobalType>
 {
+	private int lastVarIdx = 0; // Last index used for fresh rec vars
+	private Collection<RecVar> usedRecVars = new java.util.HashSet<>();
 	private Collection<RecVar> bound = new java.util.HashSet<>();
 	private Collection<String> errors = new java.util.LinkedList<>();
 	private static GlobalType gtype;
@@ -94,6 +96,7 @@ public class Sanitizer extends GlobalTypeVisitor<GlobalType>
 	protected GlobalType visit(GlobalRec node)
 	{
 		RecVar var = node.recvar;
+		this.usedRecVars.add(var);
 		
 		if (!node.body.freeVariables().contains(var))
 		{
@@ -101,13 +104,15 @@ public class Sanitizer extends GlobalTypeVisitor<GlobalType>
 			return visit(node.body);
 		}
 		
-		if (this.bound.contains(var))
+		if (this.usedRecVars.contains(var))
 		{
-			// The recursion re-binds a variable, let's alpha-convert
+			// The recursion re-uses a variable, let's alpha-convert
 			try
 			{
-				return visit(AlphaConverter.apply(node, var,
-															new RecVar(var.name+"'")));
+				lastVarIdx++;
+				RecVar newvar = new RecVar(var.name+lastVarIdx);
+				this.usedRecVars.add(newvar);
+				return visit(AlphaConverter.apply(node, var, newvar));
 			}
 			catch (ScribbleException e)
 			{
@@ -116,6 +121,7 @@ public class Sanitizer extends GlobalTypeVisitor<GlobalType>
 			return node;
 		}
 		
+		// If we are here, the recursion is binding a "fresh" variable
 		this.bound.add(var);
 		GlobalRec res = new GlobalRec(var, visit(node.body));
 		this.bound.remove(var);
