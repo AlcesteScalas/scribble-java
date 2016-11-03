@@ -84,7 +84,11 @@ public class ScalaMessageExtractor extends LocalTypeVisitor<ClassTable>
 	@Override
 	protected ClassTable visit(LocalBranch node)
 	{
-		ClassTable res = new ClassTable(); 
+		ClassTable res = new ClassTable();
+		
+		// Further class tables generated from the payloads
+		Collection<ClassTable> pclasses = new java.util.LinkedList<>();
+		
 		String xtnds = "";
 		
 		if (option == Option.INPUTS)
@@ -108,6 +112,8 @@ public class ScalaMessageExtractor extends LocalTypeVisitor<ClassTable>
 				else if (c.pay instanceof LocalType)
 				{
 					def += "p: " + nameEnv.get((LocalType)c.pay);
+					// Also generate message classes for the payload
+					pclasses.add(visit((LocalType)c.pay));
 				}
 				else
 				{
@@ -128,12 +134,38 @@ public class ScalaMessageExtractor extends LocalTypeVisitor<ClassTable>
 				res.putIdem(cls, def);
 			}
 		}
+		else // option == Option.OUTPUTS
+		{
+			// When generating output messages, only inspect the payload types
+			for (LocalCase c: node.cases.values())
+			{
+				if (c.pay instanceof BaseType)
+				{
+					// Nothing to do
+				}
+				else if (c.pay instanceof LocalType)
+				{
+					pclasses.add(visit((LocalType)c.pay));
+				}
+				else
+				{
+					throw new RuntimeException("BUG: unsupported payload type: " + c.pay);
+				}
+			}
+		}
 		
-		// Finally, visit the continuations
+		// Visit the continuations
 		for (LocalCase c: node.cases.values())
 		{
 			res.putAllIdem(visit(c.body));
 		}
+		
+		// Finally, also include the message classes for the payloads (if any)
+		for (ClassTable ct: pclasses)
+		{
+			res.putAllIdem(ct);
+		}
+		
 		return res;
 	}
 	
@@ -141,6 +173,10 @@ public class ScalaMessageExtractor extends LocalTypeVisitor<ClassTable>
 	protected ClassTable visit(LocalSelect node)
 	{
 		ClassTable res = new ClassTable();
+		
+		// Further class tables generated from the payloads
+		Collection<ClassTable> pclasses = new java.util.LinkedList<>();
+		
 		String xtnds = "";
 		
 		if (option == Option.OUTPUTS)
@@ -165,6 +201,8 @@ public class ScalaMessageExtractor extends LocalTypeVisitor<ClassTable>
 				else if (c.pay instanceof LocalType)
 				{
 					def += "p: " + nameEnv.get((LocalType)c.pay);
+					// Also generate message classes for the payload
+					pclasses.add(visit((LocalType)c.pay));
 				}
 				else
 				{
@@ -176,12 +214,38 @@ public class ScalaMessageExtractor extends LocalTypeVisitor<ClassTable>
 				res.putIdem(cls, def);
 			}
 		}
+		else // option == Option.INPUTS
+		{
+			// When generating input messages, only inspect the payload types
+			for (LocalCase c: node.cases.values())
+			{
+				if (c.pay instanceof BaseType)
+				{
+					// Nothing to do
+				}
+				else if (c.pay instanceof LocalType)
+				{
+					pclasses.add(visit((LocalType)c.pay));
+				}
+				else
+				{
+					throw new RuntimeException("BUG: unsupported payload type: " + c.pay);
+				}
+			}
+		}
 		
-		// Finally, visit the continuations
+		// Visit the continuations
 		for (LocalCase c: node.cases.values())
 		{
 			res.putAllIdem(visit(c.body));
 		}
+		
+		// Finally, also include the message classes for the payloads (if any)
+		for (ClassTable ct: pclasses)
+		{
+			res.putAllIdem(ct);
+		}
+		
 		return res;
 	}
 	

@@ -13,7 +13,7 @@ import ast.linear.Out;
 import ast.linear.Type;
 import ast.linear.Visitor;
 
-/** Build the Scala channel type corresponding to a linear I/O type.
+/** Build the Scala {@code lchannels} type corresponding to a linear I/O type.
  * 
  * @author Alceste Scalas <alceste.scalas@imperial.ac.uk>
  */

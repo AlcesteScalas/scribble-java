@@ -96,7 +96,6 @@ public class Sanitizer extends GlobalTypeVisitor<GlobalType>
 	protected GlobalType visit(GlobalRec node)
 	{
 		RecVar var = node.recvar;
-		this.usedRecVars.add(var);
 		
 		if (!node.body.freeVariables().contains(var))
 		{
@@ -111,7 +110,6 @@ public class Sanitizer extends GlobalTypeVisitor<GlobalType>
 			{
 				lastVarIdx++;
 				RecVar newvar = new RecVar(var.name+lastVarIdx);
-				this.usedRecVars.add(newvar);
 				return visit(AlphaConverter.apply(node, var, newvar));
 			}
 			catch (ScribbleException e)
@@ -123,6 +121,7 @@ public class Sanitizer extends GlobalTypeVisitor<GlobalType>
 		
 		// If we are here, the recursion is binding a "fresh" variable
 		this.bound.add(var);
+		this.usedRecVars.add(var);
 		GlobalRec res = new GlobalRec(var, visit(node.body));
 		this.bound.remove(var);
 		return res;

@@ -12,8 +12,6 @@ import ast.local.LocalType;
 import ast.name.Role;
 import ast.util.ClassTable;
 
-import ast.local.ops.ScalaProtocolExtractor.ChannelTracker;
-
 /** Encoder of local session types into Scala classes.
  * 
  * @author Alceste Scalas <alceste.scalas@imperial.ac.uk>
@@ -44,21 +42,16 @@ public class ScalaEncoder
 	 */
 	public static String apply(LocalType t, String pkg, LocalNameEnv nameEnv) throws ScribbleException
 	{
-		List<String> linProtoClasses = new java.util.LinkedList<>(); 
-		ChannelTracker ctracker = new ChannelTracker(t);
-
+		ClassTable linProtoClasses = new ClassTable();
+		
 		// Note that roles is sorted
-		List<Role> roles = new java.util.ArrayList<>(new java.util.TreeSet<>(ctracker.keySet()));
+		List<Role> roles = new java.util.ArrayList<>(new java.util.TreeSet<>(t.roles()));
 		
 		// Pick roles in alphabetical order from channel tracker
 		for (Role r: roles)
 		{
-			ast.linear.Type lt = ctracker.get(r).t;
-			String linp = ast.linear.ops.ScalaProtocolExtractor.apply(lt).trim();
-			if (!linp.isEmpty())
-			{
-				linProtoClasses.add(linp);
-			}
+			ast.linear.Type lt = t.linear(r);
+			linProtoClasses.putAllIdem(ast.linear.ops.ScalaProtocolExtractor.apply(lt));
 		}
 		
 		ClassTable mpProtoClasses = ScalaProtocolExtractor.apply(t, nameEnv);
@@ -77,7 +70,7 @@ public class ScalaEncoder
 				String.join("\n", mpProtoClasses.values()) +
 				"\n\n// Classes representing messages (with continuations) in binary sessions\n" +
 				"package object " + BINARY_CLASSES_NS + " {\n" +
-				String.join("\n", linProtoClasses) +
+				String.join("\n", linProtoClasses.values()) +
 				"\n}\n"
 				);
 	}

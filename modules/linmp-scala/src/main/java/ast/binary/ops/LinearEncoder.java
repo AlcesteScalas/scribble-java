@@ -44,7 +44,7 @@ public class LinearEncoder extends Visitor<Type>
 	static Type apply(ast.binary.Type visiting, Map<RecVar, ast.linear.Type> env) throws ScribbleException
 	{
 		LinearEncoder enc = new LinearEncoder(visiting, env);
-		return enc.process();
+		return ast.linear.ops.Sanitizer.apply(enc.process());
 	}
 	
 	private LinearEncoder(ast.binary.Type visiting,
