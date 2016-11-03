@@ -24,7 +24,7 @@ public class AlphaConverter extends GlobalTypeVisitor<GlobalType>
 	private boolean open = false; // Becomes true when "old" is traversed
 	static private GlobalType gtype;
 	
-	/** Sanitize the given global type
+	/** Alpha-convert the given global type
 	 * 
 	 * @param g Global type to be alpha-converted
 	 * @param old Old variable name
