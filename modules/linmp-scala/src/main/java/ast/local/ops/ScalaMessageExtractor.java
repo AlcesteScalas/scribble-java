@@ -17,6 +17,8 @@ import ast.name.BaseType;
 import ast.name.Label;
 import ast.name.RecVar;
 
+import ast.util.ClassTable;
+
 import java.util.Collection;
 import java.util.Map;
 
@@ -24,7 +26,7 @@ import java.util.Map;
  * @author Alceste Scalas <alceste.scalas@imperial.ac.uk>
  *
  */
-public class ScalaMessageExtractor extends LocalTypeVisitor<String>
+public class ScalaMessageExtractor extends LocalTypeVisitor<ClassTable>
 {
 	public static String MESSAGE_CLASSES_PFX = "Msg";
 	
@@ -38,14 +40,14 @@ public class ScalaMessageExtractor extends LocalTypeVisitor<String>
 	private final LocalNameEnv nameEnv;
 	private final Option option;
 	
-	public static String inputs(LocalType t, LocalNameEnv nameEnv) throws ScribbleException
+	public static ClassTable inputs(LocalType t, LocalNameEnv nameEnv) throws ScribbleException
 	{
 		ScalaMessageExtractor te = new ScalaMessageExtractor(t, nameEnv, Option.INPUTS);
 		
 		return te.process();
 	}
 	
-	public static String outputs(LocalType t, LocalNameEnv nameEnv) throws ScribbleException
+	public static ClassTable outputs(LocalType t, LocalNameEnv nameEnv) throws ScribbleException
 	{
 		ScalaMessageExtractor te = new ScalaMessageExtractor(t, nameEnv, Option.OUTPUTS);
 		
@@ -60,9 +62,9 @@ public class ScalaMessageExtractor extends LocalTypeVisitor<String>
 	}
 	
 	@Override
-	protected String process() throws ScribbleException
+	protected ClassTable process() throws ScribbleException
 	{
-		String res = visit(visiting);
+		ClassTable res = visit(visiting);
 		if (errors.isEmpty())
 		{
 			return res;
@@ -74,15 +76,15 @@ public class ScalaMessageExtractor extends LocalTypeVisitor<String>
 	}
 	
 	@Override
-	protected String visit(LocalEnd node)
+	protected ClassTable visit(LocalEnd node)
 	{
-		return "";
+		return new ClassTable();
 	}
 	
 	@Override
-	protected String visit(LocalBranch node)
+	protected ClassTable visit(LocalBranch node)
 	{
-		String res = "";
+		ClassTable res = new ClassTable(); 
 		String xtnds = "";
 		
 		if (option == Option.INPUTS)
@@ -90,21 +92,22 @@ public class ScalaMessageExtractor extends LocalTypeVisitor<String>
 			if (node.cases.keySet().size() > 1)
 			{
 				xtnds = MESSAGE_CLASSES_PFX + nameEnv.get(node);
-				res += "sealed abstract class " + xtnds + "\n";
+				res.putIdem(xtnds, "sealed abstract class " + xtnds);
 			}
 			
 			for (Map.Entry<Label, LocalCase> e: node.cases.entrySet())
 			{
-				res += "case class " + e.getKey().name + "(";
+				String cls = e.getKey().name;
+				String def = "case class " + cls + "(";
 				LocalCase c = e.getValue();
 
 				if (c.pay instanceof BaseType)
 				{
-					res += "p: " + c.pay; // Directly represent payload type
+					def += "p: " + c.pay; // Directly represent payload type
 				}
 				else if (c.pay instanceof LocalType)
 				{
-					res += "p: " + nameEnv.get((LocalType)c.pay);
+					def += "p: " + nameEnv.get((LocalType)c.pay);
 				}
 				else
 				{
@@ -117,28 +120,27 @@ public class ScalaMessageExtractor extends LocalTypeVisitor<String>
 				}
 				else
 				{
-					res += ", cont: " + nameEnv.get(c.body);
+					def += ", cont: " + nameEnv.get(c.body);
 				}
 
-				res += ")";
-				res += (xtnds.isEmpty() ? "" : " extends " + xtnds);
-				res += "\n";
+				def += ")";
+				def += (xtnds.isEmpty() ? "" : " extends " + xtnds);
+				res.putIdem(cls, def);
 			}
-			res += "\n";
 		}
 		
 		// Finally, visit the continuations
 		for (LocalCase c: node.cases.values())
 		{
-			res += visit(c.body);
+			res.putAllIdem(visit(c.body));
 		}
 		return res;
 	}
 	
 	@Override
-	protected String visit(LocalSelect node)
+	protected ClassTable visit(LocalSelect node)
 	{
-		String res = "";
+		ClassTable res = new ClassTable();
 		String xtnds = "";
 		
 		if (option == Option.OUTPUTS)
@@ -152,46 +154,46 @@ public class ScalaMessageExtractor extends LocalTypeVisitor<String>
 			
 			for (Map.Entry<Label, LocalCase> e: node.cases.entrySet())
 			{
-				res += "case class " + e.getKey().name + "(";
+				String cls = e.getKey().name;
+				String def = "case class " + cls + "(";
 				LocalCase c = e.getValue();
 
 				if (c.pay instanceof BaseType)
 				{
-					res += "p: " + c.pay; // Directly represent payload type
+					def += "p: " + c.pay; // Directly represent payload type
 				}
 				else if (c.pay instanceof LocalType)
 				{
-					res += "p: " + nameEnv.get((LocalType)c.pay);
+					def += "p: " + nameEnv.get((LocalType)c.pay);
 				}
 				else
 				{
 					throw new RuntimeException("BUG: unsupported payload type: " + c.pay);
 				}
 				
-				res += ")";
-				res += (xtnds.isEmpty() ? "" : " extends " + xtnds);
-				res += "\n";
+				def += ")";
+				def += (xtnds.isEmpty() ? "" : " extends " + xtnds);
+				res.putIdem(cls, def);
 			}
-			res += "\n";
 		}
 		
 		// Finally, visit the continuations
 		for (LocalCase c: node.cases.values())
 		{
-			res += visit(c.body);
+			res.putAllIdem(visit(c.body));
 		}
 		return res;
 	}
 	
 	@Override
-	protected String visit(LocalRec node)
+	protected ClassTable visit(LocalRec node)
 	{
 		return visit(node.body);
 	}
 	
 	@Override
-	protected String visit(RecVar node)
+	protected ClassTable visit(RecVar node)
 	{
-		return "";
+		return new ClassTable();
 	}
 }

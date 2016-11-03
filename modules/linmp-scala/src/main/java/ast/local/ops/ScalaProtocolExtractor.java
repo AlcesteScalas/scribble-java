@@ -24,21 +24,19 @@ import ast.name.BaseType;
 import ast.name.Label;
 import ast.name.RecVar;
 import ast.name.Role;
+import ast.util.ClassTable;
 
-public class ScalaProtocolExtractor extends LocalTypeVisitor<String>
-{
-	public static String BINARY_CLASSES_NS = "binary";
-	
+public class ScalaProtocolExtractor extends LocalTypeVisitor<ClassTable>
+{	
 	// Simple pair of a binary type and its naming environment
-	private class LinearTypeNameEnv
+	protected static class LinearTypeNameEnv
 	{
-		public ast.linear.Type t;
-		public final ast.linear.NameEnv env;
+		protected ast.linear.Type t;
+		protected final ast.linear.NameEnv env;
 		
 		public LinearTypeNameEnv(ast.linear.Type t) throws ScribbleException
 		{
-			this.t = t;
-			this.env = ast.linear.ops.DefaultNameEnvBuilder.apply(t);
+			this(t, ast.linear.ops.DefaultNameEnvBuilder.apply(t));
 		}
 		
 		public LinearTypeNameEnv(ast.linear.Type t, ast.linear.NameEnv env)
@@ -49,7 +47,7 @@ public class ScalaProtocolExtractor extends LocalTypeVisitor<String>
 	}
 	
 	// Maps a role to its (current) binary type, and its naming environment
-	private class ChannelTracker extends HashMap<Role, LinearTypeNameEnv>
+	protected static class ChannelTracker extends HashMap<Role, LinearTypeNameEnv>
 	{
 		private static final long serialVersionUID = 1L;
 		
@@ -65,10 +63,9 @@ public class ScalaProtocolExtractor extends LocalTypeVisitor<String>
 	
 	private Collection<String> errors = new java.util.LinkedList<String>();
 	private final LocalType visiting;
-	private LocalNameEnv nameEnv;
-	private final ChannelTracker ctracker;
-	private final List<Role> roles; // Sorted list of roles in "visiting"
-	private final String root; // Root of the class hierarchy
+	private final LocalNameEnv nameEnv;
+	private ChannelTracker ctracker;
+	private List<Role> roles; // Sorted list of involved roles
 	
 	/** Generate the Scala protocol classes representing a local type.
 	 * 
@@ -76,110 +73,53 @@ public class ScalaProtocolExtractor extends LocalTypeVisitor<String>
 	 * @return The Scala class definitions representing {@code t}
 	 * @throws ScribbleException in case of error
 	 */
-	public static String apply(LocalType t) throws ScribbleException
+	public static ClassTable apply(LocalType t) throws ScribbleException
 	{
-		return apply(t, "", DefaultNameEnvBuilder.apply(t));
-	}
-	
-	/** Generate the Scala protocol classes representing a local type.
-	 * 
-	 * @param t Local type to extract classes for
-	 * @param root The root of the class hierarchy to be generated
-	 * @return The Scala class definitions representing {@code t}
-	 * @throws ScribbleException in case of error
-	 */
-	public static String apply(LocalType t, String root) throws ScribbleException
-	{
-		return apply(t, root, DefaultNameEnvBuilder.apply(t));
+		return apply(t, DefaultNameEnvBuilder.apply(t));
 	}
 	
 	/** Generate the Scala protocol classes representing a local type, using
 	 * a given naming environment.
 	 *  
 	 * @param t Local type to extract classes for
-	 * @param root The root of the class hierarchy to be generated
 	 * @param nameEnv Naming environment (supposed to be suitable for {@code t})
 	 * @return The Scala class definitions representing {@code t}
 	 * @throws ScribbleException in case of error
 	 */
-	public static String apply(LocalType t, String root, LocalNameEnv nameEnv) throws ScribbleException
+	public static ClassTable apply(LocalType t, LocalNameEnv nameEnv) throws ScribbleException
 	{
-		ScalaProtocolExtractor te = new ScalaProtocolExtractor(t, root, nameEnv);
+		ScalaProtocolExtractor te = new ScalaProtocolExtractor(t, nameEnv);
 		
 		return te.process();
 	}
 	
-	private ScalaProtocolExtractor(LocalType t, String root, LocalNameEnv nameEnv) throws ScribbleException
+	private ScalaProtocolExtractor(LocalType t, LocalNameEnv nameEnv) throws ScribbleException
 	{
 		this.visiting = t;
 		this.nameEnv = nameEnv;
 		this.ctracker = new ChannelTracker(t);
 		this.roles = new java.util.ArrayList<>(new java.util.TreeSet<>(ctracker.keySet()));
-		this.root = root;
 	}
 	
 	@Override
-	protected String process() throws ScribbleException
+	protected ClassTable process() throws ScribbleException
 	{
-		List<String> linProtoClasses = new java.util.LinkedList<>(); 
-		List<String> msgInProtoClasses = new java.util.LinkedList<>();
-		List<String> msgOutProtoClasses = new java.util.LinkedList<>();
-		
-		// Pick roles in alphabetical order from channel tracker
-		for (Role r: new java.util.ArrayList<>(new java.util.TreeSet<>(ctracker.keySet())))
-		{
-			ast.linear.Type t = ctracker.get(r).t;
-			String linp = ast.linear.ops.ScalaProtocolExtractor.apply(t).trim();
-			if (!linp.isEmpty())
-			{
-				linProtoClasses.add(linp);
-			}
-		}
-
-		String mpProtoClasses = visit(visiting).trim();
+		ClassTable mpProtoClasses = visit(visiting);
 		if (!errors.isEmpty())
 		{
 			throw new ScribbleException("Error(s) extracting protocol of " + visiting + ": " + String.join(";", errors));
 		}
-		
-		String inmsgs = ScalaMessageExtractor.inputs(visiting, nameEnv).trim();
-		if (!inmsgs.isEmpty())
-		{
-			msgInProtoClasses.add(inmsgs);
-		}
-		
-		String outmsgs = ScalaMessageExtractor.outputs(visiting, nameEnv).trim();
-		if (!outmsgs.isEmpty())
-		{
-			msgOutProtoClasses.add(outmsgs);
-		}
-		
-		// assert(msgInProtoClasses.size() == inputClassNames.size());
-		// assert(msgOutProtoClasses.size() == outputClassNames.size());
-		
-		return (root.isEmpty() ? "" : ("package " + root + "\n\n" +
-									   "import lchannels._\n\n") +
-				"// Input message types for multiparty sessions\n" +
-				String.join("\n", msgInProtoClasses) +
-				"\n\n// Output message types for multiparty sessions\n" +
-				String.join("\n", msgOutProtoClasses) +
-				"\n\n// Multiparty session classes\n" +
-				mpProtoClasses +
-				"\n\n// Classes representing messages (with continuations) in binary sessions\n" +
-				"package object " + BINARY_CLASSES_NS + " {\n" +
-				String.join("\n", linProtoClasses) +
-				"\n}\n"
-				);
+		return mpProtoClasses;
 	}
 
 	@Override
-	protected String visit(LocalEnd node)
+	protected ClassTable visit(LocalEnd node)
 	{
-		return "";
+		return new ClassTable();
 	}
 
 	@Override
-	protected String visit(LocalBranch node)
+	protected ClassTable visit(LocalBranch node)
 	{
 		String className = nameEnv.get(node);
 		assert(className != null);
@@ -196,19 +136,20 @@ public class ScalaProtocolExtractor extends LocalTypeVisitor<String>
 		// Ensure that labels are sorted
 		List<Label> labels = new java.util.ArrayList<>(new java.util.TreeSet<>(node.labels()));
 		
-		String res = "case class " + className + "(" + String.join(", ", chanspecs) + ") {\n";
-		res += "  def receive()";
+		ClassTable res = new ClassTable();
+		String def = "case class " + className + "(" + String.join(", ", chanspecs) + ") {\n";
+		def += "  def receive()";
 		if (labels.size() > 1)
 		{
 			// We could add the return type annotation, but let's Scala infer
 		}
-		res += " = {\n" +
+		def += " = {\n" +
 				"    " + node.src.name + ".receive() match {\n";
 		
 		for (Label l: labels) // Note: node might have less labels wrt v
 		{
 			// FIXME: here we could simplify if the variant has just one label
-			res += "      case m @ " + BINARY_CLASSES_NS + "." + l + "(p) => {\n";
+			def += "      case m @ " + ScalaEncoder.BINARY_CLASSES_NS + "." + l + "(p) => {\n";
 			
 			ast.linear.Payload payload = v.payload(l);
 			String payloadRepr;
@@ -245,13 +186,14 @@ public class ScalaProtocolExtractor extends LocalTypeVisitor<String>
 				ret = l.name + "(" + payloadRepr + ", " + contClassName + "(" + String.join(", ", contSpecs) + "))";
 			}
 			
-			res += ("        " + ret + "\n" +
+			def += ("        " + ret + "\n" +
 					"      }\n");
 			
 		}
-		res += ("    }\n" +
+		def += ("    }\n" +
 				"  }\n" +
 				"}");
+		res.putIdem(className, def);
 		
 		// Let's now generate the payload and continuation classes
 		for (Label l: labels)
@@ -262,9 +204,9 @@ public class ScalaProtocolExtractor extends LocalTypeVisitor<String>
 			
 			if (c.pay instanceof LocalType)
 			{
-				res += "\n" + visitHO((LocalType)c.pay);
+				res.putAllIdem(visitHO((LocalType)c.pay));
 			}
-			res += "\n" + visit(c.body);
+			res.putAllIdem(visit(c.body));
 		}
 		
 		// Restore the channel tracker status before returning
@@ -274,7 +216,7 @@ public class ScalaProtocolExtractor extends LocalTypeVisitor<String>
 	}
 	
 	@Override
-	protected String visit(LocalSelect node)
+	protected ClassTable visit(LocalSelect node)
 	{
 		String className = nameEnv.get(node);
 		assert(className != null);
@@ -290,12 +232,13 @@ public class ScalaProtocolExtractor extends LocalTypeVisitor<String>
 		String vname = lte.env.get(v);
 		assert(vname != null);
 		
-		String res = "case class " + className + "(" + String.join(", ", chanspecs) + ") {\n";
+		ClassTable res = new ClassTable();
+		String def = "case class " + className + "(" + String.join(", ", chanspecs) + ") {\n";
 		// Ensure that labels are sorted
 		List<Label> labels = new java.util.ArrayList<>(new java.util.TreeSet<>(node.labels()));
 		for (Label l: labels) // Note: node might have less labels wrt v
 		{
-			res += "  def send(v: " + l.name + ") = {\n";
+			def += "  def send(v: " + l.name + ") = {\n";
 			
 			ast.linear.Payload payload = v.payload(l);
 			String payloadRepr;
@@ -313,11 +256,11 @@ public class ScalaProtocolExtractor extends LocalTypeVisitor<String>
 			if ((cont instanceof In) || (cont instanceof Out))
 			{
 				// Let lchannels take care of the continuation
-				sendRepr = " !! " + BINARY_CLASSES_NS + "." + l + "(" + payloadRepr + ")_";
+				sendRepr = " !! " + ScalaEncoder.BINARY_CLASSES_NS + "." + l + "(" + payloadRepr + ")_";
 			}
 			else if (cont instanceof End)
 			{
-				sendRepr = " ! " + BINARY_CLASSES_NS + "." + l + "(" + payloadRepr + ")";
+				sendRepr = " ! " + ScalaEncoder.BINARY_CLASSES_NS + "." + l + "(" + payloadRepr + ")";
 			}
 			else
 			{
@@ -350,11 +293,12 @@ public class ScalaProtocolExtractor extends LocalTypeVisitor<String>
 				ret = contClassName + "(" + String.join(", ", contSpecs) + ")";
 			}
 			
-			res += ("    val cnt = " + node.dest.name + sendRepr + "\n" +
+			def += ("    val cnt = " + node.dest.name + sendRepr + "\n" +
 					"    " + ret + "\n" +
 					"  }\n");
 		}
-		res += "}";
+		def += "}";
+		res.putIdem(className, def);
 		
 		// Let's now generate the payload and continuation classes
 		for (Label l: labels)
@@ -366,9 +310,9 @@ public class ScalaProtocolExtractor extends LocalTypeVisitor<String>
 			
 			if (c.pay instanceof LocalType)
 			{
-				res += "\n" + visitHO((LocalType)c.pay);
+				res.putAllIdem(visitHO((LocalType)c.pay));
 			}
-			res += "\n" + visit(c.body);
+			res.putAllIdem(visit(c.body));
 		}
 		
 		// Restore the channel tracker status before returning
@@ -377,9 +321,9 @@ public class ScalaProtocolExtractor extends LocalTypeVisitor<String>
 		return res;
 	}
 	
-	private String visitHO(LocalType t)
+	private ClassTable visitHO(LocalType t)
 	{
-		String res;
+		ClassTable res;
 		try
 		{
 			res = apply(t); // Note that we are not providing a root, now
@@ -387,7 +331,7 @@ public class ScalaProtocolExtractor extends LocalTypeVisitor<String>
 		catch (ScribbleException e)
 		{
 			errors.add("Error extracting protocol of " + t + ": " + e);
-			res = "";
+			res = new ClassTable();
 		}
 		
 		return res;
@@ -424,7 +368,7 @@ public class ScalaProtocolExtractor extends LocalTypeVisitor<String>
 			try
 			{
 				chanspec += ast.linear.ops.ScalaChannelTypeExtractor.apply(
-						t, env, BINARY_CLASSES_NS + ".");
+						t, env, ScalaEncoder.BINARY_CLASSES_NS + ".");
 			}
 			catch (ScribbleException e)
 			{
@@ -437,15 +381,15 @@ public class ScalaProtocolExtractor extends LocalTypeVisitor<String>
 	}
 	
 	@Override
-	protected String visit(LocalRec node)
+	protected ClassTable visit(LocalRec node)
 	{
 		return visit(node.body);
 	}
 
 	@Override
-	protected String visit(RecVar node)
+	protected ClassTable visit(RecVar node)
 	{
-		return "";
+		return new ClassTable();
 	}
 
 }
