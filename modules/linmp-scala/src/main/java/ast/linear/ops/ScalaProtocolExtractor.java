@@ -44,7 +44,7 @@ public class ScalaProtocolExtractor extends Visitor<ClassTable>
 		return te.process();
 	}
 	
-	protected ScalaProtocolExtractor(Type t, NameEnv nameEnv)
+	private ScalaProtocolExtractor(Type t, NameEnv nameEnv)
 	{
 		this.visiting = t;
 		this.nameEnv = nameEnv;
@@ -141,7 +141,8 @@ public class ScalaProtocolExtractor extends Visitor<ClassTable>
 			{
 				// The record was originated from a local type:
 				// let's find out its name
-				LocalType origin = ((Record)c.payload).origin;
+				Record rec = (Record)c.payload;
+				LocalType origin = rec.origin;
 				try {
 					// FIXME: what about custom name environments?
 					LocalNameEnv env = ast.local.ops.DefaultNameEnvBuilder.apply(origin);
@@ -154,17 +155,10 @@ public class ScalaProtocolExtractor extends Visitor<ClassTable>
 				}
 				
 				// Also generate the binary classes for the payload
-				for (ast.name.Role r: origin.roles())
+				for (ast.name.Role r: rec.keySet())
 				{
-					try {
-						Type lt = origin.linear(r);
-						res.putAllIdem(visit(lt));
-					}
-					catch (ScribbleException e)
-					{
-						errors.add("Cannot extract linear protocol of " + c.payload + ": " + e);
-						payload = "ERROR";
-					}
+					Type lt = rec.get(r);
+					res.putAllIdem(visit(lt));
 				}
 			}
 			else
