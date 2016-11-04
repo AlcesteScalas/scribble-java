@@ -67,13 +67,13 @@ public class AlphaConverter extends Visitor<Type>
 	}
 
 	@Override
-	protected Type visit(End node)
+	protected End visit(End node)
 	{
 		return node;
 	}
 
 	@Override
-	protected Type visit(In node)
+	protected In visit(In node)
 	{
 		AbstractVariant av = node.carried();
 		assert(av != null);
@@ -81,11 +81,11 @@ public class AlphaConverter extends Visitor<Type>
 	}
 	
 	@Override
-	protected Type visit(Out node)
+	protected Out visit(Out node)
 	{
 		AbstractVariant av = node.carried();
 		assert(av != null);
-		return new In(visitAbstractVariant(av));
+		return new Out(visitAbstractVariant(av));
 	}
 	
 	private AbstractVariant visitAbstractVariant(AbstractVariant av)
