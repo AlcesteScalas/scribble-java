@@ -29,7 +29,7 @@ public class ScalaChannelTypeExtractor extends Visitor<String>
 		return apply(t, DefaultNameEnvBuilder.apply(t));
 	}
 	
-	public static String apply(Type t, NameEnv nameEnv) throws ScribbleException
+	protected static String apply(Type t, NameEnv nameEnv) throws ScribbleException
 	{
 		return apply(t, nameEnv, "");
 	}
