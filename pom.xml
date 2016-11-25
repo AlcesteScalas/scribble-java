@@ -82,6 +82,11 @@
 				<artifactId>scribble-cli</artifactId>
 				<version>${project.version}</version>
 			</dependency>
+			<dependency>
+				<groupId>org.scribble</groupId>
+				<artifactId>linmp-scala</artifactId>
+				<version>${project.version}</version>
+			</dependency>
 
 			<dependency>
 				<groupId>commons-io</groupId>

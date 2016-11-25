@@ -4,7 +4,8 @@ type <java> "java.lang.Boolean" from "rt.jar" as Boolean;
 type <java> "java.lang.Integer" from "rt.jar" as Int;
 type <java> "java.lang.String" from "rt.jar" as String;
 
-global protocol ClientA(role p, role q) {
+//global protocol ClientA(role p, role q) {
+global protocol Proto(role p, role q) {
   PlayA(Game@a) from q to p;
 }
 

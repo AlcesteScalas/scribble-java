@@ -4,6 +4,7 @@
     <groupId>org.scribble</groupId>
     <artifactId>parent</artifactId>
     <version>0.3.2-SNAPSHOT</version>
+    <relativePath>../../pom.xml</relativePath>
   </parent>
   <artifactId>linmp-scala</artifactId>
   <dependencies>
