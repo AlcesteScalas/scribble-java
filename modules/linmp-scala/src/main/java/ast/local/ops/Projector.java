@@ -168,7 +168,7 @@ public class Projector extends LocalTypeVisitor<ast.binary.Type>
 	protected Type visit(LocalRec node)
 	{
 		Type brec = visit(node.body);
-		if (brec.equals(node.recvar))
+		if (brec instanceof RecVar)
 		{
 			// Projection produces an unguarded recursion, considered as "end"
 			return new End();
