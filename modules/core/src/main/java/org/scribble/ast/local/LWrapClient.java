@@ -4,7 +4,6 @@ import java.util.Collections;
 import java.util.Set;
 
 import org.scribble.ast.AstFactoryImpl;
-import org.scribble.ast.ConnectionAction;
 import org.scribble.ast.Constants;
 import org.scribble.ast.MessageNode;
 import org.scribble.ast.ScribNodeBase;
@@ -16,9 +15,9 @@ import org.scribble.main.ScribbleException;
 import org.scribble.sesstype.Message;
 import org.scribble.sesstype.kind.Local;
 import org.scribble.sesstype.name.Role;
-import org.scribble.visit.ProjectedChoiceSubjectFixer;
+import org.scribble.visit.context.ProjectedChoiceSubjectFixer;
 
-public class LWrapClient extends ConnectionAction<Local> implements LSimpleInteractionNode
+public class LWrapClient extends LConnectionAction implements LSimpleInteractionNode
 {
 	public LWrapClient(RoleNode src, RoleNode dest)
 	{

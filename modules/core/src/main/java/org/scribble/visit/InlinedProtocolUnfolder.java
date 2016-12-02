@@ -16,6 +16,7 @@ import org.scribble.ast.local.LProtocolBlock;
 import org.scribble.ast.local.LRecursion;
 import org.scribble.ast.name.simple.RecVarNode;
 import org.scribble.del.ProtocolDefDel;
+import org.scribble.main.Job;
 import org.scribble.main.ScribbleException;
 import org.scribble.sesstype.kind.Global;
 import org.scribble.sesstype.kind.ProtocolKind;
@@ -77,8 +78,8 @@ public class InlinedProtocolUnfolder extends InlinedProtocolVisitor<UnfoldingEnv
 			if (visited instanceof ProtocolDecl<?>)
 			{
 				ProtocolDecl<?> pd = (ProtocolDecl<?>) visited;
-				getJob().debugPrintln("\n[DEBUG] Unfolded inlined protocol "
-							+ pd.getFullMemberName(getJobContext().getModule(getModuleContext().root)) + ":\n"
+				this.job.debugPrintln("\n[DEBUG] Unfolded inlined protocol "
+							+ pd.getFullMemberName(this.job.getContext().getModule(getModuleContext().root)) + ":\n"
 							+ ((ProtocolDefDel) pd.def.del()).getInlinedProtocolDef());
 			}
 			return visited;
@@ -103,17 +104,17 @@ public class InlinedProtocolUnfolder extends InlinedProtocolVisitor<UnfoldingEnv
 	}
 	
 	@Override
-	protected void inlinedProtocolEnter(ScribNode parent, ScribNode child) throws ScribbleException
+	protected void inlinedEnter(ScribNode parent, ScribNode child) throws ScribbleException
 	{
-		super.inlinedProtocolEnter(parent, child);
+		super.inlinedEnter(parent, child);
 		child.del().enterInlinedProtocolUnfolding(parent, child, this);
 	}
 	
 	@Override
-	protected ScribNode inlinedProtocolLeave(ScribNode parent, ScribNode child, ScribNode visited) throws ScribbleException
+	protected ScribNode inlinedLeave(ScribNode parent, ScribNode child, ScribNode visited) throws ScribbleException
 	{
 		visited = visited.del().leaveInlinedProtocolUnfolding(parent, child, this, visited);
-		return super.inlinedProtocolLeave(parent, child, visited);
+		return super.inlinedLeave(parent, child, visited);
 	}
 	
 	public Recursion<?> getRecVar(RecVar recvar)

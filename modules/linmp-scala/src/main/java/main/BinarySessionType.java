@@ -64,6 +64,8 @@ public class BinarySessionType
 		boolean minEfsm = false;
 		boolean fair = false;
 		boolean noLocalChoiceSubjectCheck = false;
+		boolean noAcceptCorrelationCheck = true;
+		boolean noValidation = true;
 
 		Path mainpath = mainmod;
 		/*List<Path> impaths = this.args.containsKey(ArgFlag.PATH)
@@ -71,6 +73,6 @@ public class BinarySessionType
 				: Collections.emptyList();*/
 		List<Path> impaths = Collections.emptyList();  // FIXME: get from Main args
 		ResourceLocator locator = new DirectoryResourceLocator(impaths);
-		return new MainContext(debug, locator, mainpath, useOldWF, noLiveness, minEfsm, fair, noLocalChoiceSubjectCheck);
+		return new MainContext(debug, locator, mainpath, useOldWF, noLiveness, minEfsm, fair, noLocalChoiceSubjectCheck, noAcceptCorrelationCheck, noValidation);
 	}
 }

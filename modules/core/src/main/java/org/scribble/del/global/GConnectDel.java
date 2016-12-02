@@ -7,10 +7,10 @@ import org.scribble.del.ConnectionActionDel;
 import org.scribble.main.ScribbleException;
 import org.scribble.sesstype.Message;
 import org.scribble.sesstype.name.Role;
-import org.scribble.visit.NameDisambiguator;
-import org.scribble.visit.Projector;
-import org.scribble.visit.WFChoiceChecker;
-import org.scribble.visit.env.WFChoiceEnv;
+import org.scribble.visit.context.Projector;
+import org.scribble.visit.wf.NameDisambiguator;
+import org.scribble.visit.wf.WFChoiceChecker;
+import org.scribble.visit.wf.env.WFChoiceEnv;
 
 public class GConnectDel extends ConnectionActionDel implements GSimpleInteractionNodeDel
 {
@@ -70,11 +70,4 @@ public class GConnectDel extends ConnectionActionDel implements GSimpleInteracti
 		proj.pushEnv(proj.popEnv().setProjection(projection));
 		return (GConnect) GSimpleInteractionNodeDel.super.leaveProjection(parent, child, proj, gc);
 	}
-	
-	/*@Override
-	public GConnect leaveModelBuilding(ScribNode parent, ScribNode child, GlobalModelBuilder builder, ScribNode visited) throws ScribbleException
-	{
-		//return (GConnect) super.leaveModelBuilding(parent, child, builder, ls);
-		throw new RuntimeException("Shouldn't get in here: " + visited);
-	}*/
 }

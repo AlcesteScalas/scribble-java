@@ -18,7 +18,6 @@ import org.scribble.parser.ScribParser;
 import org.scribble.sesstype.name.ModuleName;
 import org.scribble.util.Pair;
 import org.scribble.util.ScribParserException;
-import org.scribble.visit.Job;
 
 
 // Scribble tool context for main module
@@ -34,6 +33,8 @@ public class MainContext
 	public final boolean minEfsm;
 	public final boolean fair;
 	public final boolean noLocalChoiceSubjectCheck;
+	public final boolean noAcceptCorrelationCheck;
+	public final boolean noValidation;
 	
 	public final ModuleName main;
 
@@ -50,7 +51,9 @@ public class MainContext
 	
 	// FIXME: make Path abstract as e.g. URI -- locator is abstract but Path is coupled to concrete DirectoryResourceLocator
 	//public MainContext(boolean jUnit, boolean debug, ResourceLocator locator, Path mainpath, boolean useOldWF, boolean noLiveness)
-	public MainContext(boolean debug, ResourceLocator locator, Path mainpath, boolean useOldWF, boolean noLiveness, boolean minEfsm, boolean fair, boolean noLocalChoiceSubjectCheck) throws ScribParserException, ScribbleException
+	public MainContext(boolean debug, ResourceLocator locator, Path mainpath, boolean useOldWF, boolean noLiveness, boolean minEfsm,
+			boolean fair, boolean noLocalChoiceSubjectCheck, boolean noAcceptCorrelationCheck, boolean noValidation)
+					throws ScribParserException, ScribbleException
 	{
 		//this.jUnit = jUnit;
 		this.debug = debug;
@@ -59,6 +62,8 @@ public class MainContext
 		this.minEfsm = minEfsm;
 		this.fair = fair;
 		this.noLocalChoiceSubjectCheck = noLocalChoiceSubjectCheck;
+		this.noAcceptCorrelationCheck = noAcceptCorrelationCheck;
+		this.noValidation = noValidation;
 
 		this.antlrParser = new AntlrParser();
 		this.scribParser = new ScribParser();
@@ -116,6 +121,7 @@ public class MainContext
 	
 	public Job newJob()
 	{
-		return new Job(this.debug, this.getParsedModules(), this.main, this.useOldWF, this.noLiveness, this.minEfsm, this.fair, this.noLocalChoiceSubjectCheck);
+		return new Job(this.debug, this.getParsedModules(), this.main, this.useOldWF, this.noLiveness, this.minEfsm, this.fair,
+				this.noLocalChoiceSubjectCheck, this.noAcceptCorrelationCheck, this.noValidation);
 	}
 }

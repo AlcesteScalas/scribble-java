@@ -18,9 +18,9 @@ import org.scribble.sesstype.kind.RecVarKind;
 import org.scribble.sesstype.name.GProtocolName;
 import org.scribble.sesstype.name.ProtocolName;
 import org.scribble.sesstype.name.Role;
-import org.scribble.visit.Projector;
-import org.scribble.visit.ProtocolDeclContextBuilder;
 import org.scribble.visit.ProtocolDefInliner;
+import org.scribble.visit.context.Projector;
+import org.scribble.visit.context.ProtocolDeclContextBuilder;
 import org.scribble.visit.env.InlineProtocolEnv;
 
 public class GDoDel extends DoDel implements GSimpleInteractionNodeDel
@@ -69,7 +69,7 @@ public class GDoDel extends DoDel implements GSimpleInteractionNodeDel
 		{
 			// For correct name mangling, need to use the parameter corresponding to the self argument
 			// N.B. -- this depends on Projector not following the Subprotocol pattern, otherwise self is wrong
-			Role param = gd.getTargetRoleParameter(proj.getJobContext(), proj.getModuleContext(), self);
+			Role param = gd.getTargetRoleParameter(proj.job.getContext(), proj.getModuleContext(), self);
 			proj.pushSelf(param);
 		}
 		else

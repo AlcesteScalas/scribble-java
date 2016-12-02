@@ -3,11 +3,11 @@ package ast;
 import org.scribble.ast.Module;
 import org.scribble.ast.global.GProtocolDecl;
 import org.scribble.del.ModuleDel;
+import org.scribble.main.Job;
 import org.scribble.main.MainContext;
 import org.scribble.main.ScribbleException;
 import org.scribble.sesstype.name.GProtocolName;
 import org.scribble.util.ScribParserException;
-import org.scribble.visit.Job;
 
 import ast.global.GlobalType;
 import ast.global.GlobalTypeTranslator;

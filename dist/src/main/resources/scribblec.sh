@@ -18,32 +18,42 @@ usage() {
   
  <SCRFILE>     Source Scribble module (.scr file) 
   
- Options: 
-  -h, --help                                     Show this info and exit
-  --verbose                                      Echo the java command
-  -V                                             Scribble debug info
+Options:
+  -h, --help                 Show this info and exit$
+  -V                         Scribble debug info$
+  --verbose                  Echo the java command$
 
-  -ip <path>                                     Scribble import path
+  -ip <path>                 Scribble module import path$
+
+  -oldwf                     Use the simpler syntactic protocol well-formedness
+
 
   -project <simple global protocol name> <role>  Project protocol
 
-  -fsm <simple global protocol name> <role>      Generate Endpoint FSM
-  -fsmdot <simple global protocol name> <role> <output file>
-          Draw Endpoint FSM as png (requires dot)
-  -minfsm                                        
-          Minimise EFSMs for dot and API generation (but not global modelling)
+  -fsm <simple global protocol name> <role>      Generate default Endpoint FSM
+  -aut                                           Output as aut (instead of dot)
+  -fsmpng <simple global protocol name> <role> <output file>
+          Draw default Endpoint FSM as png (via dot)
+  -vfsm, -ufsm <simple global proto name> <role>   
+  -vfsmpng, -ufsmpng <simple global proto name> <role> <output file>
+          Output the EFSM used in validation (or the "unfair" variant)
+  -minlts
+          Minimise EFSMs for dot output and API generation (but not validation)
           (Requires ltsconvert)
 
-  -model <simple global protocol name>           Generate global model
-  -modeldot <simple global protocol name> <role> <output file>
-          Draw global model as png (requires dot)
-  -fair                                          Assume fair output choices
 
-  -api <simple global protocol name> <role>      Generate Endpoint API
-  -d <path>                                      API output path
-  -session <simple global protocol name>         Generate Session API only
-  -schan <simple global protocol name> <role>    Generate State Channel API only
-  -subtypes                                      Enable subtype API generation
+  -model <simple global protocol name>          Generate global model
+  -modelpng <simple global protocol name> <role> <output file>
+          Draw global model as png (requires dot)
+  -fair                                         Assume fair output choices
+  -umodel, -umodelpng (with appropriate args)   "Unfair" variant
+
+
+  -api <simple global protocol name> <role>     Generate Java Endpoint API
+  -d <path>                                     API output directory
+  -sessapi <simple global protocol name>        Generate Session API only
+  -chanapi <simple global protocol name> <role> Generate State Channel API only
+  -subtypes                                     Enable subtypes for -chanapi
 EOF
 }
 

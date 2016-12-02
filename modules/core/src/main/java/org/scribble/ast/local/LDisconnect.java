@@ -4,7 +4,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.scribble.ast.AstFactoryImpl;
-import org.scribble.ast.ConnectionAction;
 import org.scribble.ast.Constants;
 import org.scribble.ast.MessageNode;
 import org.scribble.ast.ScribNodeBase;
@@ -16,9 +15,9 @@ import org.scribble.main.ScribbleException;
 import org.scribble.sesstype.Message;
 import org.scribble.sesstype.kind.Local;
 import org.scribble.sesstype.name.Role;
-import org.scribble.visit.ProjectedChoiceSubjectFixer;
+import org.scribble.visit.context.ProjectedChoiceSubjectFixer;
 
-public class LDisconnect extends ConnectionAction<Local> implements LSimpleInteractionNode
+public class LDisconnect extends LConnectionAction implements LSimpleInteractionNode
 {
 	public final RoleNode self;  // super.src
 	public final RoleNode peer;  // super.dest

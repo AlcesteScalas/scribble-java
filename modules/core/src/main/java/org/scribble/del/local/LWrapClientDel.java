@@ -5,21 +5,21 @@ import org.scribble.ast.local.LWrapClient;
 import org.scribble.ast.name.simple.RoleNode;
 import org.scribble.del.ConnectionActionDel;
 import org.scribble.main.ScribbleException;
-import org.scribble.model.local.WrapClient;
+import org.scribble.model.endpoint.actions.EWrapClient;
 import org.scribble.sesstype.name.Role;
-import org.scribble.visit.EndpointGraphBuilder;
-import org.scribble.visit.ProjectedChoiceSubjectFixer;
+import org.scribble.visit.context.EGraphBuilder;
+import org.scribble.visit.context.ProjectedChoiceSubjectFixer;
 
 public class LWrapClientDel extends ConnectionActionDel implements LSimpleInteractionNodeDel
 {
 	@Override
-	public LWrapClient leaveEndpointGraphBuilding(ScribNode parent, ScribNode child, EndpointGraphBuilder graph, ScribNode visited) throws ScribbleException
+	public LWrapClient leaveEGraphBuilding(ScribNode parent, ScribNode child, EGraphBuilder graph, ScribNode visited) throws ScribbleException
 	{
 		LWrapClient lc = (LWrapClient) visited;
 		RoleNode dest = lc.dest;
 		Role peer = dest.toName();
-		graph.builder.addEdge(graph.builder.getEntry(), new WrapClient(peer), graph.builder.getExit());
-		return (LWrapClient) super.leaveEndpointGraphBuilding(parent, child, graph, lc);
+		graph.util.addEdge(graph.util.getEntry(), new EWrapClient(peer), graph.util.getExit());
+		return (LWrapClient) super.leaveEGraphBuilding(parent, child, graph, lc);
 	}
 
 	@Override

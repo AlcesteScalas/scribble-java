@@ -16,10 +16,10 @@ import org.scribble.ast.global.GProtocolDecl;
 import org.scribble.ast.global.GProtocolDef;
 import org.scribble.ast.global.GRecursion;
 import org.scribble.del.global.GProtocolDefDel;
+import org.scribble.main.JobContext;
 import org.scribble.main.ScribbleException;
 import org.scribble.sesstype.SessionTypeFactory;
 import org.scribble.sesstype.name.GProtocolName;
-import org.scribble.visit.JobContext;
 
 import ast.AstFactory;
 import ast.PayloadType;
