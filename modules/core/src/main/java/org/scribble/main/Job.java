@@ -70,7 +70,8 @@ public class Job
 
 	public void checkLinearMPScalaWellFormedness() throws ScribbleException
 	{
-		checkWellFormedness();  // TODO: do the required checks
+		//checkWellFormedness();  // TODO: do the required checks (only)
+		runContextBuildingPasses();
 	}
 
 	public ScribbleException testWellFormednessCheck()

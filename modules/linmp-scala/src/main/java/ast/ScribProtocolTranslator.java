@@ -30,7 +30,7 @@ public class ScribProtocolTranslator
 		//MainContext maincon = newMainContext(mainmod);
 		//Job job = new Job(maincon.debug, maincon.getParsedModules(), maincon.main, maincon.useOldWF, maincon.noLiveness, maincon.minEfsm, maincon.fair);
 		Job job = maincon.newJob();
-		job.checkLinearMPScalaWellFormedness();  // FIXME TODO
+		job.checkLinearMPScalaWellFormedness();
 		Module main = job.getContext().getMainModule();
 
 		if (!main.hasProtocolDecl(simplename))

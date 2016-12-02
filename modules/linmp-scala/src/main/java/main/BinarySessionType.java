@@ -2,20 +2,15 @@ package main;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collections;
-import java.util.List;
 
-import org.scribble.main.MainContext;
 import org.scribble.main.ScribbleException;
-import org.scribble.main.resource.DirectoryResourceLocator;
-import org.scribble.main.resource.ResourceLocator;
 import org.scribble.sesstype.name.GProtocolName;
 import org.scribble.util.ScribParserException;
 
 import ast.ScribProtocolTranslator;
+import ast.binary.Type;
 import ast.global.GlobalType;
 import ast.local.LocalType;
-import ast.binary.Type;
 import ast.name.Role;
 
 public class BinarySessionType
@@ -37,7 +32,7 @@ public class BinarySessionType
 		try
 		{
 			//g = sbp.parseAndCheck(mainmod, proto);
-			g = sbp.parseAndCheck(newMainContext(mainmod), new GProtocolName(simpname), ast.local.ops.Merge::full);
+			g = sbp.parseAndCheck(Main.newMainContext(mainmod), new GProtocolName(simpname), ast.local.ops.Merge::full);
 			//System.out.println("Translated:\n" + "    " + g);
 		}
 		catch (ScribParserException | ScribbleException e)
@@ -53,26 +48,5 @@ public class BinarySessionType
 		Type pt = ast.local.ops.Projector.apply(lt, role2, ast.binary.ops.Merge::full);
 		
 		System.out.println(pt);
-	}
-
-	// Duplicated from CommandLine for convenience
-	private static MainContext newMainContext(Path mainmod) throws ScribParserException, ScribbleException
-	{
-		boolean debug = false;
-		boolean useOldWF = false;
-		boolean noLiveness = false;
-		boolean minEfsm = false;
-		boolean fair = false;
-		boolean noLocalChoiceSubjectCheck = false;
-		boolean noAcceptCorrelationCheck = true;
-		boolean noValidation = true;
-
-		Path mainpath = mainmod;
-		/*List<Path> impaths = this.args.containsKey(ArgFlag.PATH)
-				? CommandLine.parseImportPaths(this.args.get(ArgFlag.PATH)[0])
-				: Collections.emptyList();*/
-		List<Path> impaths = Collections.emptyList();  // FIXME: get from Main args
-		ResourceLocator locator = new DirectoryResourceLocator(impaths);
-		return new MainContext(debug, locator, mainpath, useOldWF, noLiveness, minEfsm, fair, noLocalChoiceSubjectCheck, noAcceptCorrelationCheck, noValidation);
 	}
 }

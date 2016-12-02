@@ -35,7 +35,7 @@ public class Main
 		try
 		{
 			//g = sbp.parseAndCheck(mainmod, proto);
-			g = spt.parseAndCheck(newMainContext(mainmod), new GProtocolName(simpname), merge);  // merge is for projection of "delegation payload types"
+			g = spt.parseAndCheck(Main.newMainContext(mainmod), new GProtocolName(simpname), merge);  // merge is for projection of "delegation payload types"
 			System.out.println("Translated:\n" + "    " + g);
 		}
 		catch (ScribParserException | ScribbleException e)
@@ -72,7 +72,7 @@ public class Main
 	}
 
 	// Duplicated from CommandLine for convenience
-	private static MainContext newMainContext(Path mainmod) throws ScribParserException, ScribbleException
+	protected static MainContext newMainContext(Path mainmod) throws ScribParserException, ScribbleException
 	{
 		boolean debug = false;
 		boolean useOldWF = false;
@@ -81,7 +81,7 @@ public class Main
 		boolean fair = false;
 		boolean noLocalChoiceSubjectCheck = false;
 		boolean noAcceptCorrelationCheck = true;
-		boolean noValidation = true;
+		boolean noValidation = true;  // Currently redundant due to hardcoded Job.checkLinearMPScalaWellFormedness
 
 		Path mainpath = mainmod;
 		/*List<Path> impaths = this.args.containsKey(ArgFlag.PATH)
