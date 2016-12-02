@@ -47,6 +47,7 @@ public class CommandLine
 		DOT,
 		AUT,
 		NO_VALIDATION,
+		NO_MODULE_NAME_CHECK,
 
 		// Non-unique flags
 		PROJECT,
@@ -419,6 +420,7 @@ public class CommandLine
 		boolean noLocalChoiceSubjectCheck = this.args.containsKey(ArgFlag.NO_LOCAL_CHOICE_SUBJECT_CHECK);
 		boolean noAcceptCorrelationCheck = this.args.containsKey(ArgFlag.NO_ACCEPT_CORRELATION_CHECK);
 		boolean noValidation = this.args.containsKey(ArgFlag.NO_VALIDATION);
+		boolean noModuleNameCheck = this.args.containsKey(ArgFlag.NO_MODULE_NAME_CHECK);
 
 		Path mainpath = CommandLine.parseMainPath(this.args.get(ArgFlag.MAIN_MOD)[0]);
 		List<Path> impaths = this.args.containsKey(ArgFlag.IMPORT_PATH)
@@ -427,7 +429,7 @@ public class CommandLine
 		ResourceLocator locator = new DirectoryResourceLocator(impaths);
 		//return new MainContext(jUnit, debug, locator, mainpath, useOldWF, noLiveness);
 		return new MainContext(debug, locator, mainpath, useOldWF, noLiveness, minEfsm, fair,
-				noLocalChoiceSubjectCheck, noAcceptCorrelationCheck, noValidation);
+				noLocalChoiceSubjectCheck, noAcceptCorrelationCheck, noValidation, noModuleNameCheck);
 	}
 	
 	private static Path parseMainPath(String path)

@@ -9,7 +9,7 @@
 //http://sandbox.kidstrythisathome.com/erdos/
 
 
-module Test;
+module foo;
 
 
 // CHECKME: playing multiple roles in the same session instance (but what is the concrete notion of "process id"? -- if actually try to use, e.g., ThreadID, then have to track ownership of endpoints)

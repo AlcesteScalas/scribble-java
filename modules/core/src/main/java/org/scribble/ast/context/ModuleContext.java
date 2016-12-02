@@ -28,7 +28,7 @@ import org.scribble.sesstype.name.ProtocolName;
 // Context information specific to each module as a root (wrt. to visitor passes)
 public class ModuleContext
 {
-	public final ModuleName root;  // full name
+	public final ModuleName root;  // full name -- built from declared name (not the file name -- though the simple parts are usually checked to match; cf., -noValid)
 
   // All transitive name dependencies of this module: all names fully qualified
 	// The ScribNames maps are basically just used as sets (identity map)

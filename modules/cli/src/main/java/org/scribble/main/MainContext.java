@@ -34,7 +34,8 @@ public class MainContext
 	public final boolean fair;
 	public final boolean noLocalChoiceSubjectCheck;
 	public final boolean noAcceptCorrelationCheck;
-	public final boolean noValidation;
+	public final boolean noValidation;  // FIXME: deprecate
+	public final boolean noModuleNameCheck;
 	
 	public final ModuleName main;
 
@@ -52,7 +53,7 @@ public class MainContext
 	// FIXME: make Path abstract as e.g. URI -- locator is abstract but Path is coupled to concrete DirectoryResourceLocator
 	//public MainContext(boolean jUnit, boolean debug, ResourceLocator locator, Path mainpath, boolean useOldWF, boolean noLiveness)
 	public MainContext(boolean debug, ResourceLocator locator, Path mainpath, boolean useOldWF, boolean noLiveness, boolean minEfsm,
-			boolean fair, boolean noLocalChoiceSubjectCheck, boolean noAcceptCorrelationCheck, boolean noValidation)
+			boolean fair, boolean noLocalChoiceSubjectCheck, boolean noAcceptCorrelationCheck, boolean noValidation, boolean noModuleNameCheck)
 					throws ScribParserException, ScribbleException
 	{
 		//this.jUnit = jUnit;
@@ -64,6 +65,7 @@ public class MainContext
 		this.noLocalChoiceSubjectCheck = noLocalChoiceSubjectCheck;
 		this.noAcceptCorrelationCheck = noAcceptCorrelationCheck;
 		this.noValidation = noValidation;
+		this.noModuleNameCheck = noModuleNameCheck;
 
 		this.antlrParser = new AntlrParser();
 		this.scribParser = new ScribParser();
@@ -97,9 +99,12 @@ public class MainContext
 		String path = mainpath.toString();  // FIXME: hack
 		// FileSystems.getDefault().getSeparator() ?
 		String tmp = path.substring((path.lastIndexOf(File.separator) == -1) ? 0 : path.lastIndexOf(File.separator) + 1, path.lastIndexOf('.'));
-		if (!tmp.equals(main.getFullModuleName().getSimpleName().toString()))  // ModuleName.toString hack?
+		if (!this.noValidation && !this.noModuleNameCheck)  // For webapp convenience -- relies on ModuleContext building using the declared module name, not file name
 		{
-			throw new ScribbleException("Simple module name at path " + path + " mismatch: " + main.getFullModuleName());
+			if (!tmp.equals(main.getFullModuleName().getSimpleName().toString()))  // ModuleName.toString hack?
+			{
+				throw new ScribbleException("Simple module name at path " + path + " mismatch: " + main.getFullModuleName());
+			}
 		}
 	}
 
@@ -122,6 +127,6 @@ public class MainContext
 	public Job newJob()
 	{
 		return new Job(this.debug, this.getParsedModules(), this.main, this.useOldWF, this.noLiveness, this.minEfsm, this.fair,
-				this.noLocalChoiceSubjectCheck, this.noAcceptCorrelationCheck, this.noValidation);
+				this.noLocalChoiceSubjectCheck, this.noAcceptCorrelationCheck, this.noValidation, this.noModuleNameCheck);
 	}
 }

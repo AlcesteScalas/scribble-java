@@ -81,7 +81,8 @@ public class Main
 		boolean fair = false;
 		boolean noLocalChoiceSubjectCheck = false;
 		boolean noAcceptCorrelationCheck = true;
-		boolean noValidation = true;  // Currently redundant due to hardcoded Job.checkLinearMPScalaWellFormedness
+		boolean noValidation = true;  // FIXME: deprecate -- redundant due to hardcoded Job.checkLinearMPScalaWellFormedness
+		boolean noModuleNameCheck = true;  // For webapp to bypass MainContext.checkMainModuleName
 
 		Path mainpath = mainmod;
 		/*List<Path> impaths = this.args.containsKey(ArgFlag.PATH)
@@ -89,6 +90,7 @@ public class Main
 				: Collections.emptyList();*/
 		List<Path> impaths = Collections.emptyList();  // FIXME: get from Main args
 		ResourceLocator locator = new DirectoryResourceLocator(impaths);
-		return new MainContext(debug, locator, mainpath, useOldWF, noLiveness, minEfsm, fair, noLocalChoiceSubjectCheck, noAcceptCorrelationCheck, noValidation);
+		return new MainContext(debug, locator, mainpath, useOldWF, noLiveness, minEfsm, fair,
+				noLocalChoiceSubjectCheck, noAcceptCorrelationCheck, noValidation, noModuleNameCheck);
 	}
 }

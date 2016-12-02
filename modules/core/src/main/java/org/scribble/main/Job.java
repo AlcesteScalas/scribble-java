@@ -46,6 +46,7 @@ public class Job
 	public final boolean noLocalChoiceSubjectCheck;
 	public final boolean noAcceptCorrelationCheck;
 	public final boolean noValidation;
+	public final boolean noModuleNameCheck;
 	
 	private final JobContext jcontext;  // Mutable (Visitor passes replace modules)
 	
@@ -53,7 +54,7 @@ public class Job
 	//public Job(boolean jUnit, boolean debug, Map<ModuleName, Module> parsed, ModuleName main, boolean useOldWF, boolean noLiveness)
 	public Job(boolean debug, Map<ModuleName, Module> parsed, ModuleName main,
 			boolean useOldWF, boolean noLiveness, boolean minEfsm, boolean fair, boolean noLocalChoiceSubjectCheck,
-			boolean noAcceptCorrelationCheck, boolean noValidation)
+			boolean noAcceptCorrelationCheck, boolean noValidation, boolean noModuleNameCheck)
 	{
 		//this.jUnit = jUnit;
 		this.debug = debug;
@@ -64,6 +65,7 @@ public class Job
 		this.noLocalChoiceSubjectCheck = noLocalChoiceSubjectCheck;
 		this.noAcceptCorrelationCheck = noAcceptCorrelationCheck;
 		this.noValidation = noValidation;
+		this.noModuleNameCheck = noModuleNameCheck;
 
 		this.jcontext = new JobContext(this, parsed, main);  // Single instance per Job and should never be shared
 	}
