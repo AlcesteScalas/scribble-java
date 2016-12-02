@@ -153,12 +153,8 @@ tokens
 	LOCALCATCHES = 'local-catches';
 	LOCALSEND = 'local-send';
 	LOCALRECEIVE = 'local-receive';*/
-<<<<<<< HEAD
-	
-	//PAYLOADHACK = 'payload-hack';  // FIXME
-=======
->>>>>>> 2752b389f238ceefb55224e4be8118da0d631db1
 }
+	//PAYLOADHACK = 'payload-hack';  // FIXME
 
 
 @parser::header
@@ -483,13 +479,10 @@ payloadelement:
 /*	ambiguousname  // Parser doesn't distinguish simple from qualified properly, even with backtrack
 |*/
 	qualifiedname  // This case subsumes simple names  // FIXME: ambiguousqualifiedname (or ambiguousname should just be qualified)
-<<<<<<< HEAD
 /*|
 	EXTIDENTIFIER
 	->
 	^(PAYLOADHACK EXTIDENTIFIER)*/
-=======
->>>>>>> 2752b389f238ceefb55224e4be8118da0d631db1
 |
 	protocolname '@' rolename
 ->
