@@ -4,7 +4,7 @@ module Merge1;
 // But not supported by Scala code gen. due duplicate message label occurrence
 // So all the use cases of mergeability wrt. merging duplicate branch cases aren't supported by this implementation
 // It should be one of the examples supported by merging, but not supported by vanilla Scribble
-global protocol Proto1(role A, role B, role C) {
+global protocol Proto(role A, role B, role C) {
   choice at A  {
     1a() from A to B;
     M() from B to C;

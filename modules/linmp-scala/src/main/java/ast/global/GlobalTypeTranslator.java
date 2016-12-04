@@ -73,14 +73,14 @@ public class GlobalTypeTranslator
 			Role dest = this.factory.Role(gmt.getDestinations().get(0).toString());
 			if (!gmt.msg.isMessageSigNode())
 			{
-				throw new LinearMPException(gmt.msg.getSource(), " [linmp] Message kind not supported: " + gmt);
+				throw new LinearMPException(gmt.msg.getSource(), " [linmp] Message kind not supported: " + gmt.msg);
 			}
 			MessageSigNode msn = ((MessageSigNode) gmt.msg);
 			Label lab = this.factory.MessageLab(msn.op.toString());
 			PayloadType pay = null;
 			if (msn.payloads.getElements().size() > 1)
 			{
-				throw new LinearMPException(msn.payloads.getSource(), " [linmp] Payload with greater than one element not supported: " + gmt);
+				throw new LinearMPException(msn.payloads.getSource(), " [linmp] Payload with more than one element not supported: " + msn.payloads);
 			}
 			else if (!msn.payloads.getElements().isEmpty())
 			{
