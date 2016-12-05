@@ -25,24 +25,36 @@ public class Main
 {
 	public static void main(String[] args) throws ScribbleException, ScribParserException
 	{
-		Path mainmod = Paths.get(args[0]);
-		String simpname = (args.length < 2) ? "Proto" : args[1];  // Looks for protocol named "Proto" as default if unspecified
-
 		Merge.Operator merge = ast.local.ops.Merge::full;
 
 		ScribProtocolTranslator spt = new ScribProtocolTranslator();
 		GlobalType g = null;
+
 		try
 		{
-			//g = sbp.parseAndCheck(mainmod, proto);
-			g = spt.parseAndCheck(Main.newMainContext(mainmod), new GProtocolName(simpname), merge);  // merge is for projection of "delegation payload types"
-			System.out.println("Translated:\n" + "    " + g);
+			if (args[0].equals("-inline"))
+			{
+				String mainmod = args[1];
+				String simpname = (args.length < 3) ? "Proto" : args[2];
+
+				g = spt.parseAndCheck(Main.newMainContext(mainmod), new GProtocolName(simpname), merge);  // merge is for projection of "delegation payload types"
+			}
+			else
+			{
+				Path mainmod = Paths.get(args[0]);
+				String simpname = (args.length < 2) ? "Proto" : args[1];  // Looks for protocol named "Proto" as default if unspecified
+
+				//g = sbp.parseAndCheck(mainmod, proto);
+				g = spt.parseAndCheck(Main.newMainContext(mainmod), new GProtocolName(simpname), merge);  // merge is for projection of "delegation payload types"
+			}
 		}
 		catch (ScribParserException | ScribbleException e)
 		{
 			System.err.println(e.getMessage());
 			System.exit(1);
 		}
+
+		System.out.println("Translated:\n" + "    " + g);
 		
 		GlobalType gs = ast.global.ops.Sanitizer.apply(g);
 		System.out.println("\nSanitized:\n" + "    " + gs);
@@ -91,6 +103,24 @@ public class Main
 		List<Path> impaths = Collections.emptyList();  // FIXME: get from Main args
 		ResourceLocator locator = new DirectoryResourceLocator(impaths);
 		return new MainContext(debug, locator, mainpath, useOldWF, noLiveness, minEfsm, fair,
+				noLocalChoiceSubjectCheck, noAcceptCorrelationCheck, noValidation, noModuleNameCheck);
+	}
+
+	protected static MainContext newMainContext(String inline) throws ScribParserException, ScribbleException
+	{
+		boolean debug = false;
+		boolean useOldWF = false;
+		boolean noLiveness = false;
+		boolean minEfsm = false;
+		boolean fair = false;
+		boolean noLocalChoiceSubjectCheck = false;
+		boolean noAcceptCorrelationCheck = true;
+		boolean noValidation = true;
+		boolean noModuleNameCheck = true;
+
+		List<Path> impaths = Collections.emptyList();  // FIXME: get from Main args
+		ResourceLocator locator = new DirectoryResourceLocator(impaths);
+		return new MainContext(debug, locator, inline, useOldWF, noLiveness, minEfsm, fair,
 				noLocalChoiceSubjectCheck, noAcceptCorrelationCheck, noValidation, noModuleNameCheck);
 	}
 }
