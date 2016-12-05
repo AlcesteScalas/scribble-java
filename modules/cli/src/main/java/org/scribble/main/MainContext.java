@@ -10,6 +10,7 @@ import org.scribble.ast.ImportDecl;
 import org.scribble.ast.ImportModule;
 import org.scribble.ast.Module;
 import org.scribble.main.resource.DirectoryResourceLocator;
+import org.scribble.main.resource.InlineResource;
 import org.scribble.main.resource.Resource;
 import org.scribble.main.resource.ResourceLocator;
 import org.scribble.parser.AntlrParser;
@@ -38,15 +39,15 @@ public class MainContext
 	public final boolean noAcceptCorrelationCheck;
 	public final boolean noValidation;  // FIXME: deprecate
 	public final boolean noModuleNameCheck;
-	
-	public final ModuleName main;
-
-	// Only "manually" used here for loading main module (which should be factored out to front end) -- otherwise, only used within loader
-	private final AntlrParser antlrParser;  // Not encapsulated inside ScribbleParser, because ScribbleParser's main function is to "parse" ANTLR CommonTrees into ModelNodes
-	private final ScribParser scribParser;
 
 	private final ResourceLocator locator;  // Path -> Resource
 	private final ScribModuleLoader loader;  // sesstype.ModuleName -> Pair<Resource, Module>
+
+	// Only "manually" used here for loading main module (which should be factored out to front end) -- otherwise, only used within loader
+	private final AntlrParser antlrParser = new AntlrParser();  // Not encapsulated inside ScribbleParser, because ScribbleParser's main function is to "parse" ANTLR CommonTrees into ModelNodes
+	private final ScribParser scribParser = new ScribParser();
+
+	private ModuleName main;
 
 	// ModuleName keys are full module names -- parsed are the modules read from file, distinguished from the generated projection modules
 	// Resource recorded for source path
@@ -54,7 +55,7 @@ public class MainContext
 	
 	// FIXME: make Path abstract as e.g. URI -- locator is abstract but Path is coupled to concrete DirectoryResourceLocator
 	//public MainContext(boolean jUnit, boolean debug, ResourceLocator locator, Path mainpath, boolean useOldWF, boolean noLiveness)
-	public MainContext(boolean debug, ResourceLocator locator, Path mainpath, boolean useOldWF, boolean noLiveness, boolean minEfsm,
+	public MainContext(boolean debug, ResourceLocator locator, boolean useOldWF, boolean noLiveness, boolean minEfsm,
 			boolean fair, boolean noLocalChoiceSubjectCheck, boolean noAcceptCorrelationCheck, boolean noValidation, boolean noModuleNameCheck)
 					throws ScribParserException, ScribbleException
 	{
@@ -69,30 +70,40 @@ public class MainContext
 		this.noValidation = noValidation;
 		this.noModuleNameCheck = noModuleNameCheck;
 
-		this.antlrParser = new AntlrParser();
-		this.scribParser = new ScribParser();
 		this.locator = locator; 
 		this.loader = new ScribModuleLoader(this.locator, this.antlrParser, this.scribParser);
+	}
 
-		Pair<Resource, Module> p = loadMainModule(mainpath);  // FIXME: rename exceptions
-		this.main = p.right.getFullModuleName();
-		
+	public MainContext(boolean debug, ResourceLocator locator, String inline, boolean useOldWF, boolean noLiveness, boolean minEfsm,
+			boolean fair, boolean noLocalChoiceSubjectCheck, boolean noAcceptCorrelationCheck, boolean noValidation, boolean noModuleNameCheck)
+					throws ScribParserException, ScribbleException
+	{
+		this(debug, locator, useOldWF, noLiveness, minEfsm, fair, noLocalChoiceSubjectCheck, noAcceptCorrelationCheck, noValidation, noModuleNameCheck);
+
+		Resource res = new InlineResource(inline);
+		Module mod = (Module) this.scribParser.parse(this.antlrParser.parseAntlrTree(res));
+
+		Pair<Resource, Module> p = new Pair<>(res, mod);
+		this.main = p.right.getFullModuleName();  // FIXME: main modname comes from the inlined moddecl -- check for issues if this clashes with an existing file system resource
 		loadAllModules(p);
 	}
-	
-	public Map<ModuleName, Module> getParsedModules()
+
+	// Load main module from file system
+	public MainContext(boolean debug, ResourceLocator locator, Path mainpath, boolean useOldWF, boolean noLiveness, boolean minEfsm,
+			boolean fair, boolean noLocalChoiceSubjectCheck, boolean noAcceptCorrelationCheck, boolean noValidation, boolean noModuleNameCheck)
+					throws ScribParserException, ScribbleException
 	{
-		return this.parsed.entrySet().stream().collect(Collectors.toMap((e) -> e.getKey(), (e) -> e.getValue().right));
-	}
-	
-	// FIXME: checking main module resource exists at specific location should be factored out to front-end (e.g. CommandLine) -- main module resource is specified at local front end level of abstraction, while MainContext uses abstract resource loading
-	private Pair<Resource, Module> loadMainModule(Path mainpath) throws ScribParserException, ScribbleException
-	{
+		this(debug, locator, useOldWF, noLiveness, minEfsm, fair, noLocalChoiceSubjectCheck, noAcceptCorrelationCheck, noValidation, noModuleNameCheck);
+
+		// FIXME: checking main module resource exists at specific location should be factored out to front-end (e.g. CommandLine) -- main module resource is specified at local front end level of abstraction, while MainContext uses abstract resource loading
 		//Pair<Resource, Module> p = this.loader.loadMainModule(mainpath);
 		Resource res = DirectoryResourceLocator.getResourceByFullPath(mainpath);  // FIXME: hardcoded to DirectoryResourceLocator -- main module loading should be factored out to front end (e.g. CommandLine)
-		Module mod = (Module) this.scribParser.parse(this.antlrParser.parseAntlrTree(res));
+		Module mod = (Module) this.scribParser.parse(this.antlrParser.parseAntlrTree(res));  // FIXME: rename exceptions
 		checkMainModuleName(mainpath, mod);
-		return new Pair<>(res, mod);
+
+		Pair<Resource, Module> p = new Pair<>(res, mod);
+		this.main = p.right.getFullModuleName();
+		loadAllModules(p);
 	}
 	
 	// Hacky? But not Scribble tool's job to check nested directory location of module fully corresponds to the fullname of module? Cf. Java classes
@@ -124,6 +135,11 @@ public class MainContext
 				}
 			}
 		}
+	}
+	
+	public Map<ModuleName, Module> getParsedModules()
+	{
+		return this.parsed.entrySet().stream().collect(Collectors.toMap((e) -> e.getKey(), (e) -> e.getValue().right));
 	}
 	
 	public Job newJob()
