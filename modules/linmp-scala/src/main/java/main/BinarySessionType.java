@@ -32,7 +32,7 @@ public class BinarySessionType
 		try
 		{
 			//g = sbp.parseAndCheck(mainmod, proto);
-			g = sbp.parseAndCheck(Main.newMainContext(mainmod), new GProtocolName(simpname), ast.local.ops.Merge::full);
+			g = sbp.parseAndCheck(Main.newMainContext(null, mainmod), new GProtocolName(simpname), ast.local.ops.Merge::full);
 			//System.out.println("Translated:\n" + "    " + g);
 		}
 		catch (ScribParserException | ScribbleException e)
