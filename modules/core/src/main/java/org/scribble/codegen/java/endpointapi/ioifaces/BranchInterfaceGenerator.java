@@ -1,7 +1,7 @@
 package org.scribble.codegen.java.endpointapi.ioifaces;
 
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -13,13 +13,13 @@ import org.scribble.codegen.java.util.EnumBuilder;
 import org.scribble.codegen.java.util.InterfaceBuilder;
 import org.scribble.codegen.java.util.JavaBuilder;
 import org.scribble.main.ScribbleException;
-import org.scribble.model.local.EndpointState;
-import org.scribble.model.local.IOAction;
+import org.scribble.model.endpoint.EState;
+import org.scribble.model.endpoint.actions.EAction;
 import org.scribble.sesstype.name.Role;
 
 public class BranchInterfaceGenerator extends IOStateInterfaceGenerator
 {
-	public BranchInterfaceGenerator(StateChannelApiGenerator apigen, Map<IOAction, InterfaceBuilder> actions, EndpointState curr)
+	public BranchInterfaceGenerator(StateChannelApiGenerator apigen, Map<EAction, InterfaceBuilder> actions, EState curr)
 	{
 		super(apigen, actions, curr);
 	}
@@ -35,7 +35,8 @@ public class BranchInterfaceGenerator extends IOStateInterfaceGenerator
 	protected void addBranchMethods()
 	{
 		Role self = this.apigen.getSelf();
-		Set<IOAction> as = this.curr.getTakeable();
+		//Set<EAction> as = this.curr.getActions();
+		List<EAction> as = this.curr.getActions();
 
 		// FIXME: factor out with BranchSocketGenerator
 		AbstractMethodBuilder bra = this.ib.newAbstractMethod("branch");
@@ -70,7 +71,7 @@ public class BranchInterfaceGenerator extends IOStateInterfaceGenerator
 		EnumBuilder eb = this.ib.newMemberEnum(getBranchInterfaceEnumName(self, this.curr));
 		eb.addModifiers(JavaBuilder.PUBLIC);
 		eb.addInterfaces(ScribSocketGenerator.OPENUM_INTERFACE);
-		this.curr.getTakeable().stream().forEach((a) -> eb.addValues(SessionApiGenerator.getOpClassName(a.mid)));
+		this.curr.getActions().stream().forEach((a) -> eb.addValues(SessionApiGenerator.getOpClassName(a.mid)));
 	}
 
 	// Don't add Action Interfaces (added to CaseInterface)
@@ -78,14 +79,14 @@ public class BranchInterfaceGenerator extends IOStateInterfaceGenerator
 	protected void addSuccessorParamsAndActionInterfaces()
 	{
 		int i = 1;
-		for (IOAction a : this.curr.getTakeable().stream().sorted(IOACTION_COMPARATOR).collect(Collectors.toList()))
+		for (EAction a : this.curr.getActions().stream().sorted(IOACTION_COMPARATOR).collect(Collectors.toList()))
 		{
 			this.ib.addParameters("__Succ" + i + " extends " + SuccessorInterfaceGenerator.getSuccessorInterfaceName(a));
 			i++;
 		}
 	}
 	
-	public static String getBranchInterfaceEnumName(Role self, EndpointState curr)
+	public static String getBranchInterfaceEnumName(Role self, EState curr)
 	{
 		return getIOStateInterfaceName(self, curr) + "_Enum";
 	}

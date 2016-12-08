@@ -23,9 +23,13 @@ public class AntlrParser
 	
 	public CommonTree parseAntlrTree(Resource res)
 	{
+		return parseAntlrTree(new String(readResource(res)));
+	}
+
+	private CommonTree parseAntlrTree(String input)
+	{
 		try
 		{
-			String input = new String(readResource(res));
 			ScribbleLexer lex = new ScribbleLexer(new ANTLRStringStream(input));
 			ScribbleParser parser = new ScribbleParser(new CommonTokenStream(lex));
 			return (CommonTree) parser.module().getTree();

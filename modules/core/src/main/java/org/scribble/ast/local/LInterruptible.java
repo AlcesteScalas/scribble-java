@@ -3,6 +3,7 @@ package org.scribble.ast.local;
 import java.util.List;
 import java.util.Set;
 
+import org.antlr.runtime.tree.CommonTree;
 import org.scribble.ast.Interruptible;
 import org.scribble.ast.ProtocolBlock;
 import org.scribble.ast.ScribNodeBase;
@@ -13,15 +14,15 @@ import org.scribble.sesstype.kind.Local;
 import org.scribble.sesstype.kind.ScopeKind;
 import org.scribble.sesstype.name.Name;
 import org.scribble.sesstype.name.Role;
-import org.scribble.visit.ProjectedChoiceSubjectFixer;
+import org.scribble.visit.context.ProjectedChoiceSubjectFixer;
 
 //public class LocalInterruptible extends Interruptible<LocalProtocolBlock, LocalInterrupt> implements LocalInteractionNode
 public class LInterruptible extends Interruptible<Local> implements LCompoundInteractionNode
 {
 	//protected LocalInterruptible(ScopeNode scope, LocalProtocolBlock block, List<LocalInterrupt> interrs)
-	protected LInterruptible(ScopeNode scope, ProtocolBlock<Local> block, List<LInterrupt> interrs)
+	protected LInterruptible(CommonTree source, ScopeNode scope, ProtocolBlock<Local> block, List<LInterrupt> interrs)
 	{
-		super(scope, block, interrs);
+		super(source, scope, block, interrs);
 	}	
 
 	@Override

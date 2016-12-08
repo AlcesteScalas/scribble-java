@@ -1,37 +1,54 @@
 package org.scribble.ast.global;
 
-import java.util.Collections;
 import java.util.List;
 
+import org.antlr.runtime.tree.CommonTree;
 import org.scribble.ast.AstFactoryImpl;
 import org.scribble.ast.Module;
+import org.scribble.ast.NonRoleParamDeclList;
 import org.scribble.ast.ProtocolDecl;
 import org.scribble.ast.ProtocolDef;
 import org.scribble.ast.ProtocolHeader;
+import org.scribble.ast.RoleDeclList;
+import org.scribble.ast.local.LProtocolDecl;
+import org.scribble.ast.local.LProtocolDef;
+import org.scribble.ast.local.LProtocolHeader;
+import org.scribble.ast.name.qualified.LProtocolNameNode;
 import org.scribble.del.ScribDel;
+import org.scribble.main.ScribbleException;
 import org.scribble.sesstype.kind.Global;
 import org.scribble.sesstype.name.GProtocolName;
 import org.scribble.sesstype.name.ModuleName;
+import org.scribble.sesstype.name.Role;
+import org.scribble.visit.context.Projector;
 
-// FIXME: visitChildren for modifiers
 public class GProtocolDecl extends ProtocolDecl<Global> implements GNode
 {
-	public static enum Modifiers { EXPLICIT, AUX }  // FIXME: factor out?  Header?
-
-	// FIXME: project modifiers to locals
-	// FIXME: lookup routines, e.g. isExplicit
-	public final List<Modifiers> modifiers;
-	
-	public GProtocolDecl(List<Modifiers> modifiers, GProtocolHeader header, GProtocolDef def)
+	public GProtocolDecl(CommonTree source, List<Modifiers> modifiers, GProtocolHeader header, GProtocolDef def)
 	{
-		super(header, def);
-		this.modifiers = Collections.unmodifiableList(modifiers);
+		super(source, modifiers, header, def);
+	}
+	
+	// FIXME? project modifiers?
+	public LProtocolDecl project(Module mod, Role self, LProtocolDef def) throws ScribbleException  // mod is just the parent?
+	{
+		//Role self = proj.peekSelf();
+		GProtocolHeader gph = getHeader();
+		LProtocolNameNode pn = Projector.makeProjectedSimpleNameNode(gph.getSource(), gph.getDeclName(), self);
+		
+		// Move to delegates? -- maybe fully integrate into projection pass
+		RoleDeclList roledecls = this.header.roledecls.project(self);
+		NonRoleParamDeclList paramdecls = this.header.paramdecls.project(self);
+		LProtocolHeader lph = AstFactoryImpl.FACTORY.LProtocolHeader(this.header.getSource(), pn, roledecls, paramdecls);
+		GProtocolName gpn = this.getFullMemberName(mod);
+		LProtocolDecl projected = AstFactoryImpl.FACTORY.LProjectionDecl(this.source, this.modifiers, gpn, self, lph, def);
+		return projected;
 	}
 
 	@Override
 	protected GProtocolDecl copy()
 	{
-		return new GProtocolDecl(this.modifiers, getHeader(), getDef());
+		return new GProtocolDecl(this.source, this.modifiers, getHeader(), getDef());
 	}
 	
 	@Override
@@ -39,7 +56,7 @@ public class GProtocolDecl extends ProtocolDecl<Global> implements GNode
 	{
 		GProtocolHeader header = getHeader().clone();
 		GProtocolDef def = getDef().clone();
-		return AstFactoryImpl.FACTORY.GProtocolDecl(this.modifiers, header, def);
+		return AstFactoryImpl.FACTORY.GProtocolDecl(this.source, this.modifiers, header, def);
 	}
 
 	@Override
@@ -47,7 +64,7 @@ public class GProtocolDecl extends ProtocolDecl<Global> implements GNode
 	{
 		
 		ScribDel del = del();
-		GProtocolDecl gpd = new GProtocolDecl(this.modifiers, (GProtocolHeader) header, (GProtocolDef) def);
+		GProtocolDecl gpd = new GProtocolDecl(this.source, this.modifiers, (GProtocolHeader) header, (GProtocolDef) def);
 		gpd = (GProtocolDecl) gpd.del(del);  // FIXME: does another shallow copy
 		return gpd;
 	}
@@ -83,15 +100,5 @@ public class GProtocolDecl extends ProtocolDecl<Global> implements GNode
 	public Global getKind()
 	{
 		return GNode.super.getKind();
-	}
-	
-	public boolean isExplicitModifier()
-	{
-		return this.modifiers.contains(Modifiers.EXPLICIT);
-	}
-
-	public boolean isAuxModifier()
-	{
-		return this.modifiers.contains(Modifiers.AUX);
 	}
 }

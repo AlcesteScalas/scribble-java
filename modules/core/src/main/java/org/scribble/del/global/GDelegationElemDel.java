@@ -19,9 +19,9 @@ import org.scribble.sesstype.kind.Global;
 import org.scribble.sesstype.name.GProtocolName;
 import org.scribble.sesstype.name.ProtocolName;
 import org.scribble.sesstype.name.Role;
-import org.scribble.visit.DelegationProtocolRefChecker;
-import org.scribble.visit.NameDisambiguator;
-import org.scribble.visit.ProtocolDeclContextBuilder;
+import org.scribble.visit.context.ProtocolDeclContextBuilder;
+import org.scribble.visit.wf.DelegationProtocolRefChecker;
+import org.scribble.visit.wf.NameDisambiguator;
 
 public class GDelegationElemDel extends ScribDelBase
 {
@@ -39,7 +39,7 @@ public class GDelegationElemDel extends ScribDelBase
 		GProtocolName gpn = de.proto.toName();
 		if (!mc.isVisibleProtocolDeclName(gpn))
 		{
-			throw new ScribbleException("Protocol decl not visible: " + gpn);
+			throw new ScribbleException(de.proto.getSource(), "Protocol decl not visible: " + gpn);
 		}
 	}
 
@@ -53,13 +53,13 @@ public class GDelegationElemDel extends ScribDelBase
 		GProtocolName fullname = (GProtocolName) mc.getVisibleProtocolDeclFullName(de.proto.toName());
 
 		Role rn = de.role.toName();
-		ProtocolDecl<Global> gpd = disamb.getJobContext().getModule(fullname.getPrefix()).getProtocolDecl(fullname.getSimpleName());
+		ProtocolDecl<Global> gpd = disamb.job.getContext().getModule(fullname.getPrefix()).getProtocolDecl(fullname.getSimpleName());
 		if (!gpd.header.roledecls.getRoles().contains(rn))
 		{
-			throw new ScribbleException("Invalid delegation role: " + de);
+			throw new ScribbleException(de.role.getSource(), "Invalid delegation role: " + de);
 		}
 
-		GProtocolNameNode pnn = (GProtocolNameNode) AstFactoryImpl.FACTORY.QualifiedNameNode(fullname.getKind(), fullname.getElements());  // Not keeping original namenode del
+		GProtocolNameNode pnn = (GProtocolNameNode) AstFactoryImpl.FACTORY.QualifiedNameNode(de.proto.getSource(), fullname.getKind(), fullname.getElements());  // Not keeping original namenode del
 		return de.reconstruct(pnn, de.role);
 	}
 
@@ -95,11 +95,11 @@ public class GDelegationElemDel extends ScribDelBase
 		GProtocolName rootfullname = (GProtocolName) mc.getVisibleProtocolDeclFullName(checker.getProtocolDeclOnEntry().header.getDeclName());
 		if (targetfullname.equals(rootfullname))  // Explicit check here because ProtocolDeclContextBuilder dependencies explicitly include self protocoldecl dependencies (cf. GProtocolDeclDel.addSelfDependency)
 		{
-			throw new ScribbleException("Recursive protocol dependencies not supported for delegation types: " + de);
+			throw new ScribbleException(de.getSource(), "Recursive protocol dependencies not supported for delegation types: " + de);
 		}
 		
 		Set<GProtocolName> todo = new LinkedHashSet<GProtocolName>();
-		ProtocolDecl<Global> targetgpd = checker.getJobContext().getModule(targetfullname.getPrefix()).getProtocolDecl(targetfullname.getSimpleName());  // target
+		ProtocolDecl<Global> targetgpd = checker.job.getContext().getModule(targetfullname.getPrefix()).getProtocolDecl(targetfullname.getSimpleName());  // target
 		// FIXME: does this already contain transitive do-dependencies?  But doesn't contain transitive delegation-dependencies..?
 		Set<GProtocolName> init = 
 				((GProtocolDeclDel) targetgpd.del()).getProtocolDeclContext().getDependencyMap().getDependencies()
@@ -117,9 +117,9 @@ public class GDelegationElemDel extends ScribDelBase
 			ProtocolName<Global> nextfullname = mc.getVisibleProtocolDeclFullName(next);
 			if (rootfullname.equals(nextfullname))
 			{
-				throw new ScribbleException("Recursive protocol dependencies not supported for delegation types: " + de);
+				throw new ScribbleException(de.getSource(), "Recursive protocol dependencies not supported for delegation types: " + de);
 			}
-			ProtocolDecl<Global> nextgpd = checker.getJobContext().getModule(targetfullname.getPrefix()).getProtocolDecl(nextfullname.getSimpleName());
+			ProtocolDecl<Global> nextgpd = checker.job.getContext().getModule(targetfullname.getPrefix()).getProtocolDecl(nextfullname.getSimpleName());
 			Set<GProtocolName> tmp = 
 					((GProtocolDeclDel) nextgpd.del()).getProtocolDeclContext().getDependencyMap().getDependencies()
 					.values().stream().flatMap((v) -> v.keySet().stream())
@@ -128,10 +128,4 @@ public class GDelegationElemDel extends ScribDelBase
 			todo.addAll(tmp);
 		}
 	}
-
-	/*@Override
-	public ScribNode leaveDelegationProtocolRefCheck(ScribNode parent, ScribNode child, DelegationProtocolRefChecker checker, ScribNode visited) throws ScribbleException
-	{
-
-	}*/
 }

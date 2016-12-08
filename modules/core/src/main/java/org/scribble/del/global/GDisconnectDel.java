@@ -6,10 +6,10 @@ import org.scribble.ast.local.LNode;
 import org.scribble.del.ConnectionActionDel;
 import org.scribble.main.ScribbleException;
 import org.scribble.sesstype.name.Role;
-import org.scribble.visit.NameDisambiguator;
-import org.scribble.visit.Projector;
-import org.scribble.visit.WFChoiceChecker;
-import org.scribble.visit.env.WFChoiceEnv;
+import org.scribble.visit.context.Projector;
+import org.scribble.visit.wf.NameDisambiguator;
+import org.scribble.visit.wf.WFChoiceChecker;
+import org.scribble.visit.wf.env.WFChoiceEnv;
 
 public class GDisconnectDel extends ConnectionActionDel implements GSimpleInteractionNodeDel
 {
@@ -35,7 +35,7 @@ public class GDisconnectDel extends ConnectionActionDel implements GSimpleIntera
 		Role src = gd.src.toName();
 		if (!checker.peekEnv().isEnabled(src))
 		{
-			throw new ScribbleException("Role not enabled: " + src);
+			throw new ScribbleException(gd.src.getSource(), "Role not enabled: " + src);
 		}
 		//Message msg = gd.msg.toMessage();  //  Unit message 
 		WFChoiceEnv env = checker.popEnv();
@@ -43,16 +43,16 @@ public class GDisconnectDel extends ConnectionActionDel implements GSimpleIntera
 		Role dest = gd.dest.toName();
 		if (!env.isEnabled(dest))
 		{
-			throw new ScribbleException("Role not enabled: " + dest);
+			throw new ScribbleException(gd.dest.getSource(), "Role not enabled: " + dest);
 		}
 		{
 			if (src.equals(dest))
 			{
-				throw new ScribbleException("(TODO) Self connections not supported: " + gd);
+				throw new ScribbleException(gd.getSource(), "[TODO] Self connections not supported: " + gd);  // Would currently be subsumed by the below
 			}
 			if (!env.isConnected(src, dest))
 			{
-				throw new ScribbleException("Roles not connected: " + src + ", " + dest);
+				throw new ScribbleException(gd.getSource(), "Roles not (necessarily) connected: " + src + ", " + dest);
 			}
 
 			env = env.disconnect(src, dest);//.removeMessage(src, dest, ...);  // Is remove really needed?
@@ -73,11 +73,4 @@ public class GDisconnectDel extends ConnectionActionDel implements GSimpleIntera
 		proj.pushEnv(proj.popEnv().setProjection(projection));
 		return (GDisconnect) GSimpleInteractionNodeDel.super.leaveProjection(parent, child, proj, gd);
 	}
-	
-	/*@Override
-	public GDisconnect leaveModelBuilding(ScribNode parent, ScribNode child, GlobalModelBuilder builder, ScribNode visited) throws ScribbleException
-	{
-		//return (GDisconnect) super.leaveModelBuilding(parent, child, builder, ls);
-		throw new RuntimeException("Shouldn't get in here: " + visited);
-	}*/
 }

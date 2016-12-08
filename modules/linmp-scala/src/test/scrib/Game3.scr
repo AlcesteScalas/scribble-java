@@ -41,7 +41,7 @@ global protocol Game(role a, role b, role c) {
         continue t;
       } or {
         Mov2CA(Boolean) from c to a;
-      continue t;
+				continue t;
       }
     }
   }

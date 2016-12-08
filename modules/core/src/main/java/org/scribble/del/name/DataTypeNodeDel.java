@@ -9,7 +9,7 @@ import org.scribble.del.ScribDelBase;
 import org.scribble.main.ScribbleException;
 import org.scribble.sesstype.kind.DataTypeKind;
 import org.scribble.sesstype.name.DataType;
-import org.scribble.visit.NameDisambiguator;
+import org.scribble.visit.wf.NameDisambiguator;
 
 public class DataTypeNodeDel extends ScribDelBase
 {
@@ -32,10 +32,10 @@ public class DataTypeNodeDel extends ScribDelBase
 		DataType dt = dtn.toName();
 		if (!mc.isVisibleDataType(dt))
 		{
-			throw new ScribbleException("Protocol decl not visible: " + dt);
+			throw new ScribbleException(dtn.getSource(), "Data type not visible: " + dt);
 		}
 		DataType fullname = mc.getVisibleDataTypeFullName(dt);
 		return (DataTypeNode)
-				AstFactoryImpl.FACTORY.QualifiedNameNode(DataTypeKind.KIND, fullname.getElements());  // Didn't keep original del
+				AstFactoryImpl.FACTORY.QualifiedNameNode(dtn.getSource(), DataTypeKind.KIND, fullname.getElements());  // Didn't keep original del
 	}
 }

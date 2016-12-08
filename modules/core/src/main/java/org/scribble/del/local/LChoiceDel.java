@@ -15,15 +15,15 @@ import org.scribble.main.ScribbleException;
 import org.scribble.sesstype.kind.RoleKind;
 import org.scribble.sesstype.name.RecVar;
 import org.scribble.sesstype.name.Role;
-import org.scribble.visit.EndpointGraphBuilder;
-import org.scribble.visit.ProjectedChoiceSubjectFixer;
-import org.scribble.visit.ProjectedChoiceDoPruner;
 import org.scribble.visit.ProtocolDefInliner;
-import org.scribble.visit.ReachabilityChecker;
-import org.scribble.visit.UnguardedChoiceDoProjectionChecker;
+import org.scribble.visit.context.EGraphBuilder;
+import org.scribble.visit.context.ProjectedChoiceDoPruner;
+import org.scribble.visit.context.ProjectedChoiceSubjectFixer;
+import org.scribble.visit.context.UnguardedChoiceDoProjectionChecker;
+import org.scribble.visit.context.env.UnguardedChoiceDoEnv;
 import org.scribble.visit.env.InlineProtocolEnv;
-import org.scribble.visit.env.ReachabilityEnv;
-import org.scribble.visit.env.UnguardedChoiceDoEnv;
+import org.scribble.visit.wf.ReachabilityChecker;
+import org.scribble.visit.wf.env.ReachabilityEnv;
 
 public class LChoiceDel extends ChoiceDel implements LCompoundInteractionNodeDel
 {
@@ -85,14 +85,16 @@ public class LChoiceDel extends ChoiceDel implements LCompoundInteractionNodeDel
 		
 		if (subjs.size() > 1)  // Unnecessary: due to WF check in GChoiceDel.leaveInlinedPathCollection -- would be better as a check on locals than in projection anyway
 		{
-			throw new ScribbleException("Cannot project for inconsistent local choice subjects: " + subjs);  // self not recorded -- can derive from LProtocolDecl RoleDeclList
+			String self = fixer.getModuleContext().root.getSimpleName().toString();  // HACK
+			self = self.substring(self.lastIndexOf('_')+1, self.length());  // FIXME: not sound (if role names include "_")
+			throw new ScribbleException(lc.getSource(), "Cannot project onto " + self + " due to inconsistent local choice subjects: " + subjs);  // self not recorded -- can derive from LProtocolDecl RoleDeclList
 			//throw new RuntimeException("Shouldn't get in here: " + subjs);
 		}
-		RoleNode subj = (RoleNode) AstFactoryImpl.FACTORY.SimpleNameNode(RoleKind.KIND,
+		RoleNode subj = (RoleNode) AstFactoryImpl.FACTORY.SimpleNameNode(null, RoleKind.KIND,  // FIXME? null source OK?
 				//blocks.get(0).getInteractionSeq().getInteractions().get(0).inferLocalChoiceSubject(fixer).toString());
 				subjs.iterator().next().toString());
 		fixer.setChoiceSubject(subj.toName());
-		LChoice projection = AstFactoryImpl.FACTORY.LChoice(subj, blocks);
+		LChoice projection = AstFactoryImpl.FACTORY.LChoice(lc.getSource(), subj, blocks);
 		return projection;
 	}
 
@@ -103,7 +105,7 @@ public class LChoiceDel extends ChoiceDel implements LCompoundInteractionNodeDel
 		List<LProtocolBlock> blocks = 
 				lc.getBlocks().stream().map((b) -> (LProtocolBlock) ((InlineProtocolEnv) b.del().env()).getTranslation()).collect(Collectors.toList());	
 		RoleNode subj = lc.subj.clone();
-		LChoice inlined = AstFactoryImpl.FACTORY.LChoice(subj, blocks);
+		LChoice inlined = AstFactoryImpl.FACTORY.LChoice(lc.getSource(), subj, blocks);
 		inl.pushEnv(inl.popEnv().setTranslation(inlined));
 		return (LChoice) super.leaveProtocolInlining(parent, child, inl, lc);
 	}
@@ -119,25 +121,35 @@ public class LChoiceDel extends ChoiceDel implements LCompoundInteractionNodeDel
 		return (LChoice) LCompoundInteractionNodeDel.super.leaveReachabilityCheck(parent, child, checker, visited);  // records the current checker Env to the current del; also pops and merges that env into the parent env
 	}
 
-	public LChoice visitForFsmConversion(EndpointGraphBuilder graph, LChoice child)
+	@Override
+	public void enterEGraphBuilding(ScribNode parent, ScribNode child, EGraphBuilder graph)
+	{
+		super.enterEGraphBuilding(parent, child, graph);
+		graph.util.enterChoice();
+	}
+
+	public LChoice visitForFsmConversion(EGraphBuilder graph, LChoice child)
 	{
 		try
 		{
-			graph.builder.enterChoice();  // FIXME: refactor enter/leave properly
-
 			for (LProtocolBlock block : child.getBlocks())
 			{
-				graph.builder.pushChoiceBlock();
+				graph.util.pushChoiceBlock();
 				block.accept(graph);
-				graph.builder.popChoiceBlock();
+				graph.util.popChoiceBlock();
 			}
-			
-			graph.builder.leaveChoice();
 		}
 		catch (ScribbleException e)
 		{
 			throw new RuntimeException("Shouldn't get in here: " + e);
 		}
 		return child;
+	}
+
+	@Override
+	public ScribNode leaveEGraphBuilding(ScribNode parent, ScribNode child, EGraphBuilder graph, ScribNode visited) throws ScribbleException
+	{
+		graph.util.leaveChoice();
+		return super.leaveEGraphBuilding(parent, child, graph, visited);
 	}
 }

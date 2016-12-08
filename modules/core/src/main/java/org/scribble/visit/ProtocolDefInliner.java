@@ -13,6 +13,8 @@ import org.scribble.ast.local.LDo;
 import org.scribble.del.ProtocolDefDel;
 import org.scribble.del.global.GDoDel;
 import org.scribble.del.local.LDoDel;
+import org.scribble.main.Job;
+import org.scribble.main.JobContext;
 import org.scribble.main.ScribbleException;
 import org.scribble.sesstype.SubprotocolSig;
 import org.scribble.sesstype.kind.ProtocolKind;
@@ -72,8 +74,8 @@ public class ProtocolDefInliner extends SubprotocolVisitor<InlineProtocolEnv>
 		if (visited instanceof ProtocolDecl<?>)
 		{
 			ProtocolDecl<?> pd = (ProtocolDecl<?>) visited;
-			getJob().debugPrintln("\n[DEBUG] Inlined root protocol "
-						+ pd.getFullMemberName(getJobContext().getModule(getModuleContext().root)) + ":\n"
+			this.job.debugPrintln("\n[DEBUG] Inlined root protocol "
+						+ pd.getFullMemberName(this.job.getContext().getModule(getModuleContext().root)) + ":\n"
 						+ ((ProtocolDefDel) pd.def.del()).getInlinedProtocolDef());
 		}
 		return leave(parent, child, visited);
@@ -103,7 +105,7 @@ public class ProtocolDefInliner extends SubprotocolVisitor<InlineProtocolEnv>
 		{
 			//return (GDo) super.visitForSubprotocols(parent, child);
 			// Duplicated from SubprotocolVisitor#visitOverrideFoDo and modified to access discarded env -- FIXME: factor out this facility better
-			JobContext jc = getJobContext();
+			JobContext jc = this.job.getContext();
 			ModuleContext mc = getModuleContext();
 			ProtocolDecl<? extends ProtocolKind> pd = child.getTargetProtocolDecl(jc, mc);
 			ScribNode seq = applySubstitutions(pd.def.block.seq.clone());

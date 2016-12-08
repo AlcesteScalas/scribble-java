@@ -3,8 +3,8 @@ package org.scribble.ast.local;
 import java.util.Collections;
 import java.util.Set;
 
+import org.antlr.runtime.tree.CommonTree;
 import org.scribble.ast.AstFactoryImpl;
-import org.scribble.ast.ConnectionAction;
 import org.scribble.ast.Constants;
 import org.scribble.ast.MessageNode;
 import org.scribble.ast.ScribNodeBase;
@@ -16,19 +16,19 @@ import org.scribble.main.ScribbleException;
 import org.scribble.sesstype.Message;
 import org.scribble.sesstype.kind.Local;
 import org.scribble.sesstype.name.Role;
-import org.scribble.visit.ProjectedChoiceSubjectFixer;
+import org.scribble.visit.context.ProjectedChoiceSubjectFixer;
 
-public class LWrapServer extends ConnectionAction<Local> implements LSimpleInteractionNode
+public class LWrapServer extends LConnectionAction implements LSimpleInteractionNode
 {
-	public LWrapServer(RoleNode src, RoleNode dest)
+	public LWrapServer(CommonTree source, RoleNode src, RoleNode dest)
 	{
-		super(src, GWrap.UNIT_MESSAGE_SIG_NODE, dest);
+		super(source, src, GWrap.UNIT_MESSAGE_SIG_NODE, dest);
 	}
 
 	@Override
 	protected ScribNodeBase copy()
 	{
-		return new LWrapServer(this.src, this.dest);
+		return new LWrapServer(this.source, this.src, this.dest);
 	}
 	
 	@Override
@@ -36,7 +36,7 @@ public class LWrapServer extends ConnectionAction<Local> implements LSimpleInter
 	{
 		RoleNode src = this.src.clone();
 		RoleNode dest = this.dest.clone();
-		return AstFactoryImpl.FACTORY.LWrapServer(src, dest);
+		return AstFactoryImpl.FACTORY.LWrapServer(this.source, src, dest);
 	}
 
 	@Override
@@ -44,7 +44,7 @@ public class LWrapServer extends ConnectionAction<Local> implements LSimpleInter
 	//public LWrapServer reconstruct(RoleNode src, RoleNode dest)
 	{
 		ScribDel del = del();
-		LWrapServer lr = new LWrapServer(src, dest);
+		LWrapServer lr = new LWrapServer(this.source, src, dest);
 		lr = (LWrapServer) lr.del(del);
 		return lr;
 	}

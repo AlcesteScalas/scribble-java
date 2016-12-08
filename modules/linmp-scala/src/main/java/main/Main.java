@@ -21,28 +21,40 @@ import ast.local.ops.Merge;
 // import ast.binary.Type;
 import ast.name.Role;
 
+// Args: either
+//   -inline "..inline module def.." [proto-name]
+//   main-mod-path [proto-name]
 public class Main
 {
 	public static void main(String[] args) throws ScribbleException, ScribParserException
 	{
-		Path mainmod = Paths.get(args[0]);
-		String simpname = (args.length < 2) ? "Proto" : args[1];  // Looks for protocol named "Proto" as default if unspecified
-
 		Merge.Operator merge = ast.local.ops.Merge::full;
-
-		ScribProtocolTranslator spt = new ScribProtocolTranslator();
 		GlobalType g = null;
+
+		String inline = null;
+		Path mainpath = null;
+		String simpname;
 		try
 		{
-			//g = sbp.parseAndCheck(mainmod, proto);
-			g = spt.parseAndCheck(newMainContext(mainmod), new GProtocolName(simpname), merge);  // merge is for projection of "delegation payload types"
-			System.out.println("Translated:\n" + "    " + g);
+			if (args[0].equals("-inline"))
+			{
+				inline = args[1];
+				simpname = (args.length < 3) ? "Proto" : args[2];  // Looks for protocol named "Proto" as default if unspecified
+			}
+			else
+			{
+				mainpath = Paths.get(args[0]);
+				simpname = (args.length < 2) ? "Proto" : args[1];
+			}
+			ScribProtocolTranslator spt = new ScribProtocolTranslator();
+			g = spt.parseAndCheck(Main.newMainContext(inline, mainpath), new GProtocolName(simpname), merge);  // merge is for projection of "delegation payload types"
 		}
 		catch (ScribParserException | ScribbleException e)
 		{
 			System.err.println(e.getMessage());
 			System.exit(1);
 		}
+		System.out.println("Translated:\n" + "    " + g);
 		
 		GlobalType gs = ast.global.ops.Sanitizer.apply(g);
 		System.out.println("\nSanitized:\n" + "    " + gs);
@@ -72,7 +84,8 @@ public class Main
 	}
 
 	// Duplicated from CommandLine for convenience
-	private static MainContext newMainContext(Path mainmod) throws ScribParserException, ScribbleException
+	// Pre: one of inline/mainpath is null
+	protected static MainContext newMainContext(String inline, Path mainpath) throws ScribParserException, ScribbleException
 	{
 		boolean debug = false;
 		boolean useOldWF = false;
@@ -80,13 +93,19 @@ public class Main
 		boolean minEfsm = false;
 		boolean fair = false;
 		boolean noLocalChoiceSubjectCheck = false;
+		boolean noAcceptCorrelationCheck = true;
+		boolean noValidation = true;  // FIXME: deprecate -- redundant due to hardcoded Job.checkLinearMPScalaWellFormedness
+		boolean noModuleNameCheck = true;  // For webapp to bypass MainContext.checkMainModuleName
 
-		Path mainpath = mainmod;
 		/*List<Path> impaths = this.args.containsKey(ArgFlag.PATH)
 				? CommandLine.parseImportPaths(this.args.get(ArgFlag.PATH)[0])
 				: Collections.emptyList();*/
 		List<Path> impaths = Collections.emptyList();  // FIXME: get from Main args
 		ResourceLocator locator = new DirectoryResourceLocator(impaths);
-		return new MainContext(debug, locator, mainpath, useOldWF, noLiveness, minEfsm, fair, noLocalChoiceSubjectCheck);
+		return (inline == null)
+				? new MainContext(debug, locator, mainpath, useOldWF, noLiveness, minEfsm, fair,
+							noLocalChoiceSubjectCheck, noAcceptCorrelationCheck, noValidation, noModuleNameCheck)
+				: new MainContext(debug, locator, inline, useOldWF, noLiveness, minEfsm, fair,
+							noLocalChoiceSubjectCheck, noAcceptCorrelationCheck, noValidation, noModuleNameCheck);
 	}
 }

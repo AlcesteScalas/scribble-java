@@ -8,10 +8,10 @@ import org.scribble.ast.HeaderParamDeclList;
 import org.scribble.ast.ProtocolDecl;
 import org.scribble.ast.ScribNode;
 import org.scribble.ast.context.ModuleContext;
+import org.scribble.main.JobContext;
 import org.scribble.main.ScribbleException;
 import org.scribble.sesstype.name.ProtocolName;
-import org.scribble.visit.JobContext;
-import org.scribble.visit.NameDisambiguator;
+import org.scribble.visit.wf.NameDisambiguator;
 
 public abstract class DoArgListDel extends ScribDelBase
 {
@@ -29,7 +29,7 @@ public abstract class DoArgListDel extends ScribDelBase
 		ProtocolDecl<?> pd = getTargetProtocolDecl((Do<?>) parent, disamb);
 		if (args.size() != getParamDeclList(pd).getDecls().size())
 		{
-			throw new ScribbleException("Do arity mismatch for " + pd.header + ": " + args);
+			throw new ScribbleException(visited.getSource(), "Do arity mismatch for " + pd.header + ": " + args);
 		}
 
 		return dal;
@@ -39,7 +39,7 @@ public abstract class DoArgListDel extends ScribDelBase
 	protected ProtocolDecl<?> getTargetProtocolDecl(Do<?> parent, NameDisambiguator disamb) throws ScribbleException
 	{
 		ModuleContext mc = disamb.getModuleContext();
-		JobContext jc = disamb.getJobContext();
+		JobContext jc = disamb.job.getContext();
 		Do<?> doo = (Do<?>) parent;
 		ProtocolName<?> pn = doo.proto.toName();
 		/*if (!mc.isVisibleProtocolDeclName(simpname))  // FIXME: should be checked somewhere else?  earlier (do-entry?) -- done

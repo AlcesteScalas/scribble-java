@@ -4,7 +4,7 @@ import org.scribble.ast.ScribNode;
 import org.scribble.ast.name.simple.RoleNode;
 import org.scribble.del.ScribDelBase;
 import org.scribble.main.ScribbleException;
-import org.scribble.visit.NameDisambiguator;
+import org.scribble.visit.wf.NameDisambiguator;
 
 public class RoleNodeDel extends ScribDelBase
 {
@@ -19,7 +19,7 @@ public class RoleNodeDel extends ScribDelBase
 		RoleNode rn = (RoleNode) visited;
 		if (!disamb.isBoundRole(rn.toName()))
 		{
-			throw new ScribbleException("Role not bound: " + rn);
+			throw new ScribbleException(rn.getSource(), "Role not bound: " + rn);
 		}
 		return rn;
 	}

@@ -4,6 +4,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.Set;
 
+import org.antlr.runtime.tree.CommonTree;
 import org.scribble.ast.AstFactoryImpl;
 import org.scribble.ast.Do;
 import org.scribble.ast.NonRoleArgList;
@@ -12,26 +13,26 @@ import org.scribble.ast.context.ModuleContext;
 import org.scribble.ast.name.qualified.LProtocolNameNode;
 import org.scribble.ast.name.qualified.ProtocolNameNode;
 import org.scribble.del.ScribDel;
+import org.scribble.main.JobContext;
 import org.scribble.main.RuntimeScribbleException;
 import org.scribble.main.ScribbleException;
 import org.scribble.sesstype.Message;
 import org.scribble.sesstype.kind.Local;
 import org.scribble.sesstype.name.LProtocolName;
 import org.scribble.sesstype.name.Role;
-import org.scribble.visit.JobContext;
-import org.scribble.visit.ProjectedChoiceSubjectFixer;
+import org.scribble.visit.context.ProjectedChoiceSubjectFixer;
 
 public class LDo extends Do<Local> implements LSimpleInteractionNode
 {
-	public LDo(RoleArgList roleinstans, NonRoleArgList arginstans, LProtocolNameNode proto)
+	public LDo(CommonTree source, RoleArgList roleinstans, NonRoleArgList arginstans, LProtocolNameNode proto)
 	{
-		super(roleinstans, arginstans, proto);
+		super(source, roleinstans, arginstans, proto);
 	}
 
 	@Override
 	protected LDo copy()
 	{
-		return new LDo(this.roles, this.args, getProtocolNameNode());
+		return new LDo(this.source, this.roles, this.args, getProtocolNameNode());
 	}
 	
 	@Override
@@ -40,14 +41,14 @@ public class LDo extends Do<Local> implements LSimpleInteractionNode
 		RoleArgList roles = this.roles.clone();
 		NonRoleArgList args = this.args.clone();
 		LProtocolNameNode proto = this.getProtocolNameNode().clone();
-		return AstFactoryImpl.FACTORY.LDo(roles, args, proto);
+		return AstFactoryImpl.FACTORY.LDo(this.source, roles, args, proto);
 	}
 	
 	@Override
 	public LDo reconstruct(RoleArgList roles, NonRoleArgList args, ProtocolNameNode<Local> proto)
 	{
 		ScribDel del = del();
-		LDo ld = new LDo(roles, args, (LProtocolNameNode) proto);
+		LDo ld = new LDo(this.source, roles, args, (LProtocolNameNode) proto);
 		ld = (LDo) ld.del(del);
 		return ld;
 	}
@@ -74,7 +75,7 @@ public class LDo extends Do<Local> implements LSimpleInteractionNode
 	public Role inferLocalChoiceSubject(ProjectedChoiceSubjectFixer fixer)
 	{
 		ModuleContext mc = fixer.getModuleContext();
-		JobContext jc = fixer.getJobContext();
+		JobContext jc = fixer.job.getContext();
 		Role subj = getTargetProtocolDecl(jc, mc).getDef().getBlock()
 				.getInteractionSeq().getInteractions().get(0).inferLocalChoiceSubject(fixer);
 		// FIXME: need equivalent of (e.g) rec X { continue X; } pruning (cf GRecursion.prune) for irrelevant recursive-do (e.g. proto(A, B, C) { choice at A {A->B.do Proto(A,B,C)} or {A->B.B->C} }))

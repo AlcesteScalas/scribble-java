@@ -6,7 +6,7 @@ import org.scribble.ast.HeaderParamDecl;
 import org.scribble.ast.HeaderParamDeclList;
 import org.scribble.ast.ScribNode;
 import org.scribble.main.ScribbleException;
-import org.scribble.visit.NameDisambiguator;
+import org.scribble.visit.wf.NameDisambiguator;
 
 public abstract class HeaderParamDeclListDel extends ScribDelBase
 {
@@ -23,7 +23,7 @@ public abstract class HeaderParamDeclListDel extends ScribDelBase
 		List<? extends HeaderParamDecl<?>> decls = pdl.getDecls();  // grammar enforces RoleDeclList size > 0
 		if (decls.size() != decls.stream().map((d) -> d.getDeclName()).distinct().count())
 		{
-			throw new ScribbleException("Duplicate header decls: " + pdl);
+			throw new ScribbleException(pdl.getSource(), "Duplicate header decls: " + pdl);
 		}
 		return pdl;
 	}

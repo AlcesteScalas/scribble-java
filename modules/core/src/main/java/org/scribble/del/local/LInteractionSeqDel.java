@@ -13,14 +13,14 @@ import org.scribble.ast.local.LInteractionSeq;
 import org.scribble.del.InteractionSeqDel;
 import org.scribble.del.ScribDelBase;
 import org.scribble.main.ScribbleException;
-import org.scribble.model.local.EndpointState;
+import org.scribble.model.endpoint.EState;
 import org.scribble.sesstype.kind.Local;
-import org.scribble.visit.EndpointGraphBuilder;
-import org.scribble.visit.ProjectedChoiceDoPruner;
 import org.scribble.visit.ProtocolDefInliner;
-import org.scribble.visit.ReachabilityChecker;
+import org.scribble.visit.context.EGraphBuilder;
+import org.scribble.visit.context.ProjectedChoiceDoPruner;
 import org.scribble.visit.env.InlineProtocolEnv;
-import org.scribble.visit.env.ReachabilityEnv;
+import org.scribble.visit.wf.ReachabilityChecker;
+import org.scribble.visit.wf.env.ReachabilityEnv;
 
 public class LInteractionSeqDel extends InteractionSeqDel
 {
@@ -50,7 +50,7 @@ public class LInteractionSeqDel extends InteractionSeqDel
 				lins.add((LInteractionNode) inlined);
 			}
 		}
-		LInteractionSeq inlined = AstFactoryImpl.FACTORY.LInteractionSeq(lins);
+		LInteractionSeq inlined = AstFactoryImpl.FACTORY.LInteractionSeq(lis.getSource(), lins);
 		inl.pushEnv(inl.popEnv().setTranslation(inlined));
 		return (LInteractionSeq) ScribDelBase.popAndSetVisitorEnv(this, inl, lis);
 	}
@@ -64,17 +64,17 @@ public class LInteractionSeqDel extends InteractionSeqDel
 			ReachabilityEnv re = checker.peekEnv();
 			if (!re.isSequenceable())
 			{
-				throw new ScribbleException("Bad sequence to: " + li);
+				throw new ScribbleException(li.getSource(), "Invalid/unreachable sequence to: " + li);
 			}
 			visited.add((LInteractionNode) li.accept(checker));
 		}
 		return child;
 	}
 
-	public LInteractionSeq visitForFsmConversion(EndpointGraphBuilder conv, LInteractionSeq child) throws ScribbleException
+	public LInteractionSeq visitForFsmConversion(EGraphBuilder conv, LInteractionSeq child) throws ScribbleException
 	{
-		EndpointState entry = conv.builder.getEntry();
-		EndpointState exit = conv.builder.getExit();
+		EState entry = conv.util.getEntry();
+		EState exit = conv.util.getExit();
 		//try
 		{
 			/*for (int i = child.getInteractions().size() - 1; i >= 0; i--)  // Backwards for "tau-less" continue
@@ -96,15 +96,15 @@ public class LInteractionSeqDel extends InteractionSeqDel
 			{
 				if (i == child.getInteractions().size() - 1)
 				{
-					conv.builder.setExit(exit);
+					conv.util.setExit(exit);
 					child.getInteractions().get(i).accept(conv);
 				}
 				else
 				{
-					EndpointState tmp = conv.builder.newState(Collections.emptySet());
-					conv.builder.setExit(tmp);
+					EState tmp = conv.util.newState(Collections.emptySet());
+					conv.util.setExit(tmp);
 					child.getInteractions().get(i).accept(conv);
-					conv.builder.setEntry(conv.builder.getExit());  // exit may not be tmp, entry/exit can be modified, e.g. continue
+					conv.util.setEntry(conv.util.getExit());  // exit may not be tmp, entry/exit can be modified, e.g. continue
 				}
 			}
 		}
@@ -113,7 +113,7 @@ public class LInteractionSeqDel extends InteractionSeqDel
 			throw new RuntimeException("Shouldn't get in here: " + e);
 		}*/
 		//conv.builder.setExit(exit);
-		conv.builder.setEntry(entry);
+		conv.util.setEntry(entry);
 		return child;	
 	}
 }

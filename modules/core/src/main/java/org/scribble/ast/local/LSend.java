@@ -5,10 +5,10 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.antlr.runtime.tree.CommonTree;
 import org.scribble.ast.AstFactoryImpl;
 import org.scribble.ast.Constants;
 import org.scribble.ast.MessageNode;
-import org.scribble.ast.MessageTransfer;
 import org.scribble.ast.ScribNodeBase;
 import org.scribble.ast.name.simple.RoleNode;
 import org.scribble.del.ScribDel;
@@ -18,19 +18,20 @@ import org.scribble.sesstype.Message;
 import org.scribble.sesstype.kind.Local;
 import org.scribble.sesstype.name.Role;
 import org.scribble.util.ScribUtil;
-import org.scribble.visit.ProjectedChoiceSubjectFixer;
+import org.scribble.visit.context.ProjectedChoiceSubjectFixer;
 
-public class LSend extends MessageTransfer<Local> implements LSimpleInteractionNode
+public class LSend extends LMessageTransfer
+		implements LSimpleInteractionNode  // Explicitly needed here for getKind
 {
-	public LSend(RoleNode src, MessageNode msg, List<RoleNode> dests)
+	public LSend(CommonTree source, RoleNode src, MessageNode msg, List<RoleNode> dests)
 	{
-		super(src, msg, dests);
+		super(source, src, msg, dests);
 	}
 
 	@Override
 	protected ScribNodeBase copy()
 	{
-		return new LSend(this.src, this.msg, getDestinations());
+		return new LSend(this.source, this.src, this.msg, getDestinations());
 	}
 	
 	@Override
@@ -39,14 +40,14 @@ public class LSend extends MessageTransfer<Local> implements LSimpleInteractionN
 		RoleNode src = this.src.clone();
 		MessageNode msg = this.msg.clone();
 		List<RoleNode> dests = ScribUtil.cloneList(getDestinations());
-		return AstFactoryImpl.FACTORY.LSend(src, msg, dests);
+		return AstFactoryImpl.FACTORY.LSend(this.source, src, msg, dests);
 	}
 
 	@Override
 	public LSend reconstruct(RoleNode src, MessageNode msg, List<RoleNode> dests)
 	{
 		ScribDel del = del();
-		LSend ls = new LSend(src, msg, dests);
+		LSend ls = new LSend(this.source, src, msg, dests);
 		ls = (LSend) ls.del(del);
 		return ls;
 	}

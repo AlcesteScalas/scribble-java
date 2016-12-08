@@ -3,8 +3,8 @@ package org.scribble.ast.local;
 import java.util.Collections;
 import java.util.Set;
 
+import org.antlr.runtime.tree.CommonTree;
 import org.scribble.ast.AstFactoryImpl;
-import org.scribble.ast.ConnectionAction;
 import org.scribble.ast.Constants;
 import org.scribble.ast.MessageNode;
 import org.scribble.ast.ScribNodeBase;
@@ -15,21 +15,21 @@ import org.scribble.main.ScribbleException;
 import org.scribble.sesstype.Message;
 import org.scribble.sesstype.kind.Local;
 import org.scribble.sesstype.name.Role;
-import org.scribble.visit.ProjectedChoiceSubjectFixer;
+import org.scribble.visit.context.ProjectedChoiceSubjectFixer;
 
-public class LAccept extends ConnectionAction<Local> implements LSimpleInteractionNode
+public class LAccept extends LConnectionAction implements LSimpleInteractionNode
 {
-	public LAccept(RoleNode src, MessageNode msg, RoleNode dest)
+	public LAccept(CommonTree source, RoleNode src, MessageNode msg, RoleNode dest)
 	//public LAccept(RoleNode src, RoleNode dest)
 	{
-		super(src, msg, dest);
+		super(source, src, msg, dest);
 		//super(src, dest);
 	}
 
 	@Override
 	protected ScribNodeBase copy()
 	{
-		return new LAccept(this.src, this.msg, this.dest);
+		return new LAccept(this.source, this.src, this.msg, this.dest);
 		//return new LAccept(this.src, this.dest);
 	}
 	
@@ -39,7 +39,7 @@ public class LAccept extends ConnectionAction<Local> implements LSimpleInteracti
 		RoleNode src = this.src.clone();
 		MessageNode msg = this.msg.clone();
 		RoleNode dest = this.dest.clone();
-		return AstFactoryImpl.FACTORY.LAccept(src, msg, dest);
+		return AstFactoryImpl.FACTORY.LAccept(this.source, src, msg, dest);
 		//return AstFactoryImpl.FACTORY.LAccept(src, dest);
 	}
 
@@ -48,7 +48,7 @@ public class LAccept extends ConnectionAction<Local> implements LSimpleInteracti
 	//public LAccept reconstruct(RoleNode src, RoleNode dest)
 	{
 		ScribDel del = del();
-		LAccept lr = new LAccept(src, msg, dest);
+		LAccept lr = new LAccept(this.source, src, msg, dest);
 		//LAccept lr = new LAccept(src, dest);
 		lr = (LAccept) lr.del(del);
 		return lr;

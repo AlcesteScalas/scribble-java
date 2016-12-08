@@ -9,7 +9,7 @@ import org.scribble.del.ScribDelBase;
 import org.scribble.main.ScribbleException;
 import org.scribble.sesstype.kind.SigKind;
 import org.scribble.sesstype.name.MessageSigName;
-import org.scribble.visit.NameDisambiguator;
+import org.scribble.visit.wf.NameDisambiguator;
 
 public class MessageSigNameNodeDel extends ScribDelBase
 {
@@ -29,6 +29,6 @@ public class MessageSigNameNodeDel extends ScribDelBase
 		ModuleContext mc = disamb.getModuleContext();
 		MessageSigNameNode msnn = (MessageSigNameNode) visited;
 		MessageSigName fullname = mc.getVisibleMessageSigNameFullName(msnn.toName());
-		return (MessageSigNameNode) AstFactoryImpl.FACTORY.QualifiedNameNode(SigKind.KIND, fullname.getElements());  // Didn't keep original del
+		return (MessageSigNameNode) AstFactoryImpl.FACTORY.QualifiedNameNode(msnn.getSource(), SigKind.KIND, fullname.getElements());  // Didn't keep original del
 	}
 }

@@ -1,15 +1,15 @@
 package org.scribble.codegen.java.endpointapi;
 
-import java.util.Set;
+import java.util.List;
 
 import org.scribble.codegen.java.util.JavaBuilder;
 import org.scribble.codegen.java.util.MethodBuilder;
-import org.scribble.model.local.EndpointState;
-import org.scribble.model.local.IOAction;
+import org.scribble.model.endpoint.EState;
+import org.scribble.model.endpoint.actions.EAction;
 
 public class AcceptSocketGenerator extends ScribSocketGenerator
 {
-	public AcceptSocketGenerator(StateChannelApiGenerator apigen, EndpointState curr)
+	public AcceptSocketGenerator(StateChannelApiGenerator apigen, EState curr)
 	{
 		super(apigen, curr);
 	}
@@ -30,24 +30,25 @@ public class AcceptSocketGenerator extends ScribSocketGenerator
 	@Override
 	protected void addMethods()
 	{
-		Set<IOAction> as = curr.getTakeable();
+		//Set<EAction> as = curr.getActions();
+		List<EAction> as = curr.getActions();
 		if (as.size() > 1)
 		{
 			throw new RuntimeException("AcceptSocket generation not yet supported for accept-branches: " + as);
 		}
-		IOAction a = as.iterator().next();
-		EndpointState succ = curr.take(a);
+		EAction a = as.iterator().next();
+		EState succ = curr.getSuccessor(a);
 		makeAcceptMethod(a, succ);
 	}
 
-	private void makeAcceptMethod(IOAction a, EndpointState succ)
+	private void makeAcceptMethod(EAction a, EState succ)
 	{
 		MethodBuilder mb = makeAcceptHeader(a, succ);
 		mb.addBodyLine(JavaBuilder.SUPER + ".accept(ss, " + getSessionApiRoleConstant(a.obj) + ");");
 		addReturnNextSocket(mb, succ);
 	}
 
-	private MethodBuilder makeAcceptHeader(IOAction a, EndpointState succ)
+	private MethodBuilder makeAcceptHeader(EAction a, EState succ)
 	{
 		MethodBuilder mb = this.cb.newMethod();
 		setAcceptHeaderWithoutReturnType(this.apigen, a, mb);
@@ -57,13 +58,13 @@ public class AcceptSocketGenerator extends ScribSocketGenerator
 
 	// Doesn't include return type
 	//public static void makeReceiveHeader(StateChannelApiGenerator apigen, IOAction a, EndpointState succ, MethodBuilder mb)
-	public static void setAcceptHeaderWithoutReturnType(StateChannelApiGenerator apigen, IOAction a, MethodBuilder mb)
+	public static void setAcceptHeaderWithoutReturnType(StateChannelApiGenerator apigen, EAction a, MethodBuilder mb)
 	{
 		final String ROLE_PARAM = "role";
 			
 		mb.setName("accept");
 		mb.addModifiers(JavaBuilder.PUBLIC);
 		mb.addExceptions(StateChannelApiGenerator.SCRIBBLERUNTIMEEXCEPTION_CLASS, "java.io.IOException");
-		mb.addParameters(SCRIBSERVERSOCKET_CLASS + " ss", SessionApiGenerator.getRoleClassName(a.obj) + " " + ROLE_PARAM);
+		mb.addParameters(SessionApiGenerator.getRoleClassName(a.obj) + " " + ROLE_PARAM, SCRIBSERVERSOCKET_CLASS + " ss");
 	}
 }

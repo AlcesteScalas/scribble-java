@@ -12,14 +12,14 @@ import org.scribble.ast.local.LContinue;
 import org.scribble.ast.name.simple.RecVarNode;
 import org.scribble.del.ContinueDel;
 import org.scribble.main.ScribbleException;
-import org.scribble.model.local.EndpointState;
-import org.scribble.model.local.IOAction;
+import org.scribble.model.endpoint.EState;
+import org.scribble.model.endpoint.actions.EAction;
 import org.scribble.sesstype.name.RecVar;
-import org.scribble.visit.EndpointGraphBuilder;
 import org.scribble.visit.ProtocolDefInliner;
-import org.scribble.visit.ReachabilityChecker;
+import org.scribble.visit.context.EGraphBuilder;
 import org.scribble.visit.env.InlineProtocolEnv;
-import org.scribble.visit.env.ReachabilityEnv;
+import org.scribble.visit.wf.ReachabilityChecker;
+import org.scribble.visit.wf.env.ReachabilityEnv;
 
 public class LContinueDel extends ContinueDel implements LSimpleInteractionNodeDel
 {
@@ -28,7 +28,7 @@ public class LContinueDel extends ContinueDel implements LSimpleInteractionNodeD
 	{
 		LContinue lc = (LContinue) visited;
 		RecVarNode recvar = (RecVarNode) ((InlineProtocolEnv) lc.recvar.del().env()).getTranslation();	
-		LContinue inlined = AstFactoryImpl.FACTORY.LContinue(recvar);
+		LContinue inlined = AstFactoryImpl.FACTORY.LContinue(lc.getSource(), recvar);
 		inl.pushEnv(inl.popEnv().setTranslation(inlined));
 		return (LContinue) super.leaveProtocolInlining(parent, child, inl, lc);
 	}
@@ -46,54 +46,37 @@ public class LContinueDel extends ContinueDel implements LSimpleInteractionNodeD
 	}
 
 	@Override
-	public LContinue leaveEndpointGraphBuilding(ScribNode parent, ScribNode child, EndpointGraphBuilder graph, ScribNode visited) throws ScribbleException
+	public LContinue leaveEGraphBuilding(ScribNode parent, ScribNode child, EGraphBuilder graph, ScribNode visited) throws ScribbleException
 	{
 		LContinue lr = (LContinue) visited;
 		RecVar rv = lr.recvar.toName();
-		//graph.builder.setEntry(graph.builder.getRecursionEntry(rv));
-		//if (graph.builder.getPredecessor() == null)  // unguarded choice case
-		if (graph.builder.isUnguardedInChoice())
+		if (graph.util.isUnguardedInChoice())
 		{
-			/*//IOAction a = graph.builder.getEnacting(rv);
-			for (IOAction a : graph.builder.getEnacting(rv))
-			{
-			List<EndpointState> ss = graph.builder.getRecursionEntry(rv).acceptAll(a);
-			//EndpointState s = graph.builder.getRecursionEntry(rv);
-			for (EndpointState s : ss)  // FIXME: produces non-det edges to different rec entries -- but equiv, do just pick 1?
-			{
-				graph.builder.addEdge(graph.builder.getEntry(), a, s);
-			}
-			//graph.builder.addEdge(graph.builder.getEntry(), a, ss.get(0));  // FIXME: OK to just pick 1? -- maybe: but the original non-det choice before enacting the recursion is still there anyway
-			*/
-			graph.builder.addContinueEdge(graph.builder.getEntry(), rv);
+			graph.util.addContinueEdge(graph.util.getEntry(), rv);
 		}
 		else
 		{
 			// ** "Overwrites" previous edge built by send/receive(s) leading to this continue
-			/*graph.builder.removeLastEdge(graph.builder.getPredecessors());  // Hacky? -- cannot implicitly overwrite (addEdge) given non-det machines
-			graph.builder.addEdge(graph.builder.getPredecessors(), graph.builder.getPreviousActions(), graph.builder.getRecursionEntry(rv));*/
-			Iterator<EndpointState> preds = graph.builder.getPredecessors().iterator();
-			Iterator<IOAction> prevs = graph.builder.getPreviousActions().iterator();
-			EndpointState entry = graph.builder.getEntry();
+			Iterator<EState> preds = graph.util.getPredecessors().iterator();
+			Iterator<EAction> prevs = graph.util.getPreviousActions().iterator();
+			EState entry = graph.util.getEntry();
 
 			Set<List<Object>> removed = new HashSet<>();  
 					// HACK: for identical edges, i.e. same pred/prev/succ (e.g. rec X { choice at A { A->B:1 } or { A->B:1 } continue X; })  // FIXME: do here, or refactor into GraphBuilder?
 					// Because duplicate edges preemptively pruned by ModelState.addEdge, but corresponding predecessors not pruned  // FIXME: make uniform
 			while (preds.hasNext())
 			{
-				EndpointState pred = preds.next();
-				IOAction prev = prevs.next();
+				EState pred = preds.next();
+				EAction prev = prevs.next();
 				List<Object> tmp = Arrays.asList(pred, prev, entry);
 				if (!removed.contains(tmp))
 				{
 					removed.add(tmp);
-					//graph.builder.removeEdge(pred, prev, entry);
-					graph.builder.removeEdgeFromPredecessor(pred, prev);  // Assumes pred is a predecessor, and removes pred from current predecessors..
+					graph.util.removeEdgeFromPredecessor(pred, prev);  // Assumes pred is a predecessor, and removes pred from current predecessors..
 				}
-				//graph.builder.addEdge(pred, prev, graph.builder.getRecursionEntry(rv));
-				graph.builder.addRecursionEdge(pred, prev, graph.builder.getRecursionEntry(rv));  // May be repeated for non-det, but OK  // Combine with removeEdgeFromPredecessor?
+				graph.util.addRecursionEdge(pred, prev, graph.util.getRecursionEntry(rv));  // May be repeated for non-det, but OK  // Combine with removeEdgeFromPredecessor?
 			}
 		}
-		return (LContinue) super.leaveEndpointGraphBuilding(parent, child, graph, lr);
+		return (LContinue) super.leaveEGraphBuilding(parent, child, graph, lr);
 	}
 }

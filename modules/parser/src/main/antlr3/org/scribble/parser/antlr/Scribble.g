@@ -153,9 +153,8 @@ tokens
 	LOCALCATCHES = 'local-catches';
 	LOCALSEND = 'local-send';
 	LOCALRECEIVE = 'local-receive';*/
-	
-	//PAYLOADHACK = 'payload-hack';  // FIXME
 }
+	//PAYLOADHACK = 'payload-hack';  // FIXME
 
 
 @parser::header
@@ -294,7 +293,7 @@ IDENTIFIER:
 fragment SYMBOL:
 	'{' | '}' | '(' | ')' | '[' | ']' | ':' | '/' | '\\' | '.' | '\#'
 |
-	'&' | '?' | '!'	| UNDERSCORE | ',' | ' '
+	'&' | '?' | '!'	| UNDERSCORE
 ;
 
 // Comes after SYMBOL due to an ANTLR syntax highlighting issue involving
