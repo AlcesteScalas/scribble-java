@@ -1,0 +1,33 @@
+module Game3;
+
+type <java> "java.lang.Boolean" from "rt.jar" as Boolean;
+type <java> "java.lang.Integer" from "rt.jar" as Int;
+type <java> "java.lang.String" from "rt.jar" as String;
+
+
+/**
+ * Deadlock-freedom in a context of multiple concurrent sessions and in the
+ * presence of delegation requires checking at the *process* level. E.g.,
+ * Coppo, M., Dezani-Ciancaglini, M., Yoshida, N., Padovani, L. "Global Progress
+ * for Dynamically Interleaved Multiparty Sessions" [9].
+ * 
+ * Here, Scribble is conducting a validation at the "earlier" *type* level. 
+ * Validated types assure deadlock-freedom for executions of individual session
+ * instances of each protocol.
+ */
+
+global protocol ClientA(role s, role c) {
+  CA(DeadLock@a) from s to c;  // This means: send a channel of *type* Deadlock@a.
+  CB(DeadLock@b) from s to c;  // The delegation here is also for the type
+                               // Deadlock, but does not constrain the channel
+                               // value to belong to the same *session* as the
+                               // above line.
+}
+  
+global protocol DeadLock(role a, role b, role c) {
+  1() from a to b;  // May deadlock if CA/CB sent above are from the same
+                    //session; not necessarily if not. I.E. depends on the
+                    //process-level implementations.
+  2() from b to c;
+  3() from c to a;
+}
