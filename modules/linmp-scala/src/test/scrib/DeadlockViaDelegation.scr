@@ -12,13 +12,13 @@ type <java> "java.lang.String" from "rt.jar" as String;
  * for Dynamically Interleaved Multiparty Sessions" [9].
  * 
  * Here, Scribble is conducting a validation at the "earlier" *type* level. 
- * Validated types assure deadlock-freedom for executions of individual session
- * instances of each protocol.
+ * (Validated types only assure deadlock-freedom for executions of individual 
+ * session instances of each protocol.)
  */
 
 global protocol ClientA(role s, role c) {
   CA(DeadLock@a) from s to c;  // This means: send a channel of *type* Deadlock@a.
-  CB(DeadLock@b) from s to c;  // The delegation here is also for the type
+  CB(DeadLock@b) from s to c;  // The delegation here is also for the protocol
                                // Deadlock, but does not constrain the channel
                                // value to belong to the same *session* as the
                                // above line.
