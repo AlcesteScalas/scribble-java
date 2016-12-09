@@ -26,8 +26,8 @@ global protocol ClientA(role s, role c) {
   
 global protocol DeadLock(role a, role b, role c) {
   1() from a to b;  // May deadlock if CA/CB sent above are from the same
-                    //session; not necessarily if not. I.E. depends on the
-                    //process-level implementations.
+                    // session; not necessarily if not. I.E., depends on the
+                    // process-level implementations.
   2() from b to c;
   3() from c to a;
 }
