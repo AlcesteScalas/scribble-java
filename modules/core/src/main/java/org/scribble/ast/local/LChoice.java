@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.antlr.runtime.tree.CommonTree;
 import org.scribble.ast.AstFactoryImpl;
 import org.scribble.ast.Choice;
 import org.scribble.ast.ProtocolBlock;
@@ -16,19 +17,19 @@ import org.scribble.sesstype.Message;
 import org.scribble.sesstype.kind.Local;
 import org.scribble.sesstype.name.Role;
 import org.scribble.util.ScribUtil;
-import org.scribble.visit.ProjectedChoiceSubjectFixer;
+import org.scribble.visit.context.ProjectedChoiceSubjectFixer;
 
 public class LChoice extends Choice<Local> implements LCompoundInteractionNode
 {
-	public LChoice(RoleNode subj, List<LProtocolBlock> blocks)
+	public LChoice(CommonTree source, RoleNode subj, List<LProtocolBlock> blocks)
 	{
-		super(subj, blocks);
+		super(source, subj, blocks);
 	}
 
 	@Override
 	protected ScribNodeBase copy()
 	{
-		return new LChoice(this.subj, getBlocks());
+		return new LChoice(this.source, this.subj, getBlocks());
 	}
 	
 	@Override
@@ -36,14 +37,14 @@ public class LChoice extends Choice<Local> implements LCompoundInteractionNode
 	{
 		RoleNode subj = this.subj.clone();
 		List<LProtocolBlock> blocks = ScribUtil.cloneList(getBlocks());
-		return AstFactoryImpl.FACTORY.LChoice(subj, blocks);
+		return AstFactoryImpl.FACTORY.LChoice(this.source, subj, blocks);
 	}
 
 	@Override
 	public LChoice reconstruct(RoleNode subj, List<? extends ProtocolBlock<Local>> blocks)
 	{
 		ScribDel del = del();
-		LChoice lc = new LChoice(subj, castBlocks(blocks));
+		LChoice lc = new LChoice(this.source, subj, castBlocks(blocks));
 		lc = (LChoice) lc.del(del);
 		return lc;
 	}
@@ -57,6 +58,7 @@ public class LChoice extends Choice<Local> implements LCompoundInteractionNode
 	@Override
 	public Role inferLocalChoiceSubject(ProjectedChoiceSubjectFixer fixer)
 	{
+		// Relies on: will never be inferring from a "continue X;" -- if choice is first statement in seq, continue must be guarded; if continue is not guarded, choice cannot be first statement in seq
 		return getBlocks().get(0).getInteractionSeq().getInteractions().get(0).inferLocalChoiceSubject(fixer);
 	}
 
@@ -85,15 +87,16 @@ public class LChoice extends Choice<Local> implements LCompoundInteractionNode
 			throw new ScribbleException("Cannot merge choices for " + this.subj + " and " + them.subj + ": " + this + ", " + ln);
 		}*/
 		List<LProtocolBlock> blocks = new LinkedList<>();
-		// For now assume all labels distinct by WFChoiceCheck -- for more general merge need to use getEnabling and check if overlapping labels have the same cases (need an equals for ScribNodes)
 		getBlocks().forEach((b) -> blocks.add(b.clone()));
 		them.getBlocks().forEach((b) -> blocks.add(b.clone()));
-		return AstFactoryImpl.FACTORY.LChoice(this.subj, blocks);  // Not reconstruct: leave context building to post-projection passes 
+		return AstFactoryImpl.FACTORY.LChoice(this.source, this.subj, blocks);  // Not reconstruct: leave context building to post-projection passes 
+			// Hacky: this.source
 	}
 
 	@Override
 	public boolean canMerge(LInteractionNode ln)
 	{
+		// Merge currently does "nothing"; validation takes direct non-deterministic interpretation -- purpose of syntactic merge is to convert non-det to "equivalent" safe det in certain sitations
 		return ln instanceof LChoice;
 	}
 	

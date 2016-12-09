@@ -8,6 +8,7 @@ import org.scribble.ast.global.GDo;
 import org.scribble.ast.name.qualified.GProtocolNameNode;
 import org.scribble.parser.ScribParser;
 import org.scribble.parser.ast.name.AntlrQualifiedName;
+import org.scribble.util.ScribParserException;
 
 public class AntlrGDo
 {
@@ -15,12 +16,12 @@ public class AntlrGDo
 	public static final int ARGUMENTLIST_CHILD_INDEX = 1;
 	public static final int ROLEINSTANTIATIONLIST_CHILD_INDEX = 2;
 
-	public static GDo parseGDo(ScribParser parser, CommonTree ct)
+	public static GDo parseGDo(ScribParser parser, CommonTree ct) throws ScribParserException
 	{
 		RoleArgList ril = (RoleArgList) parser.parse(getRoleArgListChild(ct));
 		NonRoleArgList al = (NonRoleArgList) parser.parse(getNonRoleArgListChild(ct));
 		GProtocolNameNode pnn = AntlrQualifiedName.toGProtocolNameNode(getProtocolNameChild(ct));
-		return AstFactoryImpl.FACTORY.GDo(ril, al, pnn);
+		return AstFactoryImpl.FACTORY.GDo(ct, ril, al, pnn);
 	}
 	
 	public static CommonTree getProtocolNameChild(CommonTree ct)

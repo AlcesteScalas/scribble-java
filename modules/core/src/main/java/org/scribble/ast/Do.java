@@ -2,14 +2,15 @@ package org.scribble.ast;
 
 import java.util.Iterator;
 
+import org.antlr.runtime.tree.CommonTree;
 import org.scribble.ast.context.ModuleContext;
 import org.scribble.ast.name.qualified.ProtocolNameNode;
+import org.scribble.main.JobContext;
 import org.scribble.main.ScribbleException;
 import org.scribble.sesstype.kind.ProtocolKind;
 import org.scribble.sesstype.name.ProtocolName;
 import org.scribble.sesstype.name.Role;
 import org.scribble.visit.AstVisitor;
-import org.scribble.visit.JobContext;
 
 public abstract class Do<K extends ProtocolKind> extends SimpleInteractionNode<K> //implements ScopedNode
 {
@@ -18,8 +19,9 @@ public abstract class Do<K extends ProtocolKind> extends SimpleInteractionNode<K
 	public final NonRoleArgList args;
 	public final ProtocolNameNode<K> proto;  // Maybe use an "Ambiguous" version until names resolved -- is a visible protocol, but not necessarily a simple or full member name
 
-	protected Do(RoleArgList roleinstans, NonRoleArgList arginstans, ProtocolNameNode<K> proto)
+	protected Do(CommonTree source, RoleArgList roleinstans, NonRoleArgList arginstans, ProtocolNameNode<K> proto)
 	{
+		super(source);
 		//this.scope = scope;
 		this.roles = roleinstans;
 		this.args = arginstans;

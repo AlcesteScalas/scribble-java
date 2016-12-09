@@ -7,6 +7,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import org.antlr.runtime.tree.CommonTree;
 import org.scribble.ast.global.GProtocolDecl;
 import org.scribble.ast.local.LProtocolDecl;
 import org.scribble.del.ScribDel;
@@ -30,8 +31,10 @@ public class Module extends ScribNodeBase
 	private final List<NonProtocolDecl<?>> data;
 	private final List<ProtocolDecl<?>> protos;
 	
-	public Module(ModuleDecl moddecl, List<ImportDecl<?>> imports, List<NonProtocolDecl<?>> data, List<ProtocolDecl<?>> protos)
+	public Module(CommonTree source, ModuleDecl moddecl, List<ImportDecl<?>> imports,
+			List<NonProtocolDecl<?>> data, List<ProtocolDecl<?>> protos)
 	{
+		super(source);
 		this.moddecl = moddecl;
 		this.imports = new LinkedList<>(imports);
 		this.data = new LinkedList<>(data);
@@ -41,7 +44,7 @@ public class Module extends ScribNodeBase
 	@Override
 	protected Module copy()
 	{
-		return new Module(this.moddecl, this.imports, this.data, this.protos);
+		return new Module(this.source, this.moddecl, this.imports, this.data, this.protos);
 	}
 	
 	@Override
@@ -51,13 +54,13 @@ public class Module extends ScribNodeBase
 		List<ImportDecl<?>> imports = ScribUtil.cloneList(this.imports);
 		List<NonProtocolDecl<?>> data = ScribUtil.cloneList(this.data);
 		List<ProtocolDecl<?>> protos = ScribUtil.cloneList(this.protos);
-		return AstFactoryImpl.FACTORY.Module(moddecl, imports, data, protos);
+		return AstFactoryImpl.FACTORY.Module(this.source, moddecl, imports, data, protos);
 	}
 	
 	public Module reconstruct(ModuleDecl moddecl, List<ImportDecl<?>> imports, List<NonProtocolDecl<?>> data, List<ProtocolDecl<?>> protos)
 	{
 		ScribDel del = del();
-		Module m = new Module(moddecl, imports, data, protos);
+		Module m = new Module(this.source, moddecl, imports, data, protos);
 		m = (Module) m.del(del);
 		return m;
 	}
@@ -154,11 +157,25 @@ public class Module extends ScribNodeBase
 		return this.protos.stream().filter(filter).map(cast).collect(Collectors.toList());
 	}
 	
+	public <K extends ProtocolKind> boolean hasProtocolDecl(ProtocolName<K> simpname)
+	{
+		return hasProtocolDecl(this.protos, simpname);
+	}
+	
 	// pn is simple name
   // separate into global/local?
 	public <K extends ProtocolKind> ProtocolDecl<K> getProtocolDecl(ProtocolName<K> simpname)
 	{
 		return getProtocolDecl(this.protos, simpname);
+	}
+
+	private static <K extends ProtocolKind>
+			boolean hasProtocolDecl(List<ProtocolDecl<?>> pds, ProtocolName<K> simpname)
+	{
+		return pds.stream()
+				.filter((pd) -> pd.header.getDeclName().equals(simpname)
+						&& (simpname.getKind().equals(Global.KIND)) ? pd.isGlobal() : pd.isLocal())
+				.count() > 0;
 	}
 
 	// pn is simple name
@@ -169,10 +186,14 @@ public class Module extends ScribNodeBase
 				.filter((pd) -> pd.header.getDeclName().equals(simpname)
 						&& (simpname.getKind().equals(Global.KIND)) ? pd.isGlobal() : pd.isLocal())
 				.collect(Collectors.toList());
-		if (filtered.size() != 1)
+		if (filtered.size() == 0)
 		{
 			throw new RuntimeException("Protocol not found: " + simpname);
 		}
+		/*if (filtered.size() > 1)
+		{
+			throw new RuntimeException("Found duplicate protocol decls: " + simpname);  // Just return first -- allows Do/DoArgListDel name disambiguation to go through, and later caught on leaving Module
+		}*/
 		@SuppressWarnings("unchecked")
 		ProtocolDecl<K> res = (ProtocolDecl<K>) filtered.get(0);
 		return res;

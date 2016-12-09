@@ -1,29 +1,41 @@
 package org.scribble.ast.global;
 
+import org.antlr.runtime.tree.CommonTree;
 import org.scribble.ast.AstFactoryImpl;
 import org.scribble.ast.Do;
 import org.scribble.ast.NonRoleArgList;
 import org.scribble.ast.RoleArgList;
 import org.scribble.ast.ScribNodeBase;
 import org.scribble.ast.context.ModuleContext;
+import org.scribble.ast.local.LDo;
 import org.scribble.ast.name.qualified.GProtocolNameNode;
+import org.scribble.ast.name.qualified.LProtocolNameNode;
 import org.scribble.ast.name.qualified.ProtocolNameNode;
 import org.scribble.del.ScribDel;
+import org.scribble.main.JobContext;
 import org.scribble.sesstype.kind.Global;
 import org.scribble.sesstype.name.GProtocolName;
-import org.scribble.visit.JobContext;
+import org.scribble.sesstype.name.Role;
 
 public class GDo extends Do<Global> implements GSimpleInteractionNode
 {
-	public GDo(RoleArgList roles, NonRoleArgList args, GProtocolNameNode proto)
+	public GDo(CommonTree source, RoleArgList roles, NonRoleArgList args, GProtocolNameNode proto)
 	{
-		super(roles, args, proto);
+		super(source, roles, args, proto);
+	}
+
+	public LDo project(Role self, LProtocolNameNode fullname)
+	{
+		RoleArgList roleinstans = this.roles.project(self);
+		NonRoleArgList arginstans = this.args.project(self);
+		LDo projection = AstFactoryImpl.FACTORY.LDo(this.source, roleinstans, arginstans, fullname);
+		return projection;
 	}
 
 	@Override
 	protected ScribNodeBase copy()
 	{
-		return new GDo(this.roles, this.args, getProtocolNameNode());
+		return new GDo(this.source, this.roles, this.args, getProtocolNameNode());
 	}
 	
 	@Override
@@ -32,14 +44,14 @@ public class GDo extends Do<Global> implements GSimpleInteractionNode
 		RoleArgList roles = this.roles.clone();
 		NonRoleArgList args = this.args.clone();
 		GProtocolNameNode proto = this.getProtocolNameNode().clone();
-		return AstFactoryImpl.FACTORY.GDo(roles, args, proto);
+		return AstFactoryImpl.FACTORY.GDo(this.source, roles, args, proto);
 	}
 
 	@Override
 	public GDo reconstruct(RoleArgList roles, NonRoleArgList args, ProtocolNameNode<Global> proto)
 	{
 		ScribDel del = del();
-		GDo gd = new GDo(roles, args, (GProtocolNameNode) proto);
+		GDo gd = new GDo(this.source, roles, args, (GProtocolNameNode) proto);
 		gd = (GDo) gd.del(del);
 		return gd;
 	}

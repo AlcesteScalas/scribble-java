@@ -13,7 +13,7 @@ import org.scribble.ast.local.LProtocolHeader;
 import org.scribble.main.ScribbleException;
 import org.scribble.sesstype.name.GProtocolName;
 import org.scribble.sesstype.name.Role;
-import org.scribble.visit.ProjectedRoleDeclFixer;
+import org.scribble.visit.context.ProjectedRoleDeclFixer;
 
 public class LProjectionDeclDel extends LProtocolDeclDel
 {
@@ -41,11 +41,11 @@ public class LProjectionDeclDel extends LProtocolDeclDel
 		Set<Role> occs = ((LProtocolDeclDel) lpd.del()).getProtocolDeclContext().getRoleOccurrences();
 		List<RoleDecl> rds = lpd.header.roledecls.getDecls().stream().filter((rd) -> 
 				occs.contains(rd.getDeclName())).collect(Collectors.toList());
-		RoleDeclList rdl = AstFactoryImpl.FACTORY.RoleDeclList(rds);
+		RoleDeclList rdl = AstFactoryImpl.FACTORY.RoleDeclList(lpd.header.roledecls.getSource(), rds);
 		LProtocolHeader header = lpd.getHeader().reconstruct(lpd.getHeader().getNameNode(), rdl, lpd.header.paramdecls);
 		LProtocolDecl fixed = lpd.reconstruct(header, lpd.def);
 		
-		fixer.getJob().debugPrintln("\n[DEBUG] Projected " + getSourceProtocol() + " for " + getSelfRole() + ":\n" + fixed);
+		fixer.job.debugPrintln("\n[DEBUG] Projected " + getSourceProtocol() + " for " + getSelfRole() + ":\n" + fixed);
 		
 		return super.leaveProjectedRoleDeclFixing(parent, child, fixer, fixed);
 	}

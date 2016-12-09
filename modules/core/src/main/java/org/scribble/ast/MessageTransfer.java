@@ -5,6 +5,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.antlr.runtime.tree.CommonTree;
 import org.scribble.ast.name.simple.RoleNode;
 import org.scribble.main.ScribbleException;
 import org.scribble.sesstype.kind.ProtocolKind;
@@ -14,11 +15,12 @@ import org.scribble.visit.AstVisitor;
 public abstract class MessageTransfer<K extends ProtocolKind> extends SimpleInteractionNode<K>
 {
 	public final RoleNode src;
-	public final MessageNode msg;
+	public final MessageNode msg;  // FIXME: ambig may get resolved to an unexpected kind, e.g. DataTypeNode (cf. DoArg, PayloadElem wrappers)
 	private final List<RoleNode> dests;
 
-	protected MessageTransfer(RoleNode src, MessageNode msg, List<RoleNode> dests)
+	protected MessageTransfer(CommonTree source, RoleNode src, MessageNode msg, List<RoleNode> dests)
 	{
+		super(source);
 		this.src = src;
 		this.msg = msg;
 		this.dests = new LinkedList<>(dests);

@@ -4,10 +4,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.antlr.runtime.tree.CommonTree;
 import org.scribble.ast.AstFactoryImpl;
 import org.scribble.ast.Constants;
 import org.scribble.ast.MessageNode;
-import org.scribble.ast.MessageTransfer;
 import org.scribble.ast.ScribNodeBase;
 import org.scribble.ast.name.simple.RoleNode;
 import org.scribble.del.ScribDel;
@@ -17,19 +17,19 @@ import org.scribble.sesstype.Message;
 import org.scribble.sesstype.kind.Local;
 import org.scribble.sesstype.name.Role;
 import org.scribble.util.ScribUtil;
-import org.scribble.visit.ProjectedChoiceSubjectFixer;
+import org.scribble.visit.context.ProjectedChoiceSubjectFixer;
 
-public class LReceive extends MessageTransfer<Local> implements LSimpleInteractionNode
+public class LReceive extends LMessageTransfer implements LSimpleInteractionNode
 {
-	public LReceive(RoleNode src, MessageNode msg, List<RoleNode> dests)
+	public LReceive(CommonTree source, RoleNode src, MessageNode msg, List<RoleNode> dests)
 	{
-		super(src, msg, dests);
+		super(source, src, msg, dests);
 	}
 
 	@Override
 	protected ScribNodeBase copy()
 	{
-		return new LReceive(this.src, this.msg, getDestinations());
+		return new LReceive(this.source, this.src, this.msg, getDestinations());
 	}
 	
 	@Override
@@ -38,14 +38,14 @@ public class LReceive extends MessageTransfer<Local> implements LSimpleInteracti
 		RoleNode src = this.src.clone();
 		MessageNode msg = this.msg.clone();
 		List<RoleNode> dests = ScribUtil.cloneList(getDestinations());
-		return AstFactoryImpl.FACTORY.LReceive(src, msg, dests);
+		return AstFactoryImpl.FACTORY.LReceive(this.source, src, msg, dests);
 	}
 
 	@Override
 	public LReceive reconstruct(RoleNode src, MessageNode msg, List<RoleNode> dests)
 	{
 		ScribDel del = del();
-		LReceive lr = new LReceive(src, msg, dests);
+		LReceive lr = new LReceive(this.source, src, msg, dests);
 		lr = (LReceive) lr.del(del);
 		return lr;
 	}

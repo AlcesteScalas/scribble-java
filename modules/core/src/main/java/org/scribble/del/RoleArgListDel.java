@@ -8,7 +8,7 @@ import org.scribble.ast.RoleDeclList;
 import org.scribble.ast.ScribNode;
 import org.scribble.main.ScribbleException;
 import org.scribble.sesstype.name.Role;
-import org.scribble.visit.NameDisambiguator;
+import org.scribble.visit.wf.NameDisambiguator;
 
 public class RoleArgListDel extends DoArgListDel
 {
@@ -28,7 +28,7 @@ public class RoleArgListDel extends DoArgListDel
 		//if (roles.size() != new HashSet<>(roles).size())
 		if (roles.size() != roles.stream().distinct().count())
 		{
-			throw new ScribbleException("Duplicate role args: " + roles);
+			throw new ScribbleException(ral.getSource(), "Duplicate role args: " + roles);
 		}
 		return ral;
 	}

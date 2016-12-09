@@ -3,6 +3,7 @@ package org.scribble.ast.local;
 import java.util.Collections;
 import java.util.Set;
 
+import org.antlr.runtime.tree.CommonTree;
 import org.scribble.ast.AstFactoryImpl;
 import org.scribble.ast.Continue;
 import org.scribble.ast.name.simple.RecVarNode;
@@ -11,33 +12,33 @@ import org.scribble.main.ScribbleException;
 import org.scribble.sesstype.Message;
 import org.scribble.sesstype.kind.Local;
 import org.scribble.sesstype.name.Role;
-import org.scribble.visit.ProjectedChoiceSubjectFixer;
+import org.scribble.visit.context.ProjectedChoiceSubjectFixer;
 
 public class LContinue extends Continue<Local> implements LSimpleInteractionNode
 {
-	public LContinue(RecVarNode recvar)
+	public LContinue(CommonTree source, RecVarNode recvar)
 	{
-		super(recvar);
+		super(source, recvar);
 	}
 
 	@Override
 	protected LContinue copy()
 	{
-		return new LContinue(this.recvar);
+		return new LContinue(this.source, this.recvar);
 	}
 	
 	@Override
 	public LContinue clone()
 	{
 		RecVarNode rv = this.recvar.clone();
-		return AstFactoryImpl.FACTORY.LContinue(rv);
+		return AstFactoryImpl.FACTORY.LContinue(this.source, rv);
 	}
 
 	@Override
 	public LContinue reconstruct(RecVarNode recvar)
 	{
 		ScribDel del = del();
-		LContinue lc = new LContinue(recvar);
+		LContinue lc = new LContinue(this.source, recvar);
 		lc = (LContinue) lc.del(del);
 		return lc;
 	}
@@ -45,9 +46,9 @@ public class LContinue extends Continue<Local> implements LSimpleInteractionNode
 	@Override
 	public Role inferLocalChoiceSubject(ProjectedChoiceSubjectFixer fixer)
 	{
-		//throw new RuntimeException("Shouldn't get in here: " + this);
 		//return new DummyProjectionRoleNode().toName();  // For e.g. rec X { 1() from A to B; choice at A { continue X; } or { 2() from A to B; } }
-		return fixer.createRecVarRole(this.recvar.toName());
+		return fixer.createRecVarRole(this.recvar.toName());  // Never used?
+		//return null;
 	}
 
 	// FIXME: shouldn't be needed, but here due to Eclipse bug https://bugs.eclipse.org/bugs/show_bug.cgi?id=436350
