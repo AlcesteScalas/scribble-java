@@ -49,6 +49,7 @@ public class CommandLine
 		NO_VALIDATION,
 		NO_MODULE_NAME_CHECK,
 		INLINE_MAIN_MOD,
+		F17,
 
 		// Non-unique flags
 		PROJECT,
@@ -105,7 +106,18 @@ public class CommandLine
 			ScribbleException fail = null;
 			try
 			{
-				job.checkWellFormedness();
+				/*// Scribble extensions (custom Job passes)
+				if (this.args.containsKey(ArgFlag.F17))
+				{
+					GProtocolName simpname = new GProtocolName(this.args.get(ArgFlag.F17)[0]);
+					F17Main.parseAndCheckWF(job, simpname);  // Includes base passes
+				}
+
+				// Base Scribble
+				else*/
+				{
+					job.checkWellFormedness();
+				}
 			}
 			catch (ScribbleException x)
 			{
