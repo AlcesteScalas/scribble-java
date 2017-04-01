@@ -1,40 +1,18 @@
-module HttpLong;
+module Http;
 
-
+type <java> "java.lang.Boolean" from "rt.jar" as Boolean;
+type <java> "java.lang.Integer" from "rt.jar" as Integer;
 type <java> "java.lang.String" from "rt.jar" as String;
+type <java> "java.time.ZonedDateTime" from "java.time" as ZonedDateTime;
 
-/*
-type <java> "...client.RequestLine" from ".../RequestLine.java" as REQUESTL;  // GET /~rhu/ HTTP/1.1 
-type <java> "...client.Host" from ".../Host.java" as HOST;  // host: www.doc.ic.ac.uk
-type <java> "...Body" from ".../Body.java" as reqBODY;
-type <java> "...Body" from ".../Body.java" as respBODY;
-type <java> "...client.UserAgent" from ".../UserAgent.java" as USERA;  // User-Agent: Mozilla/5.0 (Windows NT 6.3; WOW64; rv:38.0) Gecko/20100101 Firefox/38.0
-type <java> "...client.Accept" from ".../Accept.java" as ACCEPT;  // Accept: text/html,application/xhtml+xml,application/xml;q=0.9,* /*;q=0.8
-type <java> "...client.AcceptLanguage" from ".../AcceptLanguage.java" as ACCEPTL;  // Accept-Language: en-GB,en;q=0.5
-type <java> "...client.AcceptEncoding" from ".../AcceptEncoding.java" as ACCEPTE;  // Accept-Encoding: gzip, deflate
-type <java> "...client.DoNotTrack" from ".../DoNotTrack.java" as DNT;  // DNT: 1
-type <java> "...client.Connection" from ".../Connection.java" as CONNECTION;  // Connection: keep-alive
-type <java> "...client.UpgradeInsecureRequests" from ".../UpgradeInsecureRequests.java" as UPGRADEIR;  // Upgrade-Insecure-Requests: 1 
+type <java> "RequestLine" from "HttpTypes.scala" as RequestLine;  // GET /~rhu/ HTTP/1.1
+type <java> "Body" from "HttpTypes.scala" as Body;
+type <java> "Encodings" from "HttpTypes.scala" as Encodings;  // Accept-Encoding: gzip, deflate
 		
-		
-type <java> "...server.HttpVersion" from ".../HttpVersion.java" as HTTPV;  // HTTP/1.1 
-type <java> "...server._200" from ".../_200.java" as c200;  // 200 OK
-type <java> "...server._404" from ".../_404.java" as c404;
-type <java> "...server.Date" from ".../Date.java" as DATE;  // Date: Sun, 24 May 2015 21:04:36 GMT
-type <java> "...server.Server" from ".../Server.java" as SERVER;  // Server: Apache
-type <java> "...server.StrictTransportSecurity" from ".../StrictTransportSecurity.java" as STRICTTS;  // Strict-Transport-Security: max-age=31536000; preload; includeSubDomains //as STRICT_TRANSPORT_SECURITY;
-type <java> "...server.LastModified" from ".../LastModified.java" as LASTM;  // Last-Modified: Sat, 23 Jul 2011 09:38:43 GMT
-type <java> "...server.ETag" from ".../ETag.java" as ETAG;  // ETag: "ac6fa008-559-4a8b95908aec0"
-type <java> "...server.AcceptRanges" from ".../AcceptRanges.java" as ACCEPTR;  // Accept-Ranges: bytes
-type <java> "...server.ContentLength" from ".../ContentLength.java" as CONTENTL;  // Content-Length: 1369
-type <java> "...server.Vary" from ".../Vary.java" as VARY;  // Vary: Accept-Encoding
-type <java> "...server.ContentType" from ".../ContentType.java" as CONTENTT;  // Content-Type: text/html
-type <java> "...server.Via" from ".../Via.java" as VIA;  // Via: 1.1 www.doc.ic.ac.uk	
-*/
+type <java> "Version" from "HttpTypes.scala" as Version;  // HTTP/1.1
+type <java> "AcceptRanges" from "HttpTypes.scala" as AcceptRanges;  // Accept-Ranges: bytes
 
-
-//global protocol Http(role C, role S)
-global protocol Proto(role C, role S)
+global protocol Http(role C, role S)
 {
 	do Request(C, S);
 }
@@ -43,52 +21,52 @@ aux global protocol Request(role C, role S)
 {
 	choice at C
 	{
-		REQUESTL(String) from C to S;  // GET /~rhu/ HTTP/1.1 
+		Request(RequestLine) from C to S;  // GET /~rhu/ HTTP/1.1 
 		rec X
 		{
 			choice at C
 			{
-				HOST(String) from C to S;  // Host: www.doc.ic.ac.uk
+				Host(String) from C to S;  // Host: www.doc.ic.ac.uk
 				continue X;
 			}
 			or
 			{
-				USERA(String) from C to S;  // User-Agent: Mozilla/5.0 (Windows NT 6.3; WOW64; rv:38.0) Gecko/20100101 Firefox/38.0
+				UserAgent(String) from C to S;  // User-Agent: Mozilla/5.0 (Windows NT 6.3; WOW64; rv:38.0) Gecko/20100101 Firefox/38.0
 				continue X;
 			}
 			or
 			{
-				ACCEPT(String) from C to S;  // Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+				Accept(String) from C to S;  // Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
 				continue X;
 			}
 			or
 			{
-				ACCEPTL(String) from C to S;  // Accept-Language: en-GB,en;q=0.5
+				AcceptLanguage(String) from C to S;  // Accept-Language: en-GB,en;q=0.5
 				continue X;
 			}
 			or
 			{
-				ACCEPTE(String) from C to S;  // Accept-Encoding: gzip, deflate
+				AcceptEncodings(Encodings) from C to S;  // Accept-Encoding: gzip, deflate
 				continue X;
 			}
 			or
 			{
-				DNT(String) from C to S;  // DNT: 1
+				DoNotTrack(Boolean) from C to S;  // DNT: 1
 				continue X;
 			}
 			or
 			{
-				CONNECTION(String) from C to S;  // Connection: keep-alive
+				Connection(String) from C to S;  // Connection: keep-alive
 				continue X;
 			}
 			or
 			{
-				UPGRADEIR(String) from C to S;  // Upgrade-Insecure-Requests: 1 
+				UpgradeIR(Boolean) from C to S;  // Upgrade-Insecure-Requests: 1 
 				continue X;
 			}
 			or
 			{
-				reqBODY(String) from C to S;
+				RequestBody(Body) from C to S;
 				do Response(C, S);
 			}
 		}
@@ -97,15 +75,15 @@ aux global protocol Request(role C, role S)
 	
 aux global protocol Response(role C, role S)
 {
-	HTTPV(String) from S to C;  // HTTP/1.1
+	HttpVersion(Version) from S to C;  // HTTP/1.1
 	choice at S
 	{
-		c200(String) from S to C;  // 200 OK
+		Code200(String) from S to C;  // 200 OK
 		do ResponseMain(C, S);
 	}
 	or
 	{
-		c404(String) from S to C;
+		Code404(String) from S to C;
 		do ResponseMain(C, S);
 	}
 }
@@ -114,57 +92,57 @@ aux global protocol ResponseMain(role C, role S)
 {
 		choice at S
 		{
-			DATE(String) from S to C;  // Date: Sun, 24 May 2015 21:04:36 GMT
-			do ResponseMain(C, S);
-		}
-		/*or
-		{
-			SERVER(String) from S to C;  // Server: Apache
+			Date(ZonedDateTime) from S to C;  // Date: Sun, 24 May 2015 21:04:36 GMT
 			do ResponseMain(C, S);
 		}
 		or
 		{
-			STRICTTS(String) from S to C;  // Strict-Transport-Security: max-age=31536000; preload; includeSubDomains
+			Server(String) from S to C;  // Server: Apache
 			do ResponseMain(C, S);
 		}
 		or
 		{
-			LASTM(String) from S to C;  // Last-Modified: Sat, 23 Jul 2011 09:38:43 GMT
+			StrictTS(String) from S to C;  // Strict-Transport-Security: max-age=31536000; preload; includeSubDomains
 			do ResponseMain(C, S);
 		}
 		or
 		{
-			ETAG(String) from S to C;  // ETag: "ac6fa008-559-4a8b95908aec0"
+			LastModified(ZonedDateTime) from S to C;  // Last-Modified: Sat, 23 Jul 2011 09:38:43 GMT
 			do ResponseMain(C, S);
 		}
 		or
 		{
-			ACCEPTR(String) from S to C;  // Accept-Ranges: bytes
+			ETag(String) from S to C;  // ETag: "ac6fa008-559-4a8b95908aec0"
 			do ResponseMain(C, S);
 		}
 		or
 		{
-			CONTENTL(String) from S to C;  // Content-Length: 1369
+			AcceptRanges(String) from S to C;  // Accept-Ranges: bytes
 			do ResponseMain(C, S);
 		}
 		or
 		{
-			VARY(String) from S to C;  // Vary: Accept-Encoding
+			ContentLength(Integer) from S to C;  // Content-Length: 1369
 			do ResponseMain(C, S);
 		}
 		or
 		{
-			CONTENTT(String) from S to C;  // Content-Type: text/html
+			Vary(String) from S to C;  // Vary: Accept-Encoding
 			do ResponseMain(C, S);
 		}
 		or
 		{
-			VIA(String) from S to C;  // Via: 1.1 www.doc.ic.ac.uk	
+			ContentType(String) from S to C;  // Content-Type: text/html
 			do ResponseMain(C, S);
-		}*/
+		}
 		or
 		{
-			respBODY(String) from S to C;  // Message length indicated by Content-Length
+			Via(String) from S to C;  // Via: 1.1 www.doc.ic.ac.uk	
+			do ResponseMain(C, S);
+		}
+		or
+		{
+			ResponseBody(Body) from S to C;  // Message length indicated by Content-Length
 		}
 	}
 }
