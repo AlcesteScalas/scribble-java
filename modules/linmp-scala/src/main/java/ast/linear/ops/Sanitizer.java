@@ -60,7 +60,6 @@ public class Sanitizer extends Visitor<Type>
 	@Override
 	protected End visit(End node)
 	{
-		// TODO Auto-generated method stub
 		return node;
 	}
 
