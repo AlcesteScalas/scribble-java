@@ -7,7 +7,6 @@ type <java> "java.time.ZonedDateTime" from "java.time" as ZonedDateTime;
 
 type <java> "RequestLine" from "HttpTypes.scala" as RequestLine;  // GET /~rhu/ HTTP/1.1
 type <java> "Body" from "HttpTypes.scala" as Body;
-type <java> "Encodings" from "HttpTypes.scala" as Encodings;  // Accept-Encoding: gzip, deflate
 		
 type <java> "Version" from "HttpTypes.scala" as Version;  // HTTP/1.1
 type <java> "AcceptRanges" from "HttpTypes.scala" as AcceptRanges;  // Accept-Ranges: bytes
@@ -46,7 +45,7 @@ aux global protocol Request(role C, role S)
 			}
 			or
 			{
-				AcceptEncodings(Encodings) from C to S;  // Accept-Encoding: gzip, deflate
+				AcceptEncodings(String) from C to S;  // Accept-Encoding: gzip, deflate
 				continue X;
 			}
 			or
