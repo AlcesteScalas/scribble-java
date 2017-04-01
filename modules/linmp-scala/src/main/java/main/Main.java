@@ -54,17 +54,17 @@ public class Main
 			System.err.println(e.getMessage());
 			System.exit(1);
 		}
-		System.out.println("Translated:\n" + "    " + g);
+		// System.out.println("Translated:\n" + "    " + g);
 		
 		GlobalType gs = ast.global.ops.Sanitizer.apply(g);
-		System.out.println("\nSanitized:\n" + "    " + gs);
+		System.out.println("// Global type (from " + mainpath + ")");
+		System.out.println("//    " + gs + "\n");
 		
 		Map<Role, LocalType> projs = ast.global.ops.Projector.apply(gs, merge);
 		for (Entry<Role, LocalType> rl: projs.entrySet())
 		{
 			LocalType l = rl.getValue();
 			Role r = rl.getKey();
-			System.out.println("\nLocal projection for " + r + ":\n    " + l);
 //			Map<Role, Type> p = ast.local.ops.Projector.apply(l, ast.binary.ops.Merge::full);
 //			for (Role r: l.roles())
 //			{
@@ -75,11 +75,12 @@ public class Main
 //				String scalaProt = ast.linear.ops.ScalaProtocolExtractor.apply(bl);
 //				System.out.println("    Scala protocol classes:\n" + scalaProt);
 //			}
+			System.out.println("// -----------------------------------------------------");
+			System.out.println("// Local type for role " + r + ":\n//    " + l);
 			String scalaMPProt = ast.local.ops.ScalaEncoder.apply(l, "test.proto." + r);
-			System.out.println("    Scala protocol classes for local type:\n" +
-					"-----------------------------------------------------\n" +
+			System.out.println(//"// Scala protocol class definitions:\n" +
 					scalaMPProt +
-					"-----------------------------------------------------\n");
+					"// -----------------------------------------------------\n");
 		}
 	}
 
