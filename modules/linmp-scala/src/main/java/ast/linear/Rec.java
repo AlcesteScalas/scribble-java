@@ -37,8 +37,9 @@ public class Rec implements AbstractVariant
 	@Override
 	public Set<RecVar> freeVariables()
 	{
-		// TODO Auto-generated method stub
-		return null;
+		Set<RecVar> bfv = body.freeVariables();
+		bfv.remove(recvar); // Remove bound variable from free vars in body
+		return bfv;
 	}
 	
 	@Override
