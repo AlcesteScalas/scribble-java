@@ -21,8 +21,8 @@ public class Case
 	
 	public Set<RecVar> freeVariables()
 	{
-		// TODO Auto-generated method stub
-		return null;
+		// NOTE: here we assume that payloads are closed
+		return cont.freeVariables();
 	}
 	
 	@Override
