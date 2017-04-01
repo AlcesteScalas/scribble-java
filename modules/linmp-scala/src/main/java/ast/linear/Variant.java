@@ -13,6 +13,7 @@ public class Variant implements AbstractVariant
 	
 	public Variant(Map<Label, Case> cases)
 	{
+		assert(cases.size() != 0);
 		this.cases = cases;
 	}
 	
