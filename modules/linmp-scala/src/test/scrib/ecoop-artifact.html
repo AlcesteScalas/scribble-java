@@ -1,0 +1,390 @@
+<html>
+
+
+<head>
+
+<title>
+A Linear Decomposition of Multiparty Sessions for Safe Distributed Programming -- ECOOP 17 artifact submission
+</title>
+
+<meta content="...TODO..." name="...TODO...">
+
+</head>
+
+
+<body>
+
+<h4>
+A Linear Decomposition of Multiparty Sessions for Safe Distributed Programming -- ECOOP 17 artifact submission
+</h4>
+
+<p>
+
+<a href="...">Alceste Scalas</a>,
+<a href="...">Ornela Dardha,</a>
+<a href="...">Raymond Hu,</a>
+<a href="...">Nobuko Yoshida</a>
+
+</p>
+
+<p>
+
+Key resources:
+
+<ul>
+<li>
+paper page link
+</li>
+<li>
+github link
+</li>
+<ul>
+<li>
+github link of this documentation
+</li>
+</ul>
+</ul>
+
+</p>
+
+
+<hr>
+
+
+<p>
+Contents:
+<ul>
+<li>
+<a href="#vminfo">VM info</a>
+</li>
+<li>
+<a href="#runvm">How to run the VM</a>   --- KEY
+</li>
+<li>
+<a href="#runscribble">How to run Scribble (command line)</a>
+</li>
+<li>
+<a href="#scribbleinfo">How Scribble is installed/updated</a>
+</li>
+<li>
+<a href="#scribbletutorial">Scribble tutorial: Greeting protocol</a>   --- KEY
+</li>
+<li>
+<a href="#keyexamples">Key examples</a>   --- KEY
+<ul>
+<li>
+<a href="#ex:game">Game</a> (running example of the paper)
+</li>
+<li>
+<a href="#ex:threebuyer">ThreeBuyer</a>
+</li>
+<li>
+<a href="#ex:http">HTTP</a> (GET) -- fragment that is interoperable with Firefox
+</li>
+</ul>
+</ul>
+</p>
+
+
+<hr>
+
+
+<p><a name="vminfo"></a>
+how VM image made?
+
+<ul>
+<li>
+<a href="http://www.osboxes.org/ubuntu/">OSboxes VM Ubuntu 16.04.2 Xenial</a>
+</li>
+
+<br>
+
+setup notes
+
+<ul>
+<li>
+gai.conf
+</li>
+
+<li>
+vim, git, java, maven -- via apt-get
+</li>
+</ul>
+</ul>
+</p>
+
+
+<hr>
+
+
+<p><a name="runvm"></a>
+how to run VM?
+
+<ul>
+<li>
+<a href="https://www.virtualbox.org/wiki/Downloads">virtualbox 5.1.18</a>
+</li>
+
+<br>
+
+inside VM GUI
+
+<ul>
+<li>
+New -- Type: linux Version: Ubuntu (32-bit)
+</li>
+
+<li>
+default memory size
+</li>
+
+<li>
+Use an existing virtual hard disk (...TODO:file name...)
+</li>
+
+<li>
+Machine -- settings -- system -- processor -- Enable PAE/NX
+</li>
+
+<li>
+Optional: set up network -- e.g., to use git pull
+</li>
+
+<li>
+Start
+</li>
+</ul>
+
+<br>
+
+login info
+
+<ul>
+<li>
+User:osboxes.org  Password:osboxes.org
+</li>
+</ul>
+</ul>
+</p>
+
+
+<hr>
+
+
+<p><a name="runscribble"></a>
+how to run scribble?
+
+<br>
+
+validate scribble global protocol and generate scala API
+
+<ul>
+<li>
+open a terminal (e.g., ctrl-alt-t)
+</li>
+
+<li>
+from home dir (/home/osboxes) -- cd scribble
+</li>
+
+<li>
+command line script
+
+./scribblec-linmp.sh <Scrib file> [Proto name]
+
+default Proto Proto
+
+e.g., ./scribblec-linmp.sh modules/linmp-scala/src/test/scrib/Greeting.scr Proto
+</li>
+</ul>
+</p>
+
+
+<hr>
+
+
+<p><a name="scribbleinfo"></a>
+how was scribble installed?
+
+...git -- current scrib vers...
+
+leave a backup archive
+</p>
+
+
+<hr>
+
+
+<p><a name="scribbletutorial"></a>
+scribble with scala api gen tutorial -- greeting protocol
+</p>
+
+
+<hr>
+
+
+<p><a name="keyexamples"></a>
+key examples of this artifact
+
+greeting, game, threebuyer, http
+
+..explain each one...
+</p>
+
+
+<hr>
+
+
+<p><a name="ex:game"></a>
+running example of paper (...link...)
+
+demonstrates
+
+<ul>
+<li>
+...all features...
+</li>
+</ul>
+
+protocol source code
+
+<ul>
+<li>
+local dir
+</li>
+<li>
+github
+</li>
+</ul>
+
+scala endpoint source code
+<ul>
+<li>
+Q
+</li>
+<li>
+P1
+</li>
+<li>
+P2
+</li>
+<li>
+P3
+</li>
+</ul>
+
+
+how to run? ...
+</p>
+
+
+<hr>
+
+
+<p><a name="ex:threebuyer"></a>
+threebuyer
+
+directly taken global progress long version. which is based on W3C use case
+
+<ul>
+<li>
+paper link
+</li>
+<li>
+w3c link
+</li>
+</ul>
+
+demonstrates
+
+<ul>
+<li>
+all features?
+</li>
+</ul>
+
+protocol source code
+
+<ul>
+<li>
+local dir ...
+</li>
+<li>
+github ...
+</li>
+</ul>
+
+scala endpoint source code
+<ul>
+<li>
+...
+</li>
+</ul>
+
+
+how to run? ...
+</p>
+
+
+</p>
+
+
+<hr>
+
+
+<p><a name="ex:http"></a>
+http -- a fragment of GET method that is interoperable with firefox
+
+<ul>
+<li>
+paper link
+</li>
+<li>
+w3c link
+</li>
+</ul>
+
+demonstrates
+
+<ul>
+<li>
+all features?
+</li>
+</ul>
+
+protocol source code
+
+<ul>
+<li>
+local dir ...
+</li>
+<li>
+github ...
+</li>
+</ul>
+
+scala endpoint source code
+<ul>
+<li>
+...
+</li>
+</ul>
+
+
+how to run? ...
+<ul>
+<li>
+start server
+</li>
+<ul>
+firefox -- http://localhost:8080
+</li>
+</ul>
+</p>
+
+
+</body>
+
+
+</html>
+
