@@ -53,6 +53,7 @@ github link of this documentation
 
 <p>
 Contents:
+
 <ul>
 <li>
 <a href="#vminfo">VM info</a>
@@ -70,7 +71,7 @@ Contents:
 <a href="#scribbletutorial">Scribble tutorial: Greeting protocol</a>   --- KEY
 </li>
 <li>
-<a href="#keyexamples">Key examples</a>   --- KEY
+<a href="#keyexamples">Main artifact examples</a>   --- KEY
 <ul>
 <li>
 <a href="#ex:game">Game</a> (running example of the paper)
@@ -89,9 +90,9 @@ Contents:
 <hr>
 
 
-<p><a name="vminfo"></a>
-how VM image made?
+<h4><a name="vminfo"></a>how VM created?</h4>
 
+<p>
 <ul>
 <li>
 <a href="http://www.osboxes.org/ubuntu/">OSboxes VM Ubuntu 16.04.2 Xenial</a>
@@ -103,11 +104,11 @@ setup notes
 
 <ul>
 <li>
-gai.conf
+optional? gai.conf (for apt-get issue)
 </li>
 
 <li>
-vim, git, java, maven -- via apt-get
+(vim, git,) jdk (...vers...), maven (...vers...) -- via apt-get
 </li>
 </ul>
 </ul>
@@ -117,16 +118,18 @@ vim, git, java, maven -- via apt-get
 <hr>
 
 
-<p><a name="runvm"></a>
-how to run VM?
+<h4><a name="runvm"></a>how to run VM?</h4>
+
+<p>
+
+virtual box ... following instructions tested on win 10 and ubuntu XYZ
 
 <ul>
 <li>
-<a href="https://www.virtualbox.org/wiki/Downloads">virtualbox 5.1.18</a>
+download <a href="https://www.virtualbox.org/wiki/Downloads">virtualbox 5.1.18</a>
 </li>
 
-<br>
-
+<li>
 inside VM GUI
 
 <ul>
@@ -154,9 +157,10 @@ Optional: set up network -- e.g., to use git pull
 Start
 </li>
 </ul>
+</li>
 
-<br>
 
+<li>
 login info
 
 <ul>
@@ -171,8 +175,11 @@ User:osboxes.org  Password:osboxes.org
 <hr>
 
 
-<p><a name="runscribble"></a>
-how to run scribble?
+<h4><a name="runscribble"></a>How to run Scribble</h4>
+
+<p>
+
+command line
 
 <br>
 
@@ -188,13 +195,210 @@ from home dir (/home/osboxes) -- cd scribble
 </li>
 
 <li>
-command line script
+command line script -- from scribble root dir (<tt>/home/osboxes.org/scribble</tt>)
 
-./scribblec-linmp.sh <Scrib file> [Proto name]
+<ul>
+<tt>./scribblec-linmp.sh <Scrib file> [Proto name]</tt>
+</ul>
 
-default Proto Proto
+default [Proto name] if non given is assumed to be <tt>Proto</tt>
 
-e.g., ./scribblec-linmp.sh modules/linmp-scala/src/test/scrib/Greeting.scr Proto
+</li>
+</ul>
+</p>
+<p>
+
+concrete example
+
+<ul>
+<tt>$ pwd</tt><br>
+<tt>/home/osboxes.org/scribble</tt><br>
+<tt>$ ./scribblec-linmp.sh modules/linmp-scala/src/test/scrib/Greeting.scr Proto</tt>
+</ul>
+</p>
+
+
+<hr>
+
+
+<h4><a name="scribbleinfo">scribble installation info</a></h4>
+
+<p>
+
+<ul>
+<li>
+git clone <a href="https://github.com/alcestes/scribble-java.git">https://github.com/alcestes/scribble-java.git</a>
+<ul>
+<li>
+	current hash XYZ
+</li>
+<li>
+	build: <tt>maven install</tt>
+</li>
+<li>
+	...FIXME: maven antlr classpath...
+</li>
+<li>
+	link to copy of CL script 
+</li>
+</ul>
+</li>
+<li>
+	backup of installed scribble directory archive at XYZ
+</li>
+</ul>
+
+create a backup archive
+</p>
+
+
+<hr>
+
+
+<h4><a name="scribbletutorial">scribble with scala api gen tutorial: greeting protocol</a></h4>
+
+<p>
+
+greeting protocol
+
+<br>
+
+protocol source code
+
+<ul>
+<li>
+local dir
+</li>
+<li>
+github
+</li>
+</ul>
+
+explain scribble
+
+<br>
+
+link to formal grammar definition for comparison
+
+<ul>
+<li>
+	scribble file
+</li>
+
+<li>
+	module -- should be connected to filename
+</li>
+
+<li>
+	zero or more type declaration
+<ul>
+<li>
+	type def lang -- not actually used
+</li>
+<li>
+	type name in def lang
+</li>
+<li>
+	location of def file -- not actually used
+</li>
+<li>
+	alias of type in scrib def
+</li>
+</ul>
+</li>
+
+<li>
+	zero or more global protocol declaration
+<ul>
+<li>
+	proto name
+</li>
+<li>
+	two or more roles
+</li>
+<li>
+	role to role message passing
+<ul>
+<li>
+	message signature
+</li>
+</ul>
+</li>
+<li>
+	action prefixing
+</li>
+<li>
+	choice -- directed, non-deterministic
+</li>
+<li>
+	subprotocols -- recursion
+</li>
+</ul>
+</li>
+</ul>
+
+
+explain how to run tool
+
+<tt>./scribblec-linmp.sh modules/linmp-scala/src/test/scrib/Greeting.scr Proto</tt>
+
+<br>
+
+explain tool output -- validation, scala class output (copy-paste)
+
+<br>
+
+explain tool output if a protocol spec error
+
+<br>
+
+scala endpoint source code (local/github)
+
+<ul>
+<li>
+Q
+</li>
+<li>
+P1
+</li>
+<li>
+P2
+</li>
+<li>
+P3
+</li>
+</ul>
+
+explain endpoint code -- explain how a protocol violation is caught by typing -- explain run-time linearity check?
+
+<br>
+
+explain how to run the endpoints ...
+
+</p>
+
+
+<hr>
+
+
+<h4><a name="keyexamples"></a>key artifact examples</h4>
+
+<p>
+
+main examples in this artifact
+
+<ul>
+<li>
+greeting (already explained)
+</li>
+<li>
+game
+</li>
+<li>
+threebuyer
+</li>
+<li>
+http
 </li>
 </ul>
 </p>
@@ -203,40 +407,13 @@ e.g., ./scribblec-linmp.sh modules/linmp-scala/src/test/scrib/Greeting.scr Proto
 <hr>
 
 
-<p><a name="scribbleinfo"></a>
-how was scribble installed?
+<h4><a name="ex:game">Running paper example: Game</a></h4>
 
-...git -- current scrib vers...
+<p>
 
-leave a backup archive
-</p>
+running example of paper (...paper link...)
 
-
-<hr>
-
-
-<p><a name="scribbletutorial"></a>
-scribble with scala api gen tutorial -- greeting protocol
-</p>
-
-
-<hr>
-
-
-<p><a name="keyexamples"></a>
-key examples of this artifact
-
-greeting, game, threebuyer, http
-
-..explain each one...
-</p>
-
-
-<hr>
-
-
-<p><a name="ex:game"></a>
-running example of paper (...link...)
+<br>
 
 demonstrates
 
@@ -281,8 +458,9 @@ how to run? ...
 <hr>
 
 
-<p><a name="ex:threebuyer"></a>
-threebuyer
+<h4><a name="ex:threebuyer">threebuyer</a></h4>
+
+<p>
 
 directly taken global progress long version. which is based on W3C use case
 
@@ -332,15 +510,15 @@ how to run? ...
 <hr>
 
 
-<p><a name="ex:http"></a>
-http -- a fragment of GET method that is interoperable with firefox
+<h4><a name="ex:http"></a>HTTP</h4>
+
+<p>
+
+a fragment of GET method that is used to created a HTTP server that is interoperable with firefox (tested with firefox XYZ -- installed inside the VM)
 
 <ul>
 <li>
-paper link
-</li>
-<li>
-w3c link
+http RFC
 </li>
 </ul>
 
