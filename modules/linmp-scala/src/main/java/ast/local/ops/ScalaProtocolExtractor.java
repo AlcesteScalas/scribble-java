@@ -138,13 +138,13 @@ public class ScalaProtocolExtractor extends LocalTypeVisitor<ClassTable>
 		
 		ClassTable res = new ClassTable();
 		String def = "case class " + className + "(" + String.join(", ", chanspecs) + ") {\n";
-		def += "  def receive()";
+		def += "  def receive(implicit atMost: Duration = Duration.Inf)";
 		if (labels.size() > 1)
 		{
 			// We could add the return type annotation, but let's Scala infer
 		}
 		def += " = {\n" +
-				"    " + node.src.name + ".receive() match {\n";
+				"    " + node.src.name + ".receive(atMost) match {\n";
 		
 		for (Label l: labels) // Note: node might have less labels wrt v
 		{

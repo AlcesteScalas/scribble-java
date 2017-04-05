@@ -61,6 +61,7 @@ public class ScalaEncoder
 		ClassTable msgOutProtoClasses = ScalaMessageExtractor.outputs(t, nameEnv);
 		
 		return ("package " + pkg + "\n\n" +
+				"import scala.concurrent.duration.Duration\n" +
 				"import lchannels._\n\n" +
 				"// Input message types for multiparty sessions\n" +
 				String.join("\n", msgInProtoClasses.values()) +
