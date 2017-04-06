@@ -11,137 +11,137 @@ type <java> "Body" from "HttpTypes.scala" as Body;
 type <java> "Version" from "HttpTypes.scala" as Version;  // HTTP/1.1
 type <java> "AcceptRanges" from "HttpTypes.scala" as AcceptRanges;  // Accept-Ranges: bytes
 
-global protocol Http(role C, role S)
+global protocol Http(role c, role s)
 {
-	do Request(C, S);
+	do Request(c, s);
 }
 
-aux global protocol Request(role C, role S)
+aux global protocol Request(role c, role s)
 {
-	choice at C
+	choice at c
 	{
-		Request(RequestLine) from C to S;  // GET /~rhu/ HTTP/1.1 
+		Request(RequestLine) from c to s;  // GET /~rhu/ HTTP/1.1 
 		rec X
 		{
-			choice at C
+			choice at c
 			{
-				Host(String) from C to S;  // Host: www.doc.ic.ac.uk
+				Host(String) from c to s;  // Host: www.doc.ic.ac.uk
 				continue X;
 			}
 			or
 			{
-				UserAgent(String) from C to S;  // User-Agent: Mozilla/5.0 (Windows NT 6.3; WOW64; rv:38.0) Gecko/20100101 Firefox/38.0
+				UserAgent(String) from c to s;  // User-Agent: Mozilla/5.0 (Windows NT 6.3; WOW64; rv:38.0) Gecko/20100101 Firefox/38.0
 				continue X;
 			}
 			or
 			{
-				Accept(String) from C to S;  // Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+				Accept(String) from c to s;  // Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
 				continue X;
 			}
 			or
 			{
-				AcceptLanguage(String) from C to S;  // Accept-Language: en-GB,en;q=0.5
+				AcceptLanguage(String) from c to s;  // Accept-Language: en-GB,en;q=0.5
 				continue X;
 			}
 			or
 			{
-				AcceptEncodings(String) from C to S;  // Accept-Encoding: gzip, deflate
+				AcceptEncodings(String) from c to s;  // Accept-Encoding: gzip, deflate
 				continue X;
 			}
 			or
 			{
-				DoNotTrack(Boolean) from C to S;  // DNT: 1
+				DoNotTrack(Boolean) from c to s;  // DNT: 1
 				continue X;
 			}
 			or
 			{
-				Connection(String) from C to S;  // Connection: keep-alive
+				Connection(String) from c to s;  // Connection: keep-alive
 				continue X;
 			}
 			or
 			{
-				UpgradeIR(Boolean) from C to S;  // Upgrade-Insecure-Requests: 1 
+				UpgradeIR(Boolean) from c to s;  // Upgrade-Insecure-Requests: 1 
 				continue X;
 			}
 			or
 			{
-				RequestBody(Body) from C to S;
-				do Response(C, S);
+				RequestBody(Body) from c to s;
+				do Response(c, s);
 			}
 		}
 	}
 }
 	
-aux global protocol Response(role C, role S)
+aux global protocol Response(role c, role s)
 {
-	HttpVersion(Version) from S to C;  // HTTP/1.1
-	choice at S
+	HttpVersion(Version) from s to c;  // HTTP/1.1
+	choice at s
 	{
-		Code200(String) from S to C;  // 200 OK
-		do ResponseMain(C, S);
+		Code200(String) from s to c;  // 200 OK
+		do ResponseMain(c, s);
 	}
 	or
 	{
-		Code404(String) from S to C;
-		do ResponseMain(C, S);
+		Code404(String) from s to c;
+		do ResponseMain(c, s);
 	}
 }
 
-aux global protocol ResponseMain(role C, role S)
+aux global protocol ResponseMain(role c, role s)
 {
-		choice at S
+		choice at s
 		{
-			Date(ZonedDateTime) from S to C;  // Date: Sun, 24 May 2015 21:04:36 GMT
-			do ResponseMain(C, S);
+			Date(ZonedDateTime) from s to c;  // Date: Sun, 24 May 2015 21:04:36 GMT
+			do ResponseMain(c, s);
 		}
 		or
 		{
-			Server(String) from S to C;  // Server: Apache
-			do ResponseMain(C, S);
+			Server(String) from s to c;  // Server: Apache
+			do ResponseMain(c, s);
 		}
 		or
 		{
-			StrictTS(String) from S to C;  // Strict-Transport-Security: max-age=31536000; preload; includeSubDomains
-			do ResponseMain(C, S);
+			StrictTS(String) from s to c;  // Strict-Transport-Security: max-age=31536000; preload; includeSubDomains
+			do ResponseMain(c, s);
 		}
 		or
 		{
-			LastModified(ZonedDateTime) from S to C;  // Last-Modified: Sat, 23 Jul 2011 09:38:43 GMT
-			do ResponseMain(C, S);
+			LastModified(ZonedDateTime) from s to c;  // Last-Modified: Sat, 23 Jul 2011 09:38:43 GMT
+			do ResponseMain(c, s);
 		}
 		or
 		{
-			ETag(String) from S to C;  // ETag: "ac6fa008-559-4a8b95908aec0"
-			do ResponseMain(C, S);
+			ETag(String) from s to c;  // ETag: "ac6fa008-559-4a8b95908aec0"
+			do ResponseMain(c, s);
 		}
 		or
 		{
-			AcceptRanges(String) from S to C;  // Accept-Ranges: bytes
-			do ResponseMain(C, S);
+			AcceptRanges(String) from s to c;  // Accept-Ranges: bytes
+			do ResponseMain(c, s);
 		}
 		or
 		{
-			ContentLength(Integer) from S to C;  // Content-Length: 1369
-			do ResponseMain(C, S);
+			ContentLength(Integer) from s to c;  // Content-Length: 1369
+			do ResponseMain(c, s);
 		}
 		or
 		{
-			Vary(String) from S to C;  // Vary: Accept-Encoding
-			do ResponseMain(C, S);
+			Vary(String) from s to c;  // Vary: Accept-Encoding
+			do ResponseMain(c, s);
 		}
 		or
 		{
-			ContentType(String) from S to C;  // Content-Type: text/html
-			do ResponseMain(C, S);
+			ContentType(String) from s to c;  // Content-Type: text/html
+			do ResponseMain(c, s);
 		}
 		or
 		{
-			Via(String) from S to C;  // Via: 1.1 www.doc.ic.ac.uk	
-			do ResponseMain(C, S);
+			Via(String) from s to c;  // Via: 1.1 www.doc.ic.ac.uk	
+			do ResponseMain(c, s);
 		}
 		or
 		{
-			ResponseBody(Body) from S to C;  // Message length indicated by Content-Length
+			ResponseBody(Body) from s to c;  // Message length indicated by Content-Length
 		}
 	}
 }
