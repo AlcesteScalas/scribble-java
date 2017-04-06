@@ -180,7 +180,11 @@ public class ScalaProtocolExtractor extends LocalTypeVisitor<ClassTable>
 					}
 					else
 					{
-						contSpecs.add("m.cont"); // Use the continuation
+						if (v.continuation(l) instanceof End) {
+							contSpecs.add("()"); // Role has no continuation
+						} else {
+							contSpecs.add("m.cont"); // Use the continuation
+						}
 					}
 				}
 				ret = l.name + "(" + payloadRepr + ", " + contClassName + "(" + String.join(", ", contSpecs) + "))";
