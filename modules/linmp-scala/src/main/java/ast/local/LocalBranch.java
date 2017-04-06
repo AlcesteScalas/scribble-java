@@ -55,7 +55,7 @@ public class LocalBranch implements LocalType
 	@Override
 	public String toString()
 	{
-		return this.src + "?{" +
+		return this.src + "&{" +
 				this.cases.entrySet().stream()
 					.map((e) -> e.getKey().toString() + e.getValue().toString())
 					.collect(Collectors.joining(", ")) + "}";
