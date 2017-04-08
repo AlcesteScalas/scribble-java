@@ -3,13 +3,14 @@ module Http;
 type <java> "java.lang.Boolean" from "rt.jar" as Boolean;
 type <java> "java.lang.Integer" from "rt.jar" as Integer;
 type <java> "java.lang.String" from "rt.jar" as String;
-type <java> "java.time.ZonedDateTime" from "java.time" as ZonedDateTime;
 
-type <java> "RequestLine" from "HttpTypes.scala" as RequestLine;  // GET /~rhu/ HTTP/1.1
-type <java> "Body" from "HttpTypes.scala" as Body;
+type <java> "ZonedDateTime" from "java.time" as ZonedDateTime;
+
+type <java> "RequestLine" from "http.protocol.types" as RequestLine;  // GET /path/ HTTP/1.1
+type <java> "Body" from "http.protocol.types" as Body;
 		
-type <java> "Version" from "HttpTypes.scala" as Version;  // HTTP/1.1
-type <java> "AcceptRanges" from "HttpTypes.scala" as AcceptRanges;  // Accept-Ranges: bytes
+type <java> "Version" from "http.protocol.types" as Version;  // HTTP/1.1
+type <java> "AcceptRanges" from "http.protocol.types" as AcceptRanges;  // Accept-Ranges: bytes
 
 global protocol Http(role c, role s)
 {
@@ -20,7 +21,7 @@ aux global protocol Request(role c, role s)
 {
 	choice at c
 	{
-		Request(RequestLine) from c to s;  // GET /~rhu/ HTTP/1.1 
+		Request(RequestLine) from c to s;  // GET /path/ HTTP/1.1 
 		rec X
 		{
 			choice at c
