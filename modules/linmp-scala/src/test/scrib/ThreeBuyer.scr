@@ -50,8 +50,8 @@ aux global protocol TwoBuyerChoice(role alice, role bob, role seller)
 global protocol Delegation(role carol, role bob)
 {
 	Contrib(Int) from bob to carol;  // Should be the Int on line 19
-	Delegate(TwoBuyerChoice@bob) from bob to Carol;
-	choice at Carol
+	Delegate(TwoBuyerChoice@bob) from bob to carol;
+	choice at carol
 	{
 		OkC() from carol to bob;
 	}
