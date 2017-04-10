@@ -1,9 +1,14 @@
 module Merge1;
 
-// This example should be fine wrt. merging
-// But not supported by Scala code gen. due duplicate message label occurrence
-// So all the use cases of mergeability wrt. merging duplicate branch cases aren't supported by this implementation
-// It should be one of the examples supported by merging, but not supported by vanilla Scribble
+// This example should be supported by session types merging,
+// but is not currently supported by Scala session classes generation
+// due to a message label M that occurs twice in different contexts.
+// Possible solutions:
+//   1. rename one of the two M() messages;
+//   2. relax the correspondence between message labels and Scala class names.
+// 
+// NOTE: it should be one of the examples supported by session types merging,
+//       but not supported by vanilla Scribble
 global protocol Proto(role A, role B, role C) {
   choice at A  {
     1a() from A to B;
