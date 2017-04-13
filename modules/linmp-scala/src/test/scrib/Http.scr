@@ -9,7 +9,6 @@ type <java> "RequestLine" from "HttpTypes.scala" as RequestLine;  // GET /~rhu/ 
 type <java> "Body" from "HttpTypes.scala" as Body;
 		
 type <java> "Version" from "HttpTypes.scala" as Version;  // HTTP/1.1
-type <java> "AcceptRanges" from "HttpTypes.scala" as AcceptRanges;  // Accept-Ranges: bytes
 
 global protocol Http(role C, role S)
 {
