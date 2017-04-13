@@ -1,7 +1,7 @@
 /**
  * Taken from:
  *     M. Coppo, M. Dezani-Ciancaglini, N. Yoshida, L. Padovani
- *     "Global Progress for Dynamically Interleaved Sessions"
+ *     "Global Progress for Dynamically Interleaved Multiparty Sessions"
  *     Mathematical Structures in Computer Science, 2016
  *     http://dx.doi.org/10.1017/S0960129514000188
  */
