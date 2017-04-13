@@ -1,64 +1,47 @@
-module Game;
+module Game3;
 
+type <java> "java.lang.Boolean" from "rt.jar" as Boolean;
+type <java> "java.lang.Integer" from "rt.jar" as Int;
+type <java> "java.lang.String" from "rt.jar" as String;
 
-global protocol Proto(role Client, role S1, role S2)
-{
-	choice at S1
-	{
-		playAsA() from S1 to Client;
-		//finA() from S1 to S2;
-		do Game(Client, S1, S2);
-	}
-	or
-	{
-		playAsB(Game@B) from S1 to Client;
-		fin() from S1 to S2;
-		//finB() from S1 to S2;
-	}
-	or
-	{
-		playAsC(Game@C) from S1 to Client;
-		fin() from S1 to S2;
-		//finC() from S1 to S2;
-	}
+global protocol ClientA(role p, role q) {
+  PlayA(Game@a) from q to p;
 }
 
+global protocol ClientB(role p, role q) {
+  PlayB(Game@b) from q to p;
+}
 
-global protocol Game(role A, role B, role C)
-{
-	1() from A to B;
-	1() from B to C;
-	rec X
-	{
-		choice at A
-		{
-			1() from A to B;
-			1() from B to C;
-			//1() from C to A;
-			continue X;
-		}
-		or
-		{
-			2() from A to B;
-			2() from B to C;
-			//2() from C to A;
-		}
-	}
-	/*// Randonmly made up for now
-	rec X
-	{
-		choice at A
-		{
-			1() from A to B;
-			1() from B to C;
-			1() from C to A;
-			continue X;
-		}
-		or
-		{
-			2() from A to B;
-			2() from B to C;
-			2() from C to A;
-		}
-	}*/
+global protocol ClientC(role p, role q) {
+  PlayC(Game@c) from q to p;
+}
+
+global protocol Game(role a, role b, role c) {
+  InfoBC(String) from b to c;
+  InfoCA(String) from c to a;
+  InfoAB(String) from a to b;
+  
+  rec t {
+    choice at a {
+      Mov1AB(Int) from a to b;
+      Mov1BC(Int) from b to c;
+      choice at c {
+        Mov1CA(Int) from c to a;
+        continue t;
+      } or {
+        Mov2CA(Boolean) from c to a;
+        continue t;
+      }
+    } or {
+      Mov2AB(Boolean) from a to b;
+      Mov2BC(Boolean) from b to c;
+      choice at c {
+        Mov1CA(Int) from c to a;
+        continue t;
+      } or {
+        Mov2CA(Boolean) from c to a;
+				continue t;
+      }
+    }
+  }
 }

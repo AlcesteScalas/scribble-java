@@ -1,56 +1,62 @@
-//$ java -cp 'modules\linmp-scala\target\classes\;modules\cli\target\classes\;modules\core\target\classes;modules\parser\target\classes;C:\Users\Raymond\.m2\repository\org\antlr\antlr-runtime\3.2\antlr-runtime-3.2.jar;lib\antlr.jar;lib\antlr-runtime.jar;lib\commons-io.jar;lib\scribble-cli.jar;lib\scribble-core.jar;lib\scribble-parser.jar.jar' main.Main modules/linmp-scala/src/test/scrib/ThreeBuyer.scr ThreeBuyer
-
 /**
- * Taken from [MSCS16] Global Progress for Dynamically Interleaved Sessions
+ * Taken from:
+ *     M. Coppo, M. Dezani-Ciancaglini, N. Yoshida, L. Padovani
+ *     "Global Progress for Dynamically Interleaved Sessions"
+ *     Mathematical Structures in Computer Science, 2016
+ *     http://dx.doi.org/10.1017/S0960129514000188
  */
 
 module ThreeBuyer;
 
-
 type <java> "java.lang.Integer" from "rt.jar" as Int;
 type <java> "java.lang.String" from "rt.jar" as String;
-type <java> "test.twobuyer.Date" from "test/twobuyer/Date.java" as Date;
 
+type <java> "ZonedDateTime" from "java.time" as ZonedDateTime;
 
-// A = 2, B = 1, S = 3
-global protocol TwoBuyer(role A, role B, role S)
-{
-	title(String) from A to S;
-	quoteA(Int) from S to A;
-	quoteB(Int) from S to B;
-	shareA(Int) from A to B;
-	do TwoBuyerChoice(A, B, S);
+global protocol PlayAlice(role c, role s) {
+  PlayAlice(TwoBuyer@alice) from c to s;
 }
 
-aux global protocol TwoBuyerChoice(role A, role B, role S)
+global protocol PlayBob(role c, role s) {
+  PlayBob(TwoBuyer@bob) from c to s;
+}
+
+global protocol TwoBuyer(role alice, role bob, role seller)
 {
-	choice at B
+	Title(String) from alice to seller;
+	QuoteA(Int) from seller to alice;
+	QuoteB(Int) from seller to bob;
+	ShareA(Int) from alice to bob;
+	do TwoBuyerChoice(alice, bob, seller);
+}
+
+aux global protocol TwoBuyerChoice(role alice, role bob, role seller)
+{
+	choice at bob
 	{
-		okA() from B to A;
-		okS() from B to S;
-		addr(String) from B to S;
-		deliv(Date) from S to B;
+		OkA() from bob to alice;
+		OkS() from bob to seller;
+		Address(String) from bob to seller;
+		Deliver(ZonedDateTime) from seller to bob;
 	}
 	or
 	{
-		quitA() from B to A;
-		quitS() from B to S;
+		QuitA() from bob to alice;
+		QuitS() from bob to seller;
 	}
 }
 
 
-// C = 1, B = 2
-global protocol ThreeBuyer(role C, role B)
-//global protocol Proto(role C, role B)
+global protocol Delegation(role carol, role bob)
 {
-	contrib(Int) from B to C;  // Should be the Int on line 19
-	deleg(TwoBuyerChoice@B) from B to C;
-	choice at C
+	Contrib(Int) from bob to carol;  // Should be the Int on line 19
+	Delegate(TwoBuyerChoice@bob) from bob to carol;
+	choice at carol
 	{
-		okC() from C to B;  // Not enforced: consistency of "ok" choice here and in the delegated session
+		OkC() from carol to bob;
 	}
 	or
 	{
-		quitC() from C to B;
+		QuitC() from carol to bob;
 	}
 }

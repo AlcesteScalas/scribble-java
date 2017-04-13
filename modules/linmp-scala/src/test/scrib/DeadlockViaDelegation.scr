@@ -6,28 +6,32 @@ type <java> "java.lang.String" from "rt.jar" as String;
 
 
 /**
- * Deadlock-freedom in a context of multiple concurrent sessions and in the
- * presence of delegation requires checking at the *process* level. E.g.,
- * Coppo, M., Dezani-Ciancaglini, M., Yoshida, N., Padovani, L. "Global Progress
- * for Dynamically Interleaved Multiparty Sessions" [9].
+ * Standard multiparty session typing systems do not guarantee deadlock-freedom
+ * of processes dealing with multiple concurrent sessions,
+ * and in presence of delegation.
+ *
+ * Similarly, Scribble can guarantee absence of deadlocks *inside* a single
+ * session, but cannot prevent processes from interacting on multiple
+ * sessions in a way that causes a deadlock.
  * 
- * Here, Scribble is conducting a validation at the "earlier" *type* level. 
- * (Validated types only assure deadlock-freedom for executions of individual 
- * session instances of each protocol.)
+ * For a work dealing deadlocks and multiple sessions, see e.g.:
+ *
+ *     M. Coppo, M. Dezani-Ciancaglini, N. Yoshida, L. Padovani
+ *     "Global Progress for Dynamically Interleaved Sessions"
+ *     Mathematical Structures in Computer Science, 2016
+ *     http://dx.doi.org/10.1017/S0960129514000188
  */
 
 global protocol ClientA(role s, role c) {
-  CA(DeadLock@a) from s to c;  // This means: send a channel of *type* Deadlock@a.
-  CB(DeadLock@b) from s to c;  // The delegation here is also for the protocol
-                               // Deadlock, but does not constrain the channel
-                               // value to belong to the same *session* as the
-                               // above line.
+  CA(DeadLock@a) from s to c;  // Means: send a channel of *type* Deadlock@a.
+  CB(DeadLock@b) from s to c;  // Means: send a channel of *type* Deadlock@b.
+                               // Note that the channels delegated above might
+                               // belong to the same multiparty session
 }
   
 global protocol DeadLock(role a, role b, role c) {
-  1() from a to b;  // May deadlock if CA/CB sent above are from the same
-                    // session; not necessarily if not. I.E., depends on the
-                    // process-level implementations.
+  1() from a to b;  // Might deadlock if CA/CB sent above carry channels
+                    // belonging to the same multiparty session.
   2() from b to c;
   3() from c to a;
 }

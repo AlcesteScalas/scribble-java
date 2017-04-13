@@ -55,7 +55,7 @@ public class LocalSelect implements LocalType
 	@Override
 	public String toString()
 	{
-		return this.dest + "!{" +
+		return this.dest + "⊕{" +
 				this.cases.entrySet().stream()
 					.map((e) -> e.getKey().toString() + e.getValue().toString())
 					.collect(Collectors.joining(", ")) + "}";

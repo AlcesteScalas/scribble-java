@@ -33,7 +33,7 @@ public class GlobalRec implements GlobalType
 	@Override
 	public String toString()
 	{
-		return "mu " + this.recvar + "." + this.body;
+		return "μ(" + this.recvar + ")." + this.body;
 	}
 	
 	@Override

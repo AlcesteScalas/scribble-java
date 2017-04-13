@@ -37,7 +37,7 @@ public class LocalRec implements LocalType
 	@Override
 	public String toString()
 	{
-		return "mu " + this.recvar + "." + this.body;
+		return "μ(" + this.recvar + ")." + this.body;
 	}
 
 	@Override

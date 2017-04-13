@@ -44,7 +44,7 @@ public class GlobalSend implements GlobalType
 	@Override
 	public String toString()
 	{
-		return this.src + "->" + this.dest + ":{" +
+		return this.src + "->" + this.dest + "{" +
 				this.cases.entrySet().stream()
 					.map((e) -> e.getKey().toString() + e.getValue().toString())
 					.collect(Collectors.joining(", ")) + "}";
