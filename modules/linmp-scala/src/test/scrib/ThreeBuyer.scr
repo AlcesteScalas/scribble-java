@@ -13,12 +13,12 @@ type <java> "java.lang.String" from "rt.jar" as String;
 
 type <java> "ZonedDateTime" from "java.time" as ZonedDateTime;
 
-global protocol PlayAlice(role c, role s) {
-  PlayAlice(TwoBuyer@alice) from c to s;
+global protocol PlayAlice(role alice, role seller) {
+  PlayAlice(TwoBuyer@alice) from seller to alice;
 }
 
-global protocol PlayBob(role c, role s) {
-  PlayBob(TwoBuyer@bob) from c to s;
+global protocol PlayBob(role bob, role seller) {
+  PlayBob(TwoBuyer@bob) from seller to bob;
 }
 
 global protocol TwoBuyer(role alice, role bob, role seller)
