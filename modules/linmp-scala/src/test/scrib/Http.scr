@@ -10,7 +10,6 @@ type <java> "RequestLine" from "http.protocol.types" as RequestLine;  // GET /pa
 type <java> "Body" from "http.protocol.types" as Body;
 		
 type <java> "Version" from "http.protocol.types" as Version;  // HTTP/1.1
-type <java> "AcceptRanges" from "http.protocol.types" as AcceptRanges;  // Accept-Ranges: bytes
 
 global protocol Http(role c, role s)
 {

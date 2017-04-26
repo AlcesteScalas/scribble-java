@@ -1,4 +1,4 @@
-module Merge1;
+module DuplicateLabels;
 
 // This example should be supported by session types merging,
 // but is not currently supported by Scala session classes generation
