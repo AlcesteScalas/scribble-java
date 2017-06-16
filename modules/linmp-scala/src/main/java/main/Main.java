@@ -66,7 +66,11 @@ public class Main
 		}
 		catch (ScribParserException | ScribbleException e)
 		{
-			if (!junit)
+			if (junit)
+			{
+				throw e;
+			}
+			else
 			{
 				System.err.println(e.getMessage());
 				System.exit(1);

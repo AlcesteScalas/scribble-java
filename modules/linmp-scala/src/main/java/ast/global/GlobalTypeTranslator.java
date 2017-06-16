@@ -181,7 +181,7 @@ public class GlobalTypeTranslator
 		{
 			if (is.size() > 1)
 			{
-				throw new RuntimeException("[linmp] Shouldn't get in here: " + is);
+				throw new LinMPSyntaxException("[linmp] Bad sequence after continue: " + is);
 			}
 			return this.factory.RecVar(((GContinue) first).recvar.toString());
 		}
