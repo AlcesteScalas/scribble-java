@@ -72,7 +72,7 @@ public class Job
 
 	public void checkLinearMPScalaWellFormedness() throws ScribbleException
 	{
-		//checkWellFormedness();  // TODO: do the required checks (only)
+		//checkWellFormedness();  // TODO: do the required checks (only)  // FIXME: protocols that use inlining aren't being fully validated (linmp main uses inlined)
 		runContextBuildingPasses();
 		runUnfoldingPass();
 	}

@@ -32,7 +32,13 @@ public class ScribProtocolTranslator
 		Module main = job.getContext().getMainModule();
 		for (GProtocolDecl gpd : main.getGlobalProtocolDecls())
 		{
-			res.add(parseAndCheck(maincon, gpd.getHeader().getDeclName(), merge));
+			//if (!gpd.modifiers.contains(Modifiers.AUX))  // Should *not* skip here: linmp currently skips job.checkLinearMPScalaWellFormedness() -- so it just uses the result of (naive) inlining, for which default Scribble WF has not been checked
+			                                               // So linmp needs to check aux, to detect linmp syntax errors
+			                                               // CHECKME: is checking linmp syntax of all subprotos separately sufficient?  (Or should it be checked on the 
+			                                               // FIXME: handle subprotos in linmp properly
+			{
+				res.add(parseAndCheck(maincon, gpd.getHeader().getDeclName(), merge));
+			}
 		}
 
 		return res;
@@ -57,6 +63,10 @@ public class ScribProtocolTranslator
 			throw new ScribbleException("Global protocol not found: " + simplename);
 		}
 		GProtocolDecl gpd = (GProtocolDecl) main.getProtocolDecl(simplename);  // FIXME: cast
+		/*if (gpd.modifiers.contains(Modifiers.AUX))  // Skipping: cf. parseAndCheckAll
+		{
+			throw new RuntimeException("[linmp] Target protocol should not be aux: " + simplename);
+		}*/
 		return new GlobalTypeTranslator().translate(job.getContext(), ((ModuleDel) main.del()).getModuleContext(), merge, gpd);
 	}
 	
