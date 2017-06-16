@@ -8,7 +8,7 @@ type <java> "java.lang.String" from "rt.jar" as String;
 /**
  * Standard multiparty session typing systems do not guarantee deadlock-freedom
  * of processes dealing with multiple concurrent sessions,
- * and in presence of delegation.
+ * and in the presence of delegation.
  *
  * Similarly, Scribble can guarantee absence of deadlocks *inside* a single
  * session, but cannot prevent processes from interacting on multiple

@@ -4,8 +4,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-
-import main.LinearMPException;
+import java.util.Map.Entry;
 
 import org.scribble.ast.MessageSigNode;
 import org.scribble.ast.context.ModuleContext;
@@ -30,6 +29,7 @@ import ast.local.ops.Sanitizer;
 import ast.name.Label;
 import ast.name.RecVar;
 import ast.name.Role;
+import main.LinearMPException;
 
 public class GlobalTypeTranslator
 {
@@ -131,29 +131,31 @@ public class GlobalTypeTranslator
 			{
 				parsed.add(parseSeq(jobc, mainc, merge, b.getInteractionSeq().getInteractions()));  // "Directly" nested choice will still return a GlobalSend (which is really a choice; uniform global choice constructor is convenient)
 			}
-			Role src = null;
-			Role dest = null;
+			GlobalSend tmp = (GlobalSend) parsed.get(0);
+			Role src = tmp.src;
+			Role dest = tmp.dest;
 			Map<Label, GlobalSendCase> cases = new HashMap<>();
-			for (GlobalType p : parsed)
+			tmp.cases.entrySet().forEach(e -> cases.put(e.getKey(), e.getValue()));
+			for (GlobalType p : parsed.subList(1, parsed.size()))
 			{
-				if (!(p instanceof GlobalSend))
+				/*if (!(p instanceof GlobalSend))
 				{
 					throw new RuntimeException("[linmp] Shouldn't get in here: " + p);
-				}
-				GlobalSend tmp = (GlobalSend) p;
-				if (src == null)
+				}*/
+				GlobalSend tmp2 = (GlobalSend) p;
+				if (!dest.equals(tmp2.dest))
 				{
-					src = tmp.src;
-					dest = tmp.dest;
+					throw new LinearMPException(gc.getSource(), " [linmp] Choice message from " + src + " to inconsistent recipients: " + tmp2.dest + " and " + dest);
 				}
-				else
+				for (Entry<Label, GlobalSendCase> e : tmp2.cases.entrySet())
 				{
-					if (!dest.equals(tmp.dest))
+					Label lab = e.getKey();
+					if (cases.containsKey(lab))
 					{
-						throw new LinearMPException(gc.getSource(), " [linmp] Choice message from " + src + " to inconsistent recipients: " + tmp.dest + " and " + dest);
+						throw new LinearMPException(gc.getSource(), " [linmp] Duplicate choice message label not allowed: " + lab);
 					}
+					cases.put(lab, e.getValue());
 				}
-				tmp.cases.entrySet().forEach((e) -> cases.put(e.getKey(), e.getValue()));
 			}
 			return this.factory.GlobalSend(src, dest, cases);
 		}
