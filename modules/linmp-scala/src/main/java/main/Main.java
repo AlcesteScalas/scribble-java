@@ -3,6 +3,7 @@ package main;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -21,44 +22,67 @@ import ast.local.ops.Merge;
 // import ast.binary.Type;
 import ast.name.Role;
 
-// Args: either
+// Args: one of
+//   <-a | -junit> main-mod-path
 //   -inline "..inline module def.." [proto-name]
 //   main-mod-path [proto-name]
 public class Main
 {
 	public static void main(String[] args) throws ScribbleException, ScribParserException
 	{
+		ScribProtocolTranslator spt = new ScribProtocolTranslator();
 		Merge.Operator merge = ast.local.ops.Merge::full;
-		GlobalType g = null;
 
-		String inline = null;
-		Path mainpath = null;
-		String simpname;
+		List<GlobalType> gs = new LinkedList<>();
+		boolean junit =  args[0].equals("-junit");
 		try
 		{
-			if (args[0].equals("-inline"))
+			Path mainpath = null;
+			if (args[0].equals("-a") || junit)
 			{
-				inline = args[1];
-				simpname = (args.length < 3) ? "Proto" : args[2];  // Looks for protocol named "Proto" as default if unspecified
+				mainpath = Paths.get(args[1]);
+				gs.addAll(spt.parseAndCheckAll(Main.newMainContext(null, mainpath), merge));
 			}
-			else
+			else 
 			{
-				mainpath = Paths.get(args[0]);
-				simpname = (args.length < 2) ? "Proto" : args[1];
+				String inline = null;
+				String simpname;
+				if (args[0].equals("-inline"))
+				{
+					inline = args[1];
+					simpname = (args.length < 3) ? "Proto" : args[2];  // Looks for protocol named "Proto" as default if unspecified
+				}
+				else
+				{
+					mainpath = Paths.get(args[0]);
+					simpname = (args.length < 2) ? "Proto" : args[1];
+				}
+				gs.add(spt.parseAndCheck(Main.newMainContext(inline, mainpath), new GProtocolName(simpname), merge));  // merge is for projection of "delegation payload types"
 			}
-			ScribProtocolTranslator spt = new ScribProtocolTranslator();
-			g = spt.parseAndCheck(Main.newMainContext(inline, mainpath), new GProtocolName(simpname), merge);  // merge is for projection of "delegation payload types"
+			for (GlobalType g : gs)
+			{
+				runLinMP(junit, mainpath, g, merge);
+			}
 		}
 		catch (ScribParserException | ScribbleException e)
 		{
-			System.err.println(e.getMessage());
-			System.exit(1);
+			if (!junit)
+			{
+				System.err.println(e.getMessage());
+				System.exit(1);
+			}
 		}
 		// System.out.println("Translated:\n" + "    " + g);
-		
+	}
+	
+	private static void runLinMP(boolean junit, Path mainpath, GlobalType g, Merge.Operator merge) throws ScribbleException, ScribParserException
+	{
 		GlobalType gs = ast.global.ops.Sanitizer.apply(g);
-		System.out.println("// Global type (from " + mainpath + ")");
-		System.out.println("//    " + gs + "\n");
+		if (!junit)
+		{
+			System.out.println("// Global type (from " + mainpath + ")");
+			System.out.println("//    " + gs + "\n");
+		}
 		
 		Map<Role, LocalType> projs = ast.global.ops.Projector.apply(gs, merge);
 		for (Entry<Role, LocalType> rl: projs.entrySet())
@@ -75,12 +99,18 @@ public class Main
 //				String scalaProt = ast.linear.ops.ScalaProtocolExtractor.apply(bl);
 //				System.out.println("    Scala protocol classes:\n" + scalaProt);
 //			}
-			System.out.println("// -----------------------------------------------------");
-			System.out.println("// Local type for role " + r + ":\n//    " + l);
-			String scalaMPProt = ast.local.ops.ScalaEncoder.apply(l, "test.proto." + r);
-			System.out.println(//"// Scala protocol class definitions:\n" +
-					scalaMPProt +
-					"// -----------------------------------------------------\n");
+			if (!junit)
+			{
+				System.out.println("// -----------------------------------------------------");
+				System.out.println("// Local type for role " + r + ":\n//    " + l);
+			}
+				String scalaMPProt = ast.local.ops.ScalaEncoder.apply(l, "test.proto." + r);
+			if (!junit)
+			{
+				System.out.println(//"// Scala protocol class definitions:\n" +
+						scalaMPProt +
+						"// -----------------------------------------------------\n");
+			}
 		}
 	}
 

@@ -1,5 +1,8 @@
 package ast;
 
+import java.util.LinkedList;
+import java.util.List;
+
 import org.scribble.ast.Module;
 import org.scribble.ast.global.GProtocolDecl;
 import org.scribble.del.ModuleDel;
@@ -19,6 +22,22 @@ public class ScribProtocolTranslator
 	{
 
 	}
+
+	public List<GlobalType> parseAndCheckAll(MainContext maincon, Merge.Operator merge) throws ScribbleException, ScribParserException
+	{
+		List<GlobalType> res = new LinkedList<>();
+		
+		Job job = maincon.newJob();
+		job.checkLinearMPScalaWellFormedness();
+		Module main = job.getContext().getMainModule();
+		for (GProtocolDecl gpd : main.getGlobalProtocolDecls())
+		{
+			res.add(parseAndCheck(maincon, gpd.getHeader().getDeclName(), merge));
+		}
+
+		return res;
+	}
+	
 
 	// merge is for projection of "delegation payload types"
 	//public GlobalType parseAndCheck(Path mainmod, String simplename) throws ScribbleException, ScribParserException
