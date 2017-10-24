@@ -4,8 +4,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-
-import main.LinearMPException;
+import java.util.Map.Entry;
 
 import org.scribble.ast.MessageSigNode;
 import org.scribble.ast.context.ModuleContext;
@@ -30,6 +29,8 @@ import ast.local.ops.Sanitizer;
 import ast.name.Label;
 import ast.name.RecVar;
 import ast.name.Role;
+import main.LinMPSyntaxException;
+import main.LinearMPException;
 
 public class GlobalTypeTranslator
 {
@@ -73,14 +74,14 @@ public class GlobalTypeTranslator
 			Role dest = this.factory.Role(gmt.getDestinations().get(0).toString());
 			if (!gmt.msg.isMessageSigNode())
 			{
-				throw new LinearMPException(gmt.msg.getSource(), " [linmp] Message kind not supported: " + gmt.msg);
+				throw new LinMPSyntaxException(gmt.msg.getSource(), " [linmp] Message kind not supported: " + gmt.msg);
 			}
 			MessageSigNode msn = ((MessageSigNode) gmt.msg);
 			Label lab = this.factory.MessageLab(msn.op.toString());
 			PayloadType pay = null;
 			if (msn.payloads.getElements().size() > 1)
 			{
-				throw new LinearMPException(msn.payloads.getSource(), " [linmp] Payload with more than one element not supported: " + msn.payloads);
+				throw new LinMPSyntaxException(msn.payloads.getSource(), " [linmp] Payload with more than one element not supported: " + msn.payloads);
 			}
 			else if (!msn.payloads.getElements().isEmpty())
 			{
@@ -120,7 +121,7 @@ public class GlobalTypeTranslator
 		{
 			if (is.size() > 1)
 			{
-				throw new LinearMPException(is.get(1).getSource(), " [linmp] Sequential composition after choice not supported: " + is.get(1));
+				throw new LinMPSyntaxException(is.get(1).getSource(), " [linmp] Sequential composition after choice not supported: " + is.get(1));
 			}
 			GChoice gc = (GChoice) first; 
 			/*List<GlobalType> parsed = gc.getBlocks().stream()
@@ -131,29 +132,37 @@ public class GlobalTypeTranslator
 			{
 				parsed.add(parseSeq(jobc, mainc, merge, b.getInteractionSeq().getInteractions()));  // "Directly" nested choice will still return a GlobalSend (which is really a choice; uniform global choice constructor is convenient)
 			}
-			Role src = null;
-			Role dest = null;
+			GlobalType p0 = parsed.get(0);
+			if (!(p0 instanceof GlobalSend))
+			{
+				throw new LinMPSyntaxException(gc.getSource(), " [linmp] Expected global interaction, not: " + p0);  // In default Scribble, could be, e.g., "choice-unguarded" RecVar
+			}
+			GlobalSend tmp0 = (GlobalSend) p0;
+			Role src = tmp0.src;
+			Role dest = tmp0.dest;
 			Map<Label, GlobalSendCase> cases = new HashMap<>();
-			for (GlobalType p : parsed)
+			tmp0.cases.entrySet().forEach(e -> cases.put(e.getKey(), e.getValue()));
+			for (GlobalType p : parsed.subList(1, parsed.size()))
 			{
 				if (!(p instanceof GlobalSend))
 				{
-					throw new RuntimeException("[linmp] Shouldn't get in here: " + p);
+					//throw new RuntimeException("[linmp] Shouldn't get in here: " + p);
+					throw new LinMPSyntaxException(gc.getSource(), " [linmp] Expected global interaction, not: " + p0);  // In default Scribble, could be, e.g., "choice-unguarded" RecVar
 				}
 				GlobalSend tmp = (GlobalSend) p;
-				if (src == null)
+				if (!dest.equals(tmp.dest))
 				{
-					src = tmp.src;
-					dest = tmp.dest;
+					throw new LinMPSyntaxException(gc.getSource(), " [linmp] Choice message from " + src + " to inconsistent recipients: " + tmp.dest + " and " + dest);
 				}
-				else
+				for (Entry<Label, GlobalSendCase> e : tmp.cases.entrySet())
 				{
-					if (!dest.equals(tmp.dest))
+					Label lab = e.getKey();
+					if (cases.containsKey(lab))
 					{
-						throw new LinearMPException(gc.getSource(), " [linmp] Choice message from " + src + " to inconsistent recipients: " + tmp.dest + " and " + dest);
+						throw new LinMPSyntaxException(gc.getSource(), " [linmp] Duplicate choice message label not allowed: " + lab);
 					}
+					cases.put(lab, e.getValue());
 				}
-				tmp.cases.entrySet().forEach((e) -> cases.put(e.getKey(), e.getValue()));
 			}
 			return this.factory.GlobalSend(src, dest, cases);
 		}
@@ -161,7 +170,7 @@ public class GlobalTypeTranslator
 		{
 			if (is.size() > 1)
 			{
-				throw new LinearMPException(is.get(1).getSource(), " [linmp] Sequential composition after recursion not supported: " + is.get(1));
+				throw new LinMPSyntaxException(is.get(1).getSource(), " [linmp] Sequential composition after recursion not supported: " + is.get(1));
 			}
 			GRecursion gr = (GRecursion) first;
 			RecVar recvar = this.factory.RecVar(gr.recvar.toString());
@@ -172,7 +181,7 @@ public class GlobalTypeTranslator
 		{
 			if (is.size() > 1)
 			{
-				throw new RuntimeException("[linmp] Shouldn't get in here: " + is);
+				throw new LinMPSyntaxException(is.get(1).getSource(), " [linmp] Bad sequential composition after continue: " + is.get(1));
 			}
 			return this.factory.RecVar(((GContinue) first).recvar.toString());
 		}
