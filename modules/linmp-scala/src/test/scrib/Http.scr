@@ -8,7 +8,7 @@ type <java> "ZonedDateTime" from "java.time" as ZonedDateTime;
 
 type <java> "RequestLine" from "http.protocol.types" as RequestLine;  // GET /path/ HTTP/1.1
 type <java> "Body" from "http.protocol.types" as Body;
-		
+
 type <java> "Version" from "http.protocol.types" as Version;  // HTTP/1.1
 
 global protocol Http(role c, role s)
@@ -20,7 +20,7 @@ aux global protocol Request(role c, role s)
 {
 	choice at c
 	{
-		Request(RequestLine) from c to s;  // GET /path/ HTTP/1.1 
+		Request(RequestLine) from c to s;  // GET /path/ HTTP/1.1
 		rec X
 		{
 			choice at c
@@ -60,7 +60,7 @@ aux global protocol Request(role c, role s)
 			}
 			or
 			{
-				UpgradeIR(Boolean) from c to s;  // Upgrade-Insecure-Requests: 1 
+				UpgradeIR(Boolean) from c to s;  // Upgrade-Insecure-Requests: 1
 				continue X;
 			}
 			or
@@ -71,7 +71,7 @@ aux global protocol Request(role c, role s)
 		}
 	}
 }
-	
+
 aux global protocol Response(role c, role s)
 {
 	HttpVersion(Version) from s to c;  // HTTP/1.1
@@ -89,59 +89,58 @@ aux global protocol Response(role c, role s)
 
 aux global protocol ResponseMain(role c, role s)
 {
-		choice at s
-		{
-			Date(ZonedDateTime) from s to c;  // Date: Sun, 24 May 2015 21:04:36 GMT
-			do ResponseMain(c, s);
-		}
-		or
-		{
-			Server(String) from s to c;  // Server: Apache
-			do ResponseMain(c, s);
-		}
-		or
-		{
-			StrictTS(String) from s to c;  // Strict-Transport-Security: max-age=31536000; preload; includeSubDomains
-			do ResponseMain(c, s);
-		}
-		or
-		{
-			LastModified(ZonedDateTime) from s to c;  // Last-Modified: Sat, 23 Jul 2011 09:38:43 GMT
-			do ResponseMain(c, s);
-		}
-		or
-		{
-			ETag(String) from s to c;  // ETag: "ac6fa008-559-4a8b95908aec0"
-			do ResponseMain(c, s);
-		}
-		or
-		{
-			AcceptRanges(String) from s to c;  // Accept-Ranges: bytes
-			do ResponseMain(c, s);
-		}
-		or
-		{
-			ContentLength(Integer) from s to c;  // Content-Length: 1369
-			do ResponseMain(c, s);
-		}
-		or
-		{
-			Vary(String) from s to c;  // Vary: Accept-Encoding
-			do ResponseMain(c, s);
-		}
-		or
-		{
-			ContentType(String) from s to c;  // Content-Type: text/html
-			do ResponseMain(c, s);
-		}
-		or
-		{
-			Via(String) from s to c;  // Via: 1.1 www.doc.ic.ac.uk	
-			do ResponseMain(c, s);
-		}
-		or
-		{
-			ResponseBody(Body) from s to c;  // Message length indicated by Content-Length
-		}
+	choice at s
+	{
+		Date(ZonedDateTime) from s to c;  // Date: Sun, 24 May 2015 21:04:36 GMT
+		do ResponseMain(c, s);
+	}
+	or
+	{
+		Server(String) from s to c;  // Server: Apache
+		do ResponseMain(c, s);
+	}
+	or
+	{
+		StrictTS(String) from s to c;  // Strict-Transport-Security: max-age=31536000; preload; includeSubDomains
+		do ResponseMain(c, s);
+	}
+	or
+	{
+		LastModified(ZonedDateTime) from s to c;  // Last-Modified: Sat, 23 Jul 2011 09:38:43 GMT
+		do ResponseMain(c, s);
+	}
+	or
+	{
+		ETag(String) from s to c;  // ETag: "ac6fa008-559-4a8b95908aec0"
+		do ResponseMain(c, s);
+	}
+	or
+	{
+		AcceptRanges(String) from s to c;  // Accept-Ranges: bytes
+		do ResponseMain(c, s);
+	}
+	or
+	{
+		ContentLength(Integer) from s to c;  // Content-Length: 1369
+		do ResponseMain(c, s);
+	}
+	or
+	{
+		Vary(String) from s to c;  // Vary: Accept-Encoding
+		do ResponseMain(c, s);
+	}
+	or
+	{
+		ContentType(String) from s to c;  // Content-Type: text/html
+		do ResponseMain(c, s);
+	}
+	or
+	{
+		Via(String) from s to c;  // Via: 1.1 www.doc.ic.ac.uk
+		do ResponseMain(c, s);
+	}
+	or
+	{
+		ResponseBody(Body) from s to c;  // Message length indicated by Content-Length
 	}
 }
